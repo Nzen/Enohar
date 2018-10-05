@@ -7,10 +7,10 @@
 		4.0.0
 	</modelVersion>
 	<groupId>
-		ws.nzen.format.eno
+		ws.nzen.format
 	</groupId>
 	<artifactId>
-		enojar
+		enohar
 	</artifactId>
 	<version>
 		0.0
@@ -134,9 +134,9 @@
 		</maven.compiler.target>
 	</properties>
 	<description>
-		An eno-document serialization library. Review eno at http://eno-lang.org
+		An eno document serialization library
 	</description>
 	<name>
-		Enojar
+		Enohar
 	</name>
 </project>

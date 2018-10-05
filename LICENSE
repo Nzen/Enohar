@@ -1,11 +1,10 @@
 
-Enojar
+Enohar
 
 Copyright Nicholas Prado, released under terms of MIT license, as described at https://mitlicense.org
 
-Enojar relies on
+Enohar relies on  
 * _, which is copyright released under _ license terms.
 
-Enojar attempts to conform to the eno-lang spec. This doesn't carry an explicit license, but its instigator, Simon Repp, has released reference implementation libraries under MIT license terms, so presumably he's implicitly released the specification under the same terms.
-
+Enohar attempts to conform to the eno notation spec. It is published source, but not open source, at the time of this writing.
 
