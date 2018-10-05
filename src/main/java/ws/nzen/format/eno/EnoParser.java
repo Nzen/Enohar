@@ -40,7 +40,7 @@ public class EnoParser
 				System.out.print( " "+ word.type.name() );
 				word = naiveAlphabet.nextToken();
 			}
-			while ( word.type != LexType.END );
+			while ( word.type != Lexeme.END );
 			System.out.println();
 		}
 

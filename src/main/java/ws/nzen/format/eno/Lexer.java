@@ -18,7 +18,7 @@ public class Lexer
 	private Set<Character> alphabet;
 	public class Token
 	{
-		public LexType type;
+		public Lexeme type;
 		public String word;
 		@Override
 		public String toString()
@@ -49,7 +49,7 @@ public class Lexer
 		Token result = new Token();
 		if ( line.isEmpty() || cursorInd >= line.length() )
 		{
-			result.type = LexType.END;
+			result.type = Lexeme.END;
 			result.word = "";
 			return result;
 		}
@@ -64,19 +64,19 @@ public class Lexer
 				if ( hasNext && line.charAt( cursorInd ) == ALPHA_COPY )
 				{
 					cursorInd++;
-					result.type = LexType.COPY_OP_DEEP;
+					result.type = Lexeme.COPY_OP_DEEP;
 					result.word = "<<";
 				}
 				else
 				{
-					result.type = LexType.COPY_OP_THIN;
+					result.type = Lexeme.COPY_OP_THIN;
 					result.word = "<";
 				}
 				break;
 			}
 			case ALPHA_ESCAPE :
 			{
-				result.type = LexType.ESCAPE_OP;
+				result.type = Lexeme.ESCAPE_OP;
 				if ( ! hasNext )
 				{
 					result.word = "`";
@@ -91,19 +91,19 @@ public class Lexer
 			}
 			case ALPHA_FIELD :
 			{
-				result.type = LexType.FIELD_START_OP;
+				result.type = Lexeme.FIELD_START_OP;
 				result.word = ":";
 				break;
 			}
 			case ALPHA_LC_BREAK :
 			{
-				result.type = LexType.CONTINUE_OP_BREAK;
+				result.type = Lexeme.CONTINUE_OP_BREAK;
 				result.word = "|";
 				break;
 			}
 			case ALPHA_LC_SAME :
 			{
-				result.type = LexType.CONTINUE_OP_SAME;
+				result.type = Lexeme.CONTINUE_OP_SAME;
 				result.word = "\\";
 				break;
 			}
@@ -113,26 +113,26 @@ public class Lexer
 				if ( hasNext && line.charAt( cursorInd ) == ALPHA_LIST )
 				{
 					cursorInd++;
-					result.type = LexType.BLOCK_OP;
+					result.type = Lexeme.BLOCK_OP;
 					result.word = "--";
 					// FIX not compliant, should be two or more
 				}
 				else
 				{
-					result.type = LexType.LIST_OP;
+					result.type = Lexeme.LIST_OP;
 					result.word = "-";
 				}
 				break;
 			}
 			case ALPHA_REM :
 			{
-				result.type = LexType.COMMENT_OP;
+				result.type = Lexeme.COMMENT_OP;
 				result.word = ">";
 				break;
 			}
 			case ALPHA_SECTION :
 			{
-				result.type = LexType.SECTION_OP;
+				result.type = Lexeme.SECTION_OP;
 				bookmark = cursorInd -1;
 				cursorInd = indexOfDivergenceFrom( ALPHA_ESCAPE );
 				result.word = line.substring( bookmark, cursorInd );
@@ -140,14 +140,14 @@ public class Lexer
 			}
 			case ALPHA_SET :
 			{
-				result.type = LexType.SET_OP;
+				result.type = Lexeme.SET_OP;
 				result.word = "=";
 				break;
 			}
 			case ALPHA_SPACE :
 			case ALPHA_TAB :
 			{
-				result.type = LexType.WHITESPACE;
+				result.type = Lexeme.WHITESPACE;
 				if ( hasNext )
 				{
 					bookmark = cursorInd -1;
@@ -162,7 +162,7 @@ public class Lexer
 			}
 			default :
 			{
-				result.type = LexType.TEXT;
+				result.type = Lexeme.TEXT;
 				if ( hasNext )
 				{
 					bookmark = cursorInd -1;

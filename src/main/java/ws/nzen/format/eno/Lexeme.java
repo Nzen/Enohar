@@ -1,6 +1,6 @@
 package ws.nzen.format.eno;
 
-public enum LexType
+public enum Lexeme
 {
 	WHITESPACE,
 	CONTINUE_OP_SAME, CONTINUE_OP_BREAK,
