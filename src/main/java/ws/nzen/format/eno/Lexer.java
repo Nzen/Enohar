@@ -112,10 +112,10 @@ public class Lexer
 				// is it list or block or generic ?
 				if ( hasNext && line.charAt( cursorInd ) == ALPHA_LIST )
 				{
-					cursorInd++;
 					result.type = Lexeme.BLOCK_OP;
-					result.word = "--";
-					// FIX not compliant, should be two or more
+					bookmark = cursorInd -1;
+					cursorInd = indexOfDivergenceFrom( ALPHA_ESCAPE );
+					result.word = line.substring( bookmark, cursorInd );
 				}
 				else
 				{
