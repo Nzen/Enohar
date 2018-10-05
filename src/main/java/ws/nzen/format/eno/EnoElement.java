@@ -17,6 +17,7 @@ public class EnoElement
 	private String parsedValue;
 	private String originalValue;
 	private List<String> comments; // or Map<int,str> where int is relative offset from name
+	private int trailingLines = 0;
 
 
 	public void addToSection( EnoElement node )
@@ -63,6 +64,21 @@ public class EnoElement
 		{
 			unique.put( field.getName(), field );
 		}
+	}
+
+
+	public void addComment( String another )
+	{
+		if ( another != null )
+		{
+			comments.add( another );
+		}
+	}
+
+
+	public void addTrailingLine()
+	{
+		trailingLines += 1;
 	}
 
 
@@ -129,6 +145,14 @@ public class EnoElement
 	public void setComments( List<String> comments )
 	{
 		this.comments = comments;
+	}
+	public int getTrailingLines()
+	{
+		return trailingLines;
+	}
+	public void setTrailingLines( int trailingLines )
+	{
+		this.trailingLines = trailingLines;
 	}
 
 

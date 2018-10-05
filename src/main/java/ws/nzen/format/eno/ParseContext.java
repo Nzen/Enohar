@@ -1,7 +1,8 @@
 package ws.nzen.format.eno;
 
-public enum LexContext
+public enum ParseContext
 {
+	DOCUMENT, // which is just section level 0
 	SECTION,
 	BLOCK,
 	SET,
