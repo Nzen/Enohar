@@ -10,7 +10,7 @@
 		ws.nzen.format.eno
 	</groupId>
 	<artifactId>
-		eno_notation_operator
+		enojar
 	</artifactId>
 	<version>
 		0.0
@@ -134,9 +134,9 @@
 		</maven.compiler.target>
 	</properties>
 	<description>
-		An eno document serialization library
+		An eno-document serialization library. Review eno at http://eno-lang.org
 	</description>
 	<name>
-		Eno Notation Operator
+		Enojar
 	</name>
 </project>

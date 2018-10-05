@@ -1,8 +1,11 @@
 
-Eno Notation Operator
+Enojar
 
 Copyright Nicholas Prado, released under terms of MIT license, as described at https://mitlicense.org
 
-Eno Notation Operator relies on  
+Enojar relies on
 * _, which is copyright released under _ license terms.
+
+Enojar attempts to conform to the eno-lang spec. This doesn't carry an explicit license, but its instigator, Simon Repp, has released reference implementation libraries under MIT license terms, so presumably he's implicitly released the specification under the same terms.
+
 
