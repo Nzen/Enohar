@@ -7,10 +7,10 @@
 		4.0.0
 	</modelVersion>
 	<groupId>
-		ws.nzen.format.eno
+		ws.nzen.format
 	</groupId>
 	<artifactId>
-		eno_notation_operator
+		enohar
 	</artifactId>
 	<version>
 		0.0
@@ -137,6 +137,6 @@
 		An eno document serialization library
 	</description>
 	<name>
-		Eno Notation Operator
+		Enohar
 	</name>
 </project>
