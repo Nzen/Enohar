@@ -7,7 +7,7 @@ import java.util.List;
 import java.util.Queue;
 
 /**  */
-public class EnoParser
+public class Parser
 {
 	// eventually handle exception store localization, output formatter
 
