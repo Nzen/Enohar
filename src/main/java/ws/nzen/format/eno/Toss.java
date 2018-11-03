@@ -20,7 +20,7 @@ public class Toss
 		file.add( " #=-- \\//" );
 		file.add( "" );
 		file.add( "-- bello" );
-		EnoParser epp = new EnoParser();
+		Parser epp = new Parser();
 		epp.parse( file );
 	}
 
