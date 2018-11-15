@@ -55,7 +55,7 @@ public class Lexer
 		}
 		char nibble = line.charAt( cursorInd );
 		cursorInd++;
-		boolean hasNext = cursorInd < line.length(); // ASK am I going to ignore last ?
+		boolean hasNext = cursorInd < line.length();
 		int bookmark;
 		switch ( nibble )
 		{
@@ -114,7 +114,7 @@ public class Lexer
 				{
 					result.type = Lexeme.BLOCK_OP;
 					bookmark = cursorInd -1;
-					cursorInd = indexOfDivergenceFrom( ALPHA_ESCAPE );
+					cursorInd = indexOfDivergenceFrom( ALPHA_LIST );
 					result.word = line.substring( bookmark, cursorInd );
 				}
 				else
@@ -185,6 +185,10 @@ public class Lexer
 	private int indexOfDivergenceFrom( char match )
 	{
 		char nibble;
+		if ( cursorInd == line.length() )
+		{
+			return cursorInd;
+		}
 		int peekInd = cursorInd;
 		do
 		{
