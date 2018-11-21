@@ -5,11 +5,198 @@ import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Queue;
+import java.util.Stack;
 
 /**  */
 public class Parser
 {
+	private static final String cl = "p.";
 	// eventually handle exception store localization, output formatter
+	Queue<String> allLines = new LinkedList<>();
+	Lexer alphabet = new Lexer();
+	Lexer.Token currToken;
+	Stack<Lexer.Token> lexed = new Stack<>(); // ASK or a deque ?
+
+
+	public void recognize( List<String> fileLines )
+	{
+		if ( fileLines == null || fileLines.isEmpty() )
+		{
+			return;
+		}
+		else
+		{
+			allLines = new LinkedList<>( fileLines );
+		}
+		alphabet.setLine( allLines.poll() );
+		currToken = alphabet.nextToken();
+		sectionInterior();
+	}
+
+
+	private void sectionInterior()
+	{
+		String here = cl +"si ";
+		String temp;
+		switch ( currToken.type )
+		{
+			case COMMENT_OP :
+			{
+				comment();
+				sectionInterior();
+				break;
+			}
+			case WHITESPACE :
+			{
+				currToken = alphabet.nextToken();
+				sectionInterior();
+				break;
+			}
+			case SECTION_OP :
+			{
+				// if section depth more than allowed ;; complain
+				lexed.push( currToken );
+				currToken = alphabet.nextToken();
+				sectionBeginning();
+				break;
+			}
+			case TEXT :
+			{
+				currToken = alphabet.nextToken();
+				unescapedName();
+				break;
+			}
+			case ESCAPE_OP :
+			{
+				lexed.push( currToken );
+				currToken = alphabet.nextToken();
+				escapedName();
+				break;
+			}
+			case BLOCK_OP :
+			{
+				blockBoundary();
+				break;
+			}
+			case END :
+			{
+				temp = allLines.poll();
+				if ( temp == null )
+				{
+					alphabet.setLine( "" );
+					currToken = alphabet.nextToken();
+					return; // we've exhausted the input
+				}
+				else
+				{
+					alphabet.setLine( temp );
+					currToken = alphabet.nextToken();
+					sectionInterior();
+				}
+				break;
+			}
+			case CONTINUE_OP_BREAK :
+			case CONTINUE_OP_SAME :
+			{
+				System.out.println( here +"continuation started without assignment "+ currToken );
+				break;
+			}
+			case COPY_OP_DEEP :
+			case COPY_OP_THIN :
+			{
+				System.out.println( here +"template started without name "+ currToken );
+				break;
+			}
+			case FIELD_START_OP :
+			{
+				System.out.println( here +"field assignment started without name "+ currToken );
+				break;
+			}
+			case LIST_OP :
+			{
+				System.out.println( here +"list started without name "+ currToken );
+				break;
+			}
+			case SET_OP :
+			{
+				System.out.println( here +"set started without name "+ currToken );
+				break;
+			}
+			default :
+			{
+				System.out.println( here +"unrecognized lexeme "+ currToken );
+				break;
+			}
+		}
+	}
+
+
+	private void sectionBeginning()
+	{
+		if ( currToken.type == Lexeme.WHITESPACE )
+		{
+			currToken = alphabet.nextToken();
+			sectionBeginning();
+		}
+		if ( currToken.type == Lexeme.ESCAPE_OP )
+		{
+			escapedName();
+		}
+		else if ( currToken.type == Lexeme.TEXT )
+		{
+			unescapedName();
+		}
+		if ( currToken.type == Lexeme.COPY_OP_THIN
+				|| currToken.type == Lexeme.COPY_OP_DEEP )
+		{
+			templateInstruction();
+		}
+		sectionInterior();
+	}
+
+
+	private void comment()
+	{
+		String here = cl +"comment ";
+		// save
+		System.out.println( here +"recognized "+ alphabet.getLine() );
+		String temp = allLines.poll();
+		if ( temp == null )
+		{
+			alphabet.setLine( "" ); // we've exhausted the input
+		}
+		else
+		{
+			alphabet.setLine( temp );
+		}
+		currToken = alphabet.nextToken();
+	}
+
+
+	private void escapedName()
+	{
+		
+	}
+
+
+	private void unescapedName()
+	{
+		
+	}
+
+
+	private void blockBoundary()
+	{
+		// if haven't finished block, match existing ;; else start one
+		// call block text
+	}
+
+
+	private void templateInstruction()
+	{
+		
+	}
+	
 
 
 	public Eno parse( String wholeFile )
@@ -18,6 +205,7 @@ public class Parser
 	}
 
 
+	@Deprecated // until recognize() works
 	public Eno parse( List<String> fileLines )
 	{
 		Eno document = new Eno();
@@ -33,6 +221,10 @@ public class Parser
 		EnoElement currElem = new EnoElement();
 		StringBuilder aggreg = new StringBuilder();
 		Lexer.Token word;
+		Stack<Lexer.Token> lexMemory = new Stack<>();
+		Stack<Syntaxeme> parseMemory = new Stack<>();
+		int escapeLen = 0;
+		String tempWord = "";
 		for ( int flInd = 0; flInd < fileLines.size(); flInd++ )
 		{
 			String currLine = fileLines.get( flInd );
@@ -41,8 +233,82 @@ public class Parser
 				currLine = "";
 			}
 			naiveAlphabet.setLine( currLine );
-			wordsOfLine.add( naiveAlphabet.nextToken() );
-			word = wordsOfLine.poll();
+			//wordsOfLine.add( naiveAlphabet.nextToken() );
+			//word = wordsOfLine.poll();
+
+			word = naiveAlphabet.nextToken();
+			if ( parseMemory.isEmpty() )
+			{
+				// build one up
+				switch ( word.type )
+				{
+					case COMMENT_OP :
+					{
+						System.out.println( "comment : "+ currLine );
+						continue; // the lines loop
+					}
+					case SECTION_OP :
+					{
+						wordsOfLine.add( word );
+						word = naiveAlphabet.nextToken();
+						if ( word.type == Lexeme.WHITESPACE )
+						{
+							word = naiveAlphabet.nextToken();
+						}
+						if ( word.type == Lexeme.ESCAPE_OP )
+						{
+							escapeLen = word.word.length();
+							word = naiveAlphabet.nextToken();
+							if ( word.type == Lexeme.WHITESPACE )
+							{
+								word = naiveAlphabet.nextToken();
+							}
+						}
+						if ( word.type == Lexeme.TEXT )
+						{
+							aggreg.append( word.word );
+							if ( escapeLen > 0 )
+							{
+								word = naiveAlphabet.nextToken();
+								if ( word.type == Lexeme.WHITESPACE )
+								{
+									word = naiveAlphabet.nextToken();
+								}
+								if ( word.type == Lexeme.ESCAPE_OP )
+								{
+									escapeLen = word.word.length();
+									word = naiveAlphabet.nextToken();
+									if ( word.type == Lexeme.WHITESPACE )
+									{
+										word = naiveAlphabet.nextToken();
+									}
+								}
+							}
+							
+						}
+						break;
+					}
+					case ESCAPE_OP :
+					{
+						break;
+					}
+					case TEXT :
+					{
+						break;
+					}
+					case WHITESPACE :
+					{
+						break;
+					}
+					default :
+						break;
+				}
+			}
+			else
+			{
+				// continue building
+			}
+
 			// ASK or does this duplicate the currElem's type ?
 			switch ( phase )
 			{

@@ -1,7 +1,20 @@
 package ws.nzen.format.eno;
 
-public enum Lexeme
+public enum Syntaxeme
 {
+	SECTION,
+	TEMPLATE,
+	LIST_ELEMENT,
+	SET,
+	SET_ELEMENT,
+	BLOCK,
+	BLOCK_TEXT,
+	BLOCK_BOUNDARY,
+	FIELD,
+	VALUE,
+	IDENTIFIER,
+	COMMENT;
+	/*
 	WHITESPACE,
 	CONTINUE_OP_SAME, CONTINUE_OP_BREAK,
 	SECTION_OP,
@@ -9,11 +22,13 @@ public enum Lexeme
 	LIST_OP,
 	BLOCK_OP,
 	FIELD_START_OP,
+	NAME,
 	COMMENT_OP,
 	SET_OP,
 	ESCAPE_OP,
 	TEXT,
 	END;
+	 */
 }
 
 
