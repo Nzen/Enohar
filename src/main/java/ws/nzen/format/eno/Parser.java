@@ -16,6 +16,16 @@ public class Parser
 	Lexer alphabet = new Lexer();
 	Lexer.Token currToken;
 	Stack<Lexer.Token> lexed = new Stack<>(); // ASK or a deque ?
+	public class Phrase
+	{
+		public Syntaxeme type;
+		public String words;
+		@Override
+		public String toString()
+		{
+			return "PT: t-"+ type.name() +" w-"+ words;
+		}
+	}
 
 
 	public void recognize( List<String> fileLines )
@@ -85,7 +95,7 @@ public class Parser
 				{
 					alphabet.setLine( "" );
 					currToken = alphabet.nextToken();
-					return; // we've exhausted the input
+					return; // we've exhausted the input, it's a valid document
 				}
 				else
 				{
@@ -95,6 +105,7 @@ public class Parser
 				}
 				break;
 			}
+			// ASK presumably I'll use these from within field body or whatever
 			case CONTINUE_OP_BREAK :
 			case CONTINUE_OP_SAME :
 			{
@@ -158,35 +169,64 @@ public class Parser
 	private void comment()
 	{
 		String here = cl +"comment ";
-		// save
-		System.out.println( here +"recognized "+ alphabet.getLine() );
-		String temp = allLines.poll();
-		if ( temp == null )
+		currToken = alphabet.nextToken();
+		Phrase fullComment = new Phrase();
+		if ( currToken.type == Lexeme.WHITESPACE )
 		{
-			alphabet.setLine( "" ); // we've exhausted the input
+			currToken = alphabet.nextToken();
+		}
+		if ( currToken.type == Lexeme.END )
+		{
+			fullComment.type = Syntaxeme.COMMENT;
+			fullComment.words = "";
 		}
 		else
 		{
-			alphabet.setLine( temp );
+			String vettedComment = "", lastNibble = "";
+			Lexeme lastNibbleType;
+			do
+			{
+				vettedComment += lastNibble;
+				lastNibble = currToken.word;
+				lastNibbleType = currToken.type;
+				currToken = alphabet.nextToken();
+			}
+			while ( currToken.type != Lexeme.END );
+			if ( lastNibbleType != Lexeme.WHITESPACE )
+			{
+				vettedComment += lastNibble;
+			}
+			fullComment.type = Syntaxeme.COMMENT;
+			fullComment.words = vettedComment;
 		}
-		currToken = alphabet.nextToken();
+		System.out.println( here +"recognized "+ fullComment );
 	}
 
 
 	private void escapedName()
 	{
-		
+		// check for whitespace and match it, gather otherwise
+		// TODO
 	}
 
 
 	private void unescapedName()
 	{
-		
+		// gather text until we hit end or assignment operator
+		StringBuilder name = new StringBuilder();
+		while ( currToken.type == Lexeme.TEXT
+				|| currToken.type == Lexeme.WHITESPACE )
+		{
+			name.append( currToken.word );
+			currToken = alphabet.nextToken();
+			// TODO
+		}
 	}
 
 
 	private void blockBoundary()
 	{
+		// TODO
 		// if haven't finished block, match existing ;; else start one
 		// call block text
 	}
@@ -194,300 +234,8 @@ public class Parser
 
 	private void templateInstruction()
 	{
-		
-	}
-	
-
-
-	public Eno parse( String wholeFile )
-	{
-		return parse( Arrays.asList( wholeFile.split( System.lineSeparator() ) ) );
-	}
-
-
-	@Deprecated // until recognize() works
-	public Eno parse( List<String> fileLines )
-	{
-		Eno document = new Eno();
-		if ( fileLines == null || fileLines.isEmpty() )
-		{
-			return document;
-		}
-		// TODO some sort of fsm tracking 
-		Lexer naiveAlphabet = new Lexer();
-		int sectionDepth = 0;
-		ParseContext phase = ParseContext.DOCUMENT;
-		Queue<Lexer.Token> wordsOfLine = new LinkedList<>();
-		EnoElement currElem = new EnoElement();
-		StringBuilder aggreg = new StringBuilder();
-		Lexer.Token word;
-		Stack<Lexer.Token> lexMemory = new Stack<>();
-		Stack<Syntaxeme> parseMemory = new Stack<>();
-		int escapeLen = 0;
-		String tempWord = "";
-		for ( int flInd = 0; flInd < fileLines.size(); flInd++ )
-		{
-			String currLine = fileLines.get( flInd );
-			if ( currLine == null )
-			{
-				currLine = "";
-			}
-			naiveAlphabet.setLine( currLine );
-			//wordsOfLine.add( naiveAlphabet.nextToken() );
-			//word = wordsOfLine.poll();
-
-			word = naiveAlphabet.nextToken();
-			if ( parseMemory.isEmpty() )
-			{
-				// build one up
-				switch ( word.type )
-				{
-					case COMMENT_OP :
-					{
-						System.out.println( "comment : "+ currLine );
-						continue; // the lines loop
-					}
-					case SECTION_OP :
-					{
-						wordsOfLine.add( word );
-						word = naiveAlphabet.nextToken();
-						if ( word.type == Lexeme.WHITESPACE )
-						{
-							word = naiveAlphabet.nextToken();
-						}
-						if ( word.type == Lexeme.ESCAPE_OP )
-						{
-							escapeLen = word.word.length();
-							word = naiveAlphabet.nextToken();
-							if ( word.type == Lexeme.WHITESPACE )
-							{
-								word = naiveAlphabet.nextToken();
-							}
-						}
-						if ( word.type == Lexeme.TEXT )
-						{
-							aggreg.append( word.word );
-							if ( escapeLen > 0 )
-							{
-								word = naiveAlphabet.nextToken();
-								if ( word.type == Lexeme.WHITESPACE )
-								{
-									word = naiveAlphabet.nextToken();
-								}
-								if ( word.type == Lexeme.ESCAPE_OP )
-								{
-									escapeLen = word.word.length();
-									word = naiveAlphabet.nextToken();
-									if ( word.type == Lexeme.WHITESPACE )
-									{
-										word = naiveAlphabet.nextToken();
-									}
-								}
-							}
-							
-						}
-						break;
-					}
-					case ESCAPE_OP :
-					{
-						break;
-					}
-					case TEXT :
-					{
-						break;
-					}
-					case WHITESPACE :
-					{
-						break;
-					}
-					default :
-						break;
-				}
-			}
-			else
-			{
-				// continue building
-			}
-
-			// ASK or does this duplicate the currElem's type ?
-			switch ( phase )
-			{
-				case DOCUMENT :
-				case SECTION :
-				{
-					/*
-					comment -> comment
-					text -> name
-					escape -> name
-					section -> new section
-					whitespace -> any
-					end -> continue
-					 */
-					break;
-				}
-				case BLOCK :
-				{
-					/*
-					whitespace
-					end -> continue
-					
-					 */
-					break;
-				}
-				case SET :
-				{
-					/*
-					whitespace
-					end -> continue
-					
-					 */
-					break;
-				}
-				case LIST :
-				{
-					/*
-					whitespace
-					end -> continue
-					list -> more list
-					 */
-					break;
-				}
-				case FIELD :
-				{
-					/*
-					whitespace
-					end -> continue
-					
-					 */
-					break;
-				}
-				case VALUE :
-				{
-					/*
-					whitespace -> any
-					continuation -> more value, but comment
-					end -> continue
-					comment -> comment
-					 */
-					break;
-				}
-				default :
-				{
-					throw new RuntimeException( ExceptionStore.onlyInstance
-							.getExceptionMessage( "unknown ParseContext "+ phase.name() ) );
-				}
-			}
-
-			// ASK probably ditch this version
-			switch ( word.type )
-			{
-				case WHITESPACE :
-				{
-					// toss preceeding for now; later need for query stuff
-					// or put this in a function add to wordsOfLine and recur
-					break;
-				}
-				case CONTINUE_OP_SAME :
-				case CONTINUE_OP_BREAK :
-				{
-					boolean wasSameContinue = word.type == Lexeme.CONTINUE_OP_SAME;
-					if ( phase != ParseContext.VALUE )
-					{
-						throw new RuntimeException( ExceptionStore.onlyInstance
-								.getExceptionMessage( "lexeme "+ word.type
-										+" continue outside of value, currently "+ phase.name() ) );
-					}
-					while ( true )
-					{
-						word = naiveAlphabet.nextToken();
-						if ( word.type == Lexeme.COMMENT_OP || word.type == Lexeme.END )
-						{
-							break;
-						}
-						else
-						{
-							wordsOfLine.add( word );
-						}
-					}
-					if ( word.type == Lexeme.END )
-					{
-						// we collected a bunch of text
-						aggreg.delete( 0, aggreg.length() );
-						for ( Lexer.Token currLt : wordsOfLine )
-						{
-							aggreg.append( currLt.word );
-						}
-						currElem.setParsedValue( currElem.getParsedValue()
-								+((wasSameContinue)? " " : System.lineSeparator())
-								+ aggreg.toString() );
-						currElem.setOriginalValue( currElem.getOriginalValue()
-								+ System.lineSeparator() + currLine );
-					}
-					else
-					{
-						// todo the above stuff or a substring of currLine from an earlier bookmark
-						currElem.addComment( naiveAlphabet.restOfLine() );
-					}
-					break;
-				}
-				case SECTION_OP :
-				{
-					break;
-				}
-				case LIST_OP :
-				{
-					break;
-				}
-				case BLOCK_OP :
-				{
-					break;
-				}
-				case COMMENT_OP :
-				{
-					break;
-				}
-				case SET_OP :
-				{
-					break;
-				}
-				case ESCAPE_OP :
-				{
-					break;
-				}
-				case TEXT :
-				{
-					break;
-				}
-				case END :
-				{
-					break;
-				}
-				case FIELD_START_OP :
-				case COPY_OP_THIN :
-				case COPY_OP_DEEP :
-				{
-					throw new RuntimeException( ExceptionStore.onlyInstance
-							.getExceptionMessage( "lexeme "+ word.type
-									+" should not start a line" ) );
-				}
-				default :
-				{
-					throw new RuntimeException( ExceptionStore.onlyInstance
-							.getExceptionMessage( "unrecognized lexeme "+ word.type ) );
-				}
-			}
-			/*
-			do
-			{
-				System.out.print( " "+ word.type.name() +"_("+ word.word +") " );
-				word = naiveAlphabet.nextToken();
-			}
-			while ( word.type != Lexeme.END );
-			System.out.println();
-			*/
-		}
-
-		return null; // todo
+		// TODO
+		// get the name then dump into section interior; semantic analysis can handle templates
 	}
 
 
