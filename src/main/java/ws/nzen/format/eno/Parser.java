@@ -15,11 +15,13 @@ public class Parser
 	Queue<String> allLines = new LinkedList<>();
 	Lexer alphabet = new Lexer();
 	Lexer.Token currToken;
+	int currLine = 0;
 	Stack<Lexer.Token> lexed = new Stack<>(); // ASK or a deque ?
 	public class Phrase
 	{
 		public Syntaxeme type;
 		public String words;
+		// public Phrase child; // or does it need to be a list ?
 		@Override
 		public String toString()
 		{
@@ -40,6 +42,7 @@ public class Parser
 		}
 		alphabet.setLine( allLines.poll() );
 		currToken = alphabet.nextToken();
+		currLine++;
 		sectionInterior();
 	}
 
@@ -81,11 +84,12 @@ public class Parser
 				lexed.push( currToken );
 				currToken = alphabet.nextToken();
 				escapedName();
+				fieldInterior();
 				break;
 			}
 			case BLOCK_OP :
 			{
-				blockBoundary();
+				multilineBoundary();
 				break;
 			}
 			case END :
@@ -101,6 +105,7 @@ public class Parser
 				{
 					alphabet.setLine( temp );
 					currToken = alphabet.nextToken();
+					currLine++;
 					sectionInterior();
 				}
 				break;
@@ -144,11 +149,12 @@ public class Parser
 
 	private void sectionBeginning()
 	{
+		String here = cl +"section name ";
 		if ( currToken.type == Lexeme.WHITESPACE )
 		{
 			currToken = alphabet.nextToken();
-			sectionBeginning();
 		}
+		// get the name
 		if ( currToken.type == Lexeme.ESCAPE_OP )
 		{
 			escapedName();
@@ -156,6 +162,15 @@ public class Parser
 		else if ( currToken.type == Lexeme.TEXT )
 		{
 			unescapedName();
+		}
+		else
+		{
+			// FIX use canon complaint
+			throw new RuntimeException( here +"section name should not start with "+ currToken );
+		}
+		if ( currToken.type == Lexeme.WHITESPACE )
+		{
+			currToken = alphabet.nextToken();
 		}
 		if ( currToken.type == Lexeme.COPY_OP_THIN
 				|| currToken.type == Lexeme.COPY_OP_DEEP )
@@ -203,14 +218,15 @@ public class Parser
 	}
 
 
-	private void escapedName()
+	private Phrase escapedName()
 	{
 		// check for whitespace and match it, gather otherwise
 		// TODO
+		return null;
 	}
 
 
-	private void unescapedName()
+	private Phrase unescapedName()
 	{
 		// gather text until we hit end or assignment operator
 		StringBuilder name = new StringBuilder();
@@ -221,11 +237,152 @@ public class Parser
 			currToken = alphabet.nextToken();
 			// TODO
 		}
+		return null;
 	}
 
 
-	private void blockBoundary()
+	private void multilineBoundary()
 	{
+		String here = cl +"multiline ";
+		Phrase boundary = new Phrase();
+		boundary.words = currToken.word;
+		boundary.type = Syntaxeme.BLOCK_BOUNDARY;
+		int blockStartedAt = currLine;
+
+		// get the name
+		currToken = alphabet.nextToken();
+		if ( currToken.type == Lexeme.WHITESPACE )
+		{
+			currToken = alphabet.nextToken();
+		}
+		Phrase leadingName;
+		if ( currToken.type == Lexeme.ESCAPE_OP )
+		{
+			leadingName = escapedName();
+		}
+		else if ( currToken.type == Lexeme.TEXT )
+		{
+			leadingName = unescapedName();
+		}
+		else
+		{
+			// FIX use canon complaint ASK can names be -:\ etc ?
+			throw new RuntimeException( here +"weird name" );
+		}
+
+		// save the rest as body until we match the block boundary
+		if ( currToken.type == Lexeme.WHITESPACE )
+		{
+			currToken = alphabet.nextToken();
+		}
+		if ( currToken.type == Lexeme.END )
+		{
+			String temp = allLines.poll();
+			if ( temp == null )
+			{
+				// FIX use canon complaint
+				throw new RuntimeException( here +"opened multiline without closing before eof" );
+			}
+			else
+			{
+				alphabet.setLine( temp );
+				currToken = alphabet.nextToken();
+				currLine++;
+			}
+		}
+		else
+		{
+			// ASK is copy op okay here ?
+			// assert unreachable
+		}
+		StringBuilder blockBodyWords = new StringBuilder();
+		Phrase secondName;
+		Phrase secondBoundary = new Phrase();
+		secondBoundary.type = Syntaxeme.BLOCK_BOUNDARY;
+		do
+		{
+			if ( currToken.type == Lexeme.WHITESPACE )
+			{
+				currToken = alphabet.nextToken();
+			}
+			if ( currToken.type == Lexeme.BLOCK_OP
+					&& boundary.words.length() == currToken.word.length() )
+			{
+				secondBoundary.words = currToken.word;
+				if ( currToken.type == Lexeme.WHITESPACE )
+				{
+					currToken = alphabet.nextToken();
+				}
+				// try to get a name from it, check for match
+				currToken = alphabet.nextToken();
+				if ( currToken.type == Lexeme.ESCAPE_OP )
+				{
+					secondName = escapedName();
+				}
+				else if ( currToken.type == Lexeme.TEXT )
+				{
+					secondName = unescapedName();
+				}
+				else
+				{
+					blockBodyWords.append( System.lineSeparator() );
+					blockBodyWords.append( alphabet.getLine() );
+					String temp = allLines.poll();
+					if ( temp == null )
+					{
+						// FIX use canon complaint
+						throw new RuntimeException( here +"opened multiline without closing before eof" );
+					}
+					else
+					{
+						alphabet.setLine( temp );
+						currToken = alphabet.nextToken();
+					}
+					continue;
+				}
+				if ( secondName.equals( leadingName ) )
+				{
+					break;
+				}
+				else
+				{
+					blockBodyWords.append( System.lineSeparator() );
+					blockBodyWords.append( alphabet.getLine() );
+					String temp = allLines.poll();
+					if ( temp == null )
+					{
+						// FIX use canon complaint
+						throw new RuntimeException( here +"opened multiline without closing before eof" );
+					}
+					else
+					{
+						alphabet.setLine( temp );
+						currToken = alphabet.nextToken();
+					}
+				}
+			}
+			else
+			{
+				blockBodyWords.append( System.lineSeparator() );
+				blockBodyWords.append( alphabet.getLine() );
+				String temp = allLines.poll();
+				if ( temp == null )
+				{
+					// FIX use canon complaint
+					throw new RuntimeException( here +"opened multiline without closing before eof" );
+				}
+				else
+				{
+					alphabet.setLine( temp );
+					currToken = alphabet.nextToken();
+				}
+			}
+		}
+		while ( true ); // leave by finding second boundary
+		Phrase blockBody = new Phrase();
+		blockBody.type = Syntaxeme.BLOCK_TEXT;
+		blockBody.words = blockBodyWords.substring(
+				System.lineSeparator().length() ); // NOTE remove extraneous prefix
 		// TODO
 		// if haven't finished block, match existing ;; else start one
 		// call block text
@@ -239,9 +396,39 @@ public class Parser
 	}
 
 
+	private Phrase fieldInterior()
+	{
+		String here = cl +"si ";
+		String temp;
+		// switch ( currToken.type )
+		// value, set, list ;; maybe I'm continuing a value or is that a different version ?
+		// TODO
+		return null;
+	}
+
+
 	
 
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
