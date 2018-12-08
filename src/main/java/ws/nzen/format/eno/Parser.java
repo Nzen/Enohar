@@ -1,7 +1,9 @@
 /** see ../../../../../LICENSE for release details */
 package ws.nzen.format.eno;
 
-import java.util.Arrays;
+import static ws.nzen.format.eno.Lexeme.*;
+import static ws.nzen.format.eno.Syntaxeme.*;
+
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Queue;
@@ -41,7 +43,7 @@ public class Parser
 			allLines = new LinkedList<>( fileLines );
 		}
 		alphabet.setLine( allLines.poll() );
-		currToken = alphabet.nextToken();
+		nextToken();
 		currLine++;
 		sectionInterior();
 	}
@@ -61,7 +63,7 @@ public class Parser
 			}
 			case WHITESPACE :
 			{
-				currToken = alphabet.nextToken();
+				nextToken();
 				sectionInterior();
 				break;
 			}
@@ -69,20 +71,18 @@ public class Parser
 			{
 				// if section depth more than allowed ;; complain
 				lexed.push( currToken );
-				currToken = alphabet.nextToken();
+				nextToken();
 				sectionBeginning();
 				break;
 			}
 			case TEXT :
 			{
-				currToken = alphabet.nextToken();
+				nextToken();
 				unescapedName();
 				break;
 			}
 			case ESCAPE_OP :
 			{
-				lexed.push( currToken );
-				currToken = alphabet.nextToken();
 				escapedName();
 				fieldInterior();
 				break;
@@ -94,19 +94,14 @@ public class Parser
 			}
 			case END :
 			{
-				temp = allLines.poll();
-				if ( temp == null )
+				if ( advanceLine() )
 				{
-					alphabet.setLine( "" );
-					currToken = alphabet.nextToken();
-					return; // we've exhausted the input, it's a valid document
+					sectionInterior(); // 4TESTS
 				}
 				else
 				{
-					alphabet.setLine( temp );
-					currToken = alphabet.nextToken();
-					currLine++;
-					sectionInterior();
+					System.out.println( here +"recognized a valid eno document" );
+					return;
 				}
 				break;
 			}
@@ -150,16 +145,16 @@ public class Parser
 	private void sectionBeginning()
 	{
 		String here = cl +"section name ";
-		if ( currToken.type == Lexeme.WHITESPACE )
+		if ( currToken.type == WHITESPACE )
 		{
-			currToken = alphabet.nextToken();
+			nextToken();
 		}
 		// get the name
-		if ( currToken.type == Lexeme.ESCAPE_OP )
+		if ( currToken.type == ESCAPE_OP )
 		{
 			escapedName();
 		}
-		else if ( currToken.type == Lexeme.TEXT )
+		else if ( currToken.type == TEXT )
 		{
 			unescapedName();
 		}
@@ -168,12 +163,12 @@ public class Parser
 			// FIX use canon complaint
 			throw new RuntimeException( here +"section name should not start with "+ currToken );
 		}
-		if ( currToken.type == Lexeme.WHITESPACE )
+		if ( currToken.type == WHITESPACE )
 		{
-			currToken = alphabet.nextToken();
+			nextToken();
 		}
-		if ( currToken.type == Lexeme.COPY_OP_THIN
-				|| currToken.type == Lexeme.COPY_OP_DEEP )
+		if ( currToken.type == COPY_OP_THIN
+				|| currToken.type == COPY_OP_DEEP )
 		{
 			templateInstruction();
 		}
@@ -184,15 +179,15 @@ public class Parser
 	private void comment()
 	{
 		String here = cl +"comment ";
-		currToken = alphabet.nextToken();
+		nextToken();
 		Phrase fullComment = new Phrase();
-		if ( currToken.type == Lexeme.WHITESPACE )
+		if ( currToken.type == WHITESPACE )
 		{
-			currToken = alphabet.nextToken();
+			nextToken();
 		}
-		if ( currToken.type == Lexeme.END )
+		if ( currToken.type == END )
 		{
-			fullComment.type = Syntaxeme.COMMENT;
+			fullComment.type = COMMENT;
 			fullComment.words = "";
 		}
 		else
@@ -204,14 +199,14 @@ public class Parser
 				vettedComment += lastNibble;
 				lastNibble = currToken.word;
 				lastNibbleType = currToken.type;
-				currToken = alphabet.nextToken();
+				nextToken();
 			}
-			while ( currToken.type != Lexeme.END );
-			if ( lastNibbleType != Lexeme.WHITESPACE )
+			while ( currToken.type != END );
+			if ( lastNibbleType != WHITESPACE )
 			{
 				vettedComment += lastNibble;
 			}
-			fullComment.type = Syntaxeme.COMMENT;
+			fullComment.type = COMMENT;
 			fullComment.words = vettedComment;
 		}
 		System.out.println( here +"recognized "+ fullComment );
@@ -220,46 +215,52 @@ public class Parser
 
 	private Phrase escapedName()
 	{
-		String here = cl +"multiline ";
+		String here = cl +"escaped ";
 		Phrase escape = new Phrase();
-		escape.type = Syntaxeme.FIELD_ESCAPE;
+		escape.type = FIELD_ESCAPE;
 		escape.words = currToken.word;
 		// get the name
-		currToken = alphabet.nextToken();
-		if ( currToken.type == Lexeme.WHITESPACE )
+		nextToken();
+		if ( currToken.type == WHITESPACE )
 		{
-			currToken = alphabet.nextToken();
+			nextToken();
 		}
 		StringBuilder namePieces = new StringBuilder();
 		String lastNibble = "";
 		Lexeme lastLex = null;
 		Phrase name = new Phrase();
-		name.type = Syntaxeme.FIELD;
+		name.type = FIELD;
 		do
 		{
-			if ( currToken.type == Lexeme.END )
+			if ( currToken.type == END )
 			{
 				// FIX use canon complaint
 				throw new RuntimeException( here +"opened escape name without closing before eol" );
 			}
-			if ( currToken.type == Lexeme.ESCAPE_OP
+			else if ( currToken.type == ESCAPE_OP
 					&& currToken.word.length() == escape.words.length()
-					&& ! name.words.isEmpty() )
+					&& ( namePieces.length() >= 1 || ! lastNibble.isEmpty() ) )
 			{
 				// this is it
-				if ( lastLex != Lexeme.WHITESPACE )
+				if ( lastLex != WHITESPACE )
 				{
 					namePieces.append( lastNibble );
-					name.words = namePieces.toString();
-					break;
 				}
+				// lastNibble is never white on first pass, as it will stay empty that round
+				name.words = namePieces.toString();
+				break;
+			}
+			else
+			{
+				namePieces.append( lastNibble );
+				lastNibble = currToken.word;
+				nextToken();
 			}
 		}
 		while ( true );
-		
-		// check for whitespace and match it, gather otherwise
-		// TODO
-		return null;
+		System.out.println( here +"recognized "+ escape );
+		System.out.println( here +"recognized "+ name );
+		return name;
 	}
 
 
@@ -267,11 +268,11 @@ public class Parser
 	{
 		// gather text until we hit end or assignment operator
 		StringBuilder name = new StringBuilder();
-		while ( currToken.type == Lexeme.TEXT
-				|| currToken.type == Lexeme.WHITESPACE )
+		while ( currToken.type == TEXT
+				|| currToken.type == WHITESPACE )
 		{
 			name.append( currToken.word );
-			currToken = alphabet.nextToken();
+			nextToken();
 			// TODO
 		}
 		return null;
@@ -283,146 +284,94 @@ public class Parser
 		String here = cl +"multiline ";
 		Phrase boundary = new Phrase();
 		boundary.words = currToken.word;
-		boundary.type = Syntaxeme.BLOCK_BOUNDARY;
+		boundary.type = BLOCK_BOUNDARY;
 		int blockStartedAt = currLine;
 
 		// get the name
-		currToken = alphabet.nextToken();
-		if ( currToken.type == Lexeme.WHITESPACE )
+		nextToken();
+		if ( currToken.type == WHITESPACE )
 		{
-			currToken = alphabet.nextToken();
+			nextToken();
 		}
 		Phrase leadingName;
-		if ( currToken.type == Lexeme.ESCAPE_OP )
+		if ( currToken.type == ESCAPE_OP )
 		{
 			leadingName = escapedName();
 		}
-		else if ( currToken.type == Lexeme.TEXT )
+		else
 		{
 			leadingName = unescapedName();
 		}
-		else
-		{
-			// FIX use canon complaint ASK can names be -:\ etc ?
-			throw new RuntimeException( here +"weird name" );
-		}
-
+		// ASK handle copy here ? hopefully not
 		// save the rest as body until we match the block boundary
-		if ( currToken.type == Lexeme.WHITESPACE )
-		{
-			currToken = alphabet.nextToken();
-		}
-		if ( currToken.type == Lexeme.END )
-		{
-			String temp = allLines.poll();
-			if ( temp == null )
-			{
-				// FIX use canon complaint
-				throw new RuntimeException( here +"opened multiline without closing before eof" );
-			}
-			else
-			{
-				alphabet.setLine( temp );
-				currToken = alphabet.nextToken();
-				currLine++;
-			}
-		}
-		else
-		{
-			// ASK is copy op okay here ?
-			// assert unreachable
-		}
+		advanceLine( true, here +"opened multiline "+ blockStartedAt +" without closing before eof" );
 		StringBuilder blockBodyWords = new StringBuilder();
-		Phrase secondName;
+		Phrase secondName = null;
 		Phrase secondBoundary = new Phrase();
-		secondBoundary.type = Syntaxeme.BLOCK_BOUNDARY;
+		secondBoundary.type = BLOCK_BOUNDARY;
 		do
 		{
-			if ( currToken.type == Lexeme.WHITESPACE )
+			if ( currToken.type == WHITESPACE )
 			{
-				currToken = alphabet.nextToken();
+				nextToken();
 			}
-			if ( currToken.type == Lexeme.BLOCK_OP
+			if ( currToken.type == BLOCK_OP
 					&& boundary.words.length() == currToken.word.length() )
 			{
+				nextToken();
 				secondBoundary.words = currToken.word;
-				if ( currToken.type == Lexeme.WHITESPACE )
+				if ( currToken.type == WHITESPACE )
 				{
-					currToken = alphabet.nextToken();
+					nextToken();
 				}
 				// try to get a name from it, check for match
-				currToken = alphabet.nextToken();
-				if ( currToken.type == Lexeme.ESCAPE_OP )
-				{
-					secondName = escapedName();
-				}
-				else if ( currToken.type == Lexeme.TEXT )
-				{
-					secondName = unescapedName();
-				}
-				else
+				if ( currToken.type == END )
 				{
 					blockBodyWords.append( System.lineSeparator() );
 					blockBodyWords.append( alphabet.getLine() );
-					String temp = allLines.poll();
-					if ( temp == null )
-					{
-						// FIX use canon complaint
-						throw new RuntimeException( here +"opened multiline without closing before eof" );
-					}
-					else
-					{
-						alphabet.setLine( temp );
-						currToken = alphabet.nextToken();
-					}
+					// FIX use canon complaint
+					advanceLine( true, here +"opened multiline "+ blockStartedAt +" without closing before eof" );
 					continue;
 				}
-				if ( secondName.equals( leadingName ) )
+				else if ( currToken.type == ESCAPE_OP )
 				{
+					secondName = escapedName();
+				}
+				else
+				{
+					secondName = unescapedName();
+				}
+				// check if the name matches
+				if ( secondName.words.equals( leadingName.words ) )
+				{
+					// entire boundary matches, block is over
 					break;
 				}
 				else
 				{
 					blockBodyWords.append( System.lineSeparator() );
 					blockBodyWords.append( alphabet.getLine() );
-					String temp = allLines.poll();
-					if ( temp == null )
-					{
-						// FIX use canon complaint
-						throw new RuntimeException( here +"opened multiline without closing before eof" );
-					}
-					else
-					{
-						alphabet.setLine( temp );
-						currToken = alphabet.nextToken();
-					}
+					// FIX use canon complaint
+					advanceLine( true, here +"opened multiline "+ blockStartedAt +" without closing before eof" );
 				}
 			}
 			else
 			{
 				blockBodyWords.append( System.lineSeparator() );
 				blockBodyWords.append( alphabet.getLine() );
-				String temp = allLines.poll();
-				if ( temp == null )
-				{
-					// FIX use canon complaint
-					throw new RuntimeException( here +"opened multiline without closing before eof" );
-				}
-				else
-				{
-					alphabet.setLine( temp );
-					currToken = alphabet.nextToken();
-				}
+				// FIX use canon complaint
+				advanceLine( true, here +"opened multiline "+ blockStartedAt +" without closing before eof" );
 			}
 		}
 		while ( true ); // leave by finding second boundary
 		Phrase blockBody = new Phrase();
-		blockBody.type = Syntaxeme.BLOCK_TEXT;
+		blockBody.type = BLOCK_TEXT;
 		blockBody.words = blockBodyWords.substring(
 				System.lineSeparator().length() ); // NOTE remove extraneous prefix
-		// TODO
-		// if haven't finished block, match existing ;; else start one
-		// call block text
+		System.out.println( here +"recognized "+ boundary );
+		System.out.println( here +"recognized "+ blockBody );
+		nextToken();
+		sectionInterior(); // ASK perhaps iterative rather than recursive, ie how deep is the call stack getting ?
 	}
 
 
@@ -440,7 +389,48 @@ public class Parser
 		// switch ( currToken.type )
 		// value, set, list ;; maybe I'm continuing a value or is that a different version ?
 		// TODO
+		if ( advanceLine() )
+		{
+			sectionInterior(); // 4TESTS
+		}
 		return null;
+	}
+
+
+	private void nextToken()
+	{
+		currToken = alphabet.nextToken();
+	}
+
+
+	private boolean advanceLine()
+	{
+		return advanceLine( false, "" );
+	}
+
+
+	/** @return whether line has input */
+	private boolean advanceLine( boolean complainWhenFileEnds, String endOfFileComplaint )
+	{
+		String temp = allLines.poll();
+		if ( temp == null )
+		{
+			if ( complainWhenFileEnds )
+			{
+				throw new RuntimeException( endOfFileComplaint );
+			}
+			else
+			{
+				return false;
+			}
+		}
+		else
+		{
+			alphabet.setLine( temp );
+			nextToken();
+			currLine++;
+			return true;
+		}
 	}
 
 

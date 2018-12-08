@@ -12,15 +12,15 @@ public class Toss
 	public static void main( String[] args )
 	{
 		List<String> file = new ArrayList<>();
-		file.add( "# banana" );
-		file.add( " fof:  anna " );
+		// file.add( "# banana" );
+		// file.add( " fof:  anna " );
 		file.add( "`bro ken` < comment" );
 		file.add( "> comment" );
-		file.add( "-222" );
-		file.add( "-- bello" );
+		// file.add( "-222" );
+		file.add( "-- `bello`" );
 		file.add( " #=-- \\//" );
 		file.add( "" );
-		file.add( "-- bello" );
+		file.add( "-- `bello`" );
 		Parser epp = new Parser();
 		// epp.parse( file );
 		epp.recognize( file );
