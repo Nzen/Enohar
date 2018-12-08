@@ -32,6 +32,7 @@ public class Parser
 	}
 
 
+	/**  */
 	public void recognize( List<String> fileLines )
 	{
 		if ( fileLines == null || fileLines.isEmpty() )
@@ -49,6 +50,7 @@ public class Parser
 	}
 
 
+	/**  */
 	private void sectionInterior()
 	{
 		String here = cl +"si ";
@@ -69,16 +71,13 @@ public class Parser
 			}
 			case SECTION_OP :
 			{
-				// if section depth more than allowed ;; complain
-				lexed.push( currToken );
-				nextToken();
 				sectionBeginning();
 				break;
 			}
 			case TEXT :
 			{
-				nextToken();
 				unescapedName();
+				fieldInterior();
 				break;
 			}
 			case ESCAPE_OP :
@@ -142,6 +141,7 @@ public class Parser
 	}
 
 
+	/**  */
 	private void sectionBeginning()
 	{
 		String here = cl +"section name ";
@@ -176,6 +176,7 @@ public class Parser
 	}
 
 
+	/**  */
 	private void comment()
 	{
 		String here = cl +"comment ";
@@ -213,6 +214,7 @@ public class Parser
 	}
 
 
+	/** ex `banana` || `` aba`ana`` */
 	private Phrase escapedName()
 	{
 		String here = cl +"escaped ";
@@ -264,21 +266,65 @@ public class Parser
 	}
 
 
+	/** ex banana || bla bla || bla>bla4 . Ends at end of line,
+	 * assignment operator, or either copy operator */
 	private Phrase unescapedName()
 	{
-		// gather text until we hit end or assignment operator
-		StringBuilder name = new StringBuilder();
-		while ( currToken.type == TEXT
-				|| currToken.type == WHITESPACE )
+		String here = cl +"unesc field ";
+		if ( currToken.type == WHITESPACE )
 		{
-			name.append( currToken.word );
 			nextToken();
-			// TODO
+			System.out.println( here +"check why currToken is whitespace when starting" ); // 4TESTS
 		}
-		return null;
+		Phrase name = new Phrase();
+		name.type = FIELD;
+		String lastPiece = currToken.word;
+		Lexeme lastType = currToken.type;
+		StringBuilder pieces = new StringBuilder();
+		nextToken();
+		do
+		{
+			if ( currToken.type == END
+					|| currToken.type == FIELD_START_OP
+					|| currToken.type == Lexeme.COPY_OP_THIN
+					|| currToken.type == Lexeme.COPY_OP_DEEP )
+			{
+				if ( lastType != WHITESPACE )
+				{
+					pieces.append( lastPiece );
+				}
+				name.words = pieces.toString();
+				break;
+			}
+			else
+			{
+				pieces.append( lastPiece );
+				lastPiece = currToken.word;
+				nextToken();
+			}
+		}
+		while ( true );
+		if ( currToken.type == END )
+		{
+			fieldInterior(); // map or set or whatever
+		}
+		else if ( currToken.type == FIELD_START_OP )
+		{
+			Phrase value = new Phrase();
+			value.type = VALUE;
+			value.words = alphabet.restOfLine();
+			advanceLine();
+		}
+		else
+		{
+			// assert it's a copy operator
+		}
+		System.out.println( here +"recognized "+ name );
+		return name;
 	}
 
 
+	/** consume lines until one matches the first line */
 	private void multilineBoundary()
 	{
 		String here = cl +"multiline ";
@@ -375,13 +421,17 @@ public class Parser
 	}
 
 
-	private void templateInstruction()
+	/** get the name, basically */
+	private Phrase templateInstruction()
 	{
 		// TODO
 		// get the name then dump into section interior; semantic analysis can handle templates
+		advanceLine(); // 4TESTS
+		return null;
 	}
 
 
+	/** get the set / list items or continued value */
 	private Phrase fieldInterior()
 	{
 		String here = cl +"si ";
@@ -397,12 +447,14 @@ public class Parser
 	}
 
 
+	/** get next token from lexer */
 	private void nextToken()
 	{
 		currToken = alphabet.nextToken();
 	}
 
 
+	/** advance without complaining */
 	private boolean advanceLine()
 	{
 		return advanceLine( false, "" );
