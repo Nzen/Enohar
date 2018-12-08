@@ -20,7 +20,7 @@ public class Parser
 	public class Phrase
 	{
 		public Syntaxeme type;
-		public String words;
+		public String words = "";
 		// public Phrase child; // or does it need to be a list ?
 		@Override
 		public String toString()
@@ -220,6 +220,43 @@ public class Parser
 
 	private Phrase escapedName()
 	{
+		String here = cl +"multiline ";
+		Phrase escape = new Phrase();
+		escape.type = Syntaxeme.FIELD_ESCAPE;
+		escape.words = currToken.word;
+		// get the name
+		currToken = alphabet.nextToken();
+		if ( currToken.type == Lexeme.WHITESPACE )
+		{
+			currToken = alphabet.nextToken();
+		}
+		StringBuilder namePieces = new StringBuilder();
+		String lastNibble = "";
+		Lexeme lastLex = null;
+		Phrase name = new Phrase();
+		name.type = Syntaxeme.FIELD;
+		do
+		{
+			if ( currToken.type == Lexeme.END )
+			{
+				// FIX use canon complaint
+				throw new RuntimeException( here +"opened escape name without closing before eol" );
+			}
+			if ( currToken.type == Lexeme.ESCAPE_OP
+					&& currToken.word.length() == escape.words.length()
+					&& ! name.words.isEmpty() )
+			{
+				// this is it
+				if ( lastLex != Lexeme.WHITESPACE )
+				{
+					namePieces.append( lastNibble );
+					name.words = namePieces.toString();
+					break;
+				}
+			}
+		}
+		while ( true );
+		
 		// check for whitespace and match it, gather otherwise
 		// TODO
 		return null;
