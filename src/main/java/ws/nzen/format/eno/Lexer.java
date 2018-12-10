@@ -1,21 +1,28 @@
 /** see ../../../../../LICENSE for release details */
 package ws.nzen.format.eno;
 
+import static ws.nzen.format.eno.Lexeme.*;
+
 import java.util.Set;
 import java.util.TreeSet;
 
 /** Produces Tokens from the current line */
 public class Lexer
 {
+	/** current input to lex */
 	private String line;
+	/** position within current line */
 	private int cursorInd = 0;
+	/** canon chars */
 	private static final char ALPHA_SECTION = '#',
 			ALPHA_LIST = '-', ALPHA_SET = '=',
 			ALPHA_FIELD = ':', ALPHA_REM = '>',
 			ALPHA_COPY = '<', ALPHA_ESCAPE = '`',
 			ALPHA_LC_SAME = '\\', ALPHA_LC_BREAK = '|',
 			ALPHA_SPACE = ' ', ALPHA_TAB = '\t';
+	/** valid characters */
 	private Set<Character> alphabet;
+	/** a type and text */
 	public class Token
 	{
 		public Lexeme type;
@@ -27,29 +34,32 @@ public class Lexer
 		}
 	};
 
+	/** an Eno Lexer waiting for input */
 	public Lexer()
 	{
 		alphabet = new TreeSet<>();
-		alphabet.add( ALPHA_COPY );
-		alphabet.add( ALPHA_ESCAPE );
-		alphabet.add( ALPHA_FIELD );
-		alphabet.add( ALPHA_LC_BREAK );
-		alphabet.add( ALPHA_LC_SAME );
-		alphabet.add( ALPHA_LIST );
-		alphabet.add( ALPHA_REM );
-		alphabet.add( ALPHA_SECTION );
-		alphabet.add( ALPHA_SET );
-		alphabet.add( ALPHA_SPACE );
+		alphabet.add( COPY_OP_THIN.getChar() );
+		alphabet.add( ESCAPE_OP.getChar() );
+		alphabet.add( FIELD_START_OP.getChar() );
+		alphabet.add( CONTINUE_OP_BREAK.getChar() );
+		alphabet.add( CONTINUE_OP_SAME.getChar() );
+		alphabet.add( LIST_OP.getChar() );
+		alphabet.add( COMMENT_OP.getChar() );
+		alphabet.add( SECTION_OP.getChar() );
+		alphabet.add( SET_OP.getChar() );
+		alphabet.add( WHITESPACE.getChar() );
 		alphabet.add( ALPHA_TAB );
 	}
 
 
+	/** the type and text of the next token,
+	 * or End until given a different line */
 	public Token nextToken()
 	{
 		Token result = new Token();
 		if ( line.isEmpty() || cursorInd >= line.length() )
 		{
-			result.type = Lexeme.END;
+			result.type = END;
 			result.word = "";
 			return result;
 		}
@@ -61,22 +71,22 @@ public class Lexer
 		{
 			case ALPHA_COPY :
 			{
-				if ( hasNext && line.charAt( cursorInd ) == ALPHA_COPY )
+				if ( hasNext && COPY_OP_DEEP.match( line.charAt( cursorInd ) ) )
 				{
 					cursorInd++;
-					result.type = Lexeme.COPY_OP_DEEP;
+					result.type = COPY_OP_DEEP;
 					result.word = "<<";
 				}
 				else
 				{
-					result.type = Lexeme.COPY_OP_THIN;
+					result.type = COPY_OP_THIN;
 					result.word = "<";
 				}
 				break;
 			}
 			case ALPHA_ESCAPE :
 			{
-				result.type = Lexeme.ESCAPE_OP;
+				result.type = ESCAPE_OP;
 				if ( ! hasNext )
 				{
 					result.word = "`";
@@ -91,19 +101,19 @@ public class Lexer
 			}
 			case ALPHA_FIELD :
 			{
-				result.type = Lexeme.FIELD_START_OP;
+				result.type = FIELD_START_OP;
 				result.word = ":";
 				break;
 			}
 			case ALPHA_LC_BREAK :
 			{
-				result.type = Lexeme.CONTINUE_OP_BREAK;
+				result.type = CONTINUE_OP_BREAK;
 				result.word = "|";
 				break;
 			}
 			case ALPHA_LC_SAME :
 			{
-				result.type = Lexeme.CONTINUE_OP_SAME;
+				result.type = CONTINUE_OP_SAME;
 				result.word = "\\";
 				break;
 			}
@@ -112,27 +122,27 @@ public class Lexer
 				// is it list or block or generic ?
 				if ( hasNext && line.charAt( cursorInd ) == ALPHA_LIST )
 				{
-					result.type = Lexeme.BLOCK_OP;
+					result.type = BLOCK_OP;
 					bookmark = cursorInd -1;
 					cursorInd = indexOfDivergenceFrom( ALPHA_LIST );
 					result.word = line.substring( bookmark, cursorInd );
 				}
 				else
 				{
-					result.type = Lexeme.LIST_OP;
+					result.type = LIST_OP;
 					result.word = "-";
 				}
 				break;
 			}
 			case ALPHA_REM :
 			{
-				result.type = Lexeme.COMMENT_OP;
+				result.type = COMMENT_OP;
 				result.word = ">";
 				break;
 			}
 			case ALPHA_SECTION :
 			{
-				result.type = Lexeme.SECTION_OP;
+				result.type = SECTION_OP;
 				bookmark = cursorInd -1;
 				cursorInd = indexOfDivergenceFrom( ALPHA_ESCAPE );
 				result.word = line.substring( bookmark, cursorInd );
@@ -140,14 +150,14 @@ public class Lexer
 			}
 			case ALPHA_SET :
 			{
-				result.type = Lexeme.SET_OP;
+				result.type = SET_OP;
 				result.word = "=";
 				break;
 			}
 			case ALPHA_SPACE :
 			case ALPHA_TAB :
 			{
-				result.type = Lexeme.WHITESPACE;
+				result.type = WHITESPACE;
 				if ( hasNext )
 				{
 					bookmark = cursorInd -1;
@@ -162,7 +172,7 @@ public class Lexer
 			}
 			default :
 			{
-				result.type = Lexeme.TEXT;
+				result.type = TEXT;
 				if ( hasNext )
 				{
 					bookmark = cursorInd -1;
@@ -179,8 +189,6 @@ public class Lexer
 	}
 
 
-	// ASK vet these against end of string case
-	// |
 	/** assumes cursorInd is on an untested value */
 	private int indexOfDivergenceFrom( char match )
 	{
@@ -258,7 +266,10 @@ public class Lexer
 	{
 		return line;
 	}
-	/** resets Lexer, throws NullPointerException */
+
+
+	/** resets Lexer
+	 * @throws NullPointerException if line is null */
 	public void setLine( String line )
 	{
 		if ( line == null )

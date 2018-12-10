@@ -32,7 +32,8 @@ public class Parser
 	}
 
 
-	/**  */
+	/** ensures this is a valid Eno document.
+	 * @throws RuntimeException otherwise */
 	public void recognize( List<String> fileLines )
 	{
 		if ( fileLines == null || fileLines.isEmpty() )
@@ -50,113 +51,110 @@ public class Parser
 	}
 
 
-	/**  */
+	/** various whole eno elements */
 	private void sectionInterior()
 	{
 		String here = cl +"si ";
 		String temp;
-		switch ( currToken.type )
+		while ( true )
 		{
-			case COMMENT_OP :
+			switch ( currToken.type )
 			{
-				comment();
-				sectionInterior();
-				break;
-			}
-			case WHITESPACE :
-			{
-				nextToken();
-				sectionInterior();
-				break;
-			}
-			case SECTION_OP :
-			{
-				sectionBeginning();
-				break;
-			}
-			case TEXT :
-			{
-				unescapedName();
-				fieldInterior();
-				break;
-			}
-			case ESCAPE_OP :
-			{
-				escapedName();
-				fieldInterior();
-				break;
-			}
-			case BLOCK_OP :
-			{
-				multilineBoundary();
-				break;
-			}
-			case END :
-			{
-				if ( advanceLine() )
+				case COMMENT_OP :
 				{
-					sectionInterior(); // 4TESTS
+					comment();
+					break;
 				}
-				else
+				case WHITESPACE :
 				{
-					System.out.println( here +"recognized a valid eno document" );
-					return;
+					nextToken();
+					break;
 				}
-				break;
-			}
-			// ASK presumably I'll use these from within field body or whatever
-			case CONTINUE_OP_BREAK :
-			case CONTINUE_OP_SAME :
-			{
-				System.out.println( here +"continuation started without assignment "+ currToken );
-				break;
-			}
-			case COPY_OP_DEEP :
-			case COPY_OP_THIN :
-			{
-				System.out.println( here +"template started without name "+ currToken );
-				break;
-			}
-			case FIELD_START_OP :
-			{
-				System.out.println( here +"field assignment started without name "+ currToken );
-				break;
-			}
-			case LIST_OP :
-			{
-				System.out.println( here +"list started without name "+ currToken );
-				break;
-			}
-			case SET_OP :
-			{
-				System.out.println( here +"set started without name "+ currToken );
-				break;
-			}
-			default :
-			{
-				System.out.println( here +"unrecognized lexeme "+ currToken );
-				break;
+				case SECTION_OP :
+				{
+					sectionBeginning();
+					break;
+				}
+				case ESCAPE_OP :
+				{
+					escapedName();
+					fieldInterior();
+					break;
+				}
+				case BLOCK_OP :
+				{
+					multilineBoundary();
+					break;
+				}
+				case END :
+				{
+					if ( ! advanceLine() )
+					{
+						System.out.println( here +"recognized a valid eno document" );
+						return;
+					}
+					break;
+				}
+				case CONTINUE_OP_BREAK :
+				case CONTINUE_OP_SAME :
+				{
+					System.out.println( here +"continuation started without assignment "+ currToken );
+					break;
+				}
+				case COPY_OP_DEEP :
+				case COPY_OP_THIN :
+				{
+					System.out.println( here +"template started without name "+ currToken );
+					break;
+				}
+				case FIELD_START_OP :
+				{
+					System.out.println( here +"field assignment started without name "+ currToken );
+					break;
+				}
+				case LIST_OP :
+				{
+					System.out.println( here +"list started without name "+ currToken );
+					break;
+				}
+				case SET_OP :
+				{
+					System.out.println( here +"set started without name "+ currToken );
+					break;
+				}
+				case TEXT :
+				default :
+				{
+					unescapedName( FIELD_START_OP, true );
+					fieldInterior();
+					break;
+				}
 			}
 		}
 	}
 
 
-	/**  */
+	/** the name and maybe a copy instruction */
 	private void sectionBeginning()
 	{
-		String here = cl +"section name ";
+		String here = cl +"section ";
+		Phrase declaration = new Phrase();
+		declaration.type = Syntaxeme.SECTION;
+		declaration.words = currToken.word;
+		nextToken();
 		if ( currToken.type == WHITESPACE )
 		{
 			nextToken();
 		}
-		// get the name
 		if ( currToken.type == ESCAPE_OP )
 		{
 			escapedName();
 		}
-		else if ( currToken.type == TEXT )
+		else if ( currToken.type != COPY_OP_THIN
+				&& currToken.type != COPY_OP_DEEP
+				&& currToken.type != END ) // ASK is this true or can it be anything
 		{
-			unescapedName();
+			unescapedName( END, true );
 		}
 		else
 		{
@@ -176,7 +174,7 @@ public class Parser
 	}
 
 
-	/**  */
+	/** a line with first non whitespace is > , ex > comment */
 	private void comment()
 	{
 		String here = cl +"comment ";
@@ -268,7 +266,7 @@ public class Parser
 
 	/** ex banana || bla bla || bla>bla4 . Ends at end of line,
 	 * assignment operator, or either copy operator */
-	private Phrase unescapedName()
+	private Phrase unescapedName( Lexeme delimiter, boolean copyIsPossible )
 	{
 		String here = cl +"unesc field ";
 		if ( currToken.type == WHITESPACE )
@@ -285,9 +283,10 @@ public class Parser
 		do
 		{
 			if ( currToken.type == END
-					|| currToken.type == FIELD_START_OP
-					|| currToken.type == Lexeme.COPY_OP_THIN
-					|| currToken.type == Lexeme.COPY_OP_DEEP )
+					|| currToken.type == delimiter
+					|| ( copyIsPossible
+						&& ( currToken.type == Lexeme.COPY_OP_THIN
+						|| currToken.type == Lexeme.COPY_OP_DEEP ) ) )
 			{
 				if ( lastType != WHITESPACE )
 				{
@@ -304,21 +303,20 @@ public class Parser
 			}
 		}
 		while ( true );
-		if ( currToken.type == END )
-		{
-			fieldInterior(); // map or set or whatever
-		}
-		else if ( currToken.type == FIELD_START_OP )
+		if ( currToken.type == delimiter )
 		{
 			Phrase value = new Phrase();
 			value.type = VALUE;
 			value.words = alphabet.restOfLine();
 			advanceLine();
 		}
-		else
+		else if ( copyIsPossible
+				&& ( currToken.type == Lexeme.COPY_OP_THIN
+				|| currToken.type == Lexeme.COPY_OP_DEEP ) )
 		{
-			// assert it's a copy operator
+			templateInstruction();
 		}
+		// else it's end of line
 		System.out.println( here +"recognized "+ name );
 		return name;
 	}
@@ -346,7 +344,7 @@ public class Parser
 		}
 		else
 		{
-			leadingName = unescapedName();
+			leadingName = unescapedName( END, false );
 		}
 		// ASK handle copy here ? hopefully not
 		// save the rest as body until we match the block boundary
@@ -385,7 +383,7 @@ public class Parser
 				}
 				else
 				{
-					secondName = unescapedName();
+					secondName = unescapedName( END, false );
 				}
 				// check if the name matches
 				if ( secondName.words.equals( leadingName.words ) )
@@ -417,17 +415,37 @@ public class Parser
 		System.out.println( here +"recognized "+ boundary );
 		System.out.println( here +"recognized "+ blockBody );
 		nextToken();
-		sectionInterior(); // ASK perhaps iterative rather than recursive, ie how deep is the call stack getting ?
 	}
 
 
 	/** get the name, basically */
 	private Phrase templateInstruction()
 	{
-		// TODO
-		// get the name then dump into section interior; semantic analysis can handle templates
-		advanceLine(); // 4TESTS
-		return null;
+		Phrase operator = new Phrase();
+		operator.words = currToken.word;
+		if ( currToken.type == COPY_OP_THIN )
+		{
+			operator.type = SHALLOW_COPY;
+		}
+		else
+		{
+			operator.type = DEEP_COPY;
+		}
+		nextToken();
+		if ( currToken.type == WHITESPACE )
+		{
+			nextToken();
+		}
+		Phrase targetName = new Phrase();
+		if ( currToken.type == ESCAPE_OP )
+		{
+			targetName = escapedName();
+		}
+		else
+		{
+			targetName = unescapedName( END, false );
+		}
+		return targetName;
 	}
 
 
@@ -439,10 +457,81 @@ public class Parser
 		// switch ( currToken.type )
 		// value, set, list ;; maybe I'm continuing a value or is that a different version ?
 		// TODO
-		if ( advanceLine() )
+		// COPYPASTE from section interior
+		switch ( currToken.type )
 		{
-			sectionInterior(); // 4TESTS
+			case COMMENT_OP :
+			{
+				comment();
+				break;
+			}
+			case WHITESPACE :
+			{
+				nextToken();
+				break;
+			}
+			case SECTION_OP :
+			{
+				sectionBeginning();
+				break;
+			}
+			case ESCAPE_OP :
+			{
+				escapedName();
+				fieldInterior();
+				break;
+			}
+			case BLOCK_OP :
+			{
+				multilineBoundary();
+				break;
+			}
+			case END :
+			{
+				if ( ! advanceLine() )
+				{
+					System.out.println( here +"recognized a valid eno document" );
+					return null;
+				}
+				break;
+			}
+			// ASK presumably I'll use these from within field body or whatever
+			case CONTINUE_OP_BREAK :
+			case CONTINUE_OP_SAME :
+			{
+				System.out.println( here +"continuation started without assignment "+ currToken );
+				break;
+			}
+			case COPY_OP_DEEP :
+			case COPY_OP_THIN :
+			{
+				System.out.println( here +"template started without name "+ currToken );
+				break;
+			}
+			case FIELD_START_OP :
+			{
+				System.out.println( here +"field assignment started without name "+ currToken );
+				break;
+			}
+			case LIST_OP :
+			{
+				System.out.println( here +"list started without name "+ currToken );
+				break;
+			}
+			case SET_OP :
+			{
+				System.out.println( here +"set started without name "+ currToken );
+				break;
+			}
+			case TEXT :
+			default :
+			{
+				unescapedName( SET_OP, false );
+				fieldInterior();
+				break;
+			}
 		}
+		advanceLine();
 		return null;
 	}
 
