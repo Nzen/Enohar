@@ -316,7 +316,6 @@ public class Parser
 		{
 			leadingName = unescapedName( DELIM_END );
 		}
-		// ASK handle copy here ? hopefully not
 		// save the rest as body until we match the block boundary
 		nextLine( true, here +"opened multiline "+ blockStartedAt +" without closing before eof" );
 		StringBuilder blockBodyWords = new StringBuilder();
@@ -326,18 +325,14 @@ public class Parser
 		do
 		{
 			if ( currToken.type == WHITESPACE )
-			{
 				nextToken();
-			}
 			if ( currToken.type == BLOCK_OP
 					&& boundary.words.length() == currToken.word.length() )
 			{
-				nextToken();
 				secondBoundary.words = currToken.word;
+				nextToken();
 				if ( currToken.type == WHITESPACE )
-				{
 					nextToken();
-				}
 				// try to get a name from it, check for match
 				if ( currToken.type == END )
 				{
@@ -380,8 +375,11 @@ public class Parser
 		while ( true ); // leave by finding second boundary
 		Phrase blockBody = new Phrase();
 		blockBody.type = BLOCK_TEXT;
-		blockBody.words = blockBodyWords.substring(
-				System.lineSeparator().length() ); // NOTE remove extraneous prefix
+		if ( blockBodyWords.length() > 0 )
+		{
+			blockBody.words = blockBodyWords.substring(
+					System.lineSeparator().length() ); // NOTE remove extra prefix
+		}
 		System.out.println( here +"recognized "+ boundary );
 		System.out.println( here +"recognized "+ blockBody );
 		nextToken();
@@ -403,9 +401,7 @@ public class Parser
 		}
 		nextToken();
 		if ( currToken.type == WHITESPACE )
-		{
 			nextToken();
-		}
 		Phrase targetName = new Phrase();
 		if ( currToken.type == ESCAPE_OP )
 		{
