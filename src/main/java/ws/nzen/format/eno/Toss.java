@@ -12,8 +12,8 @@ public class Toss
 	public static void main( String[] args )
 	{
 		List<String> file = new ArrayList<>();
-		// file.add( "# banana" );
-		// file.add( " fof:  anna " );
+		file.add( "# banana" );
+		file.add( " faf:  anna " );
 		file.add( "`bro ken` < comment" );
 		file.add( "> comment" );
 		// file.add( "-222" );
@@ -21,6 +21,17 @@ public class Toss
 		file.add( " #=-- \\//" );
 		file.add( "" );
 		file.add( "-- bello" );
+		file.add( " fef: " );
+		file.add( "-eve" );
+		file.add( " - adam" );
+		file.add( " fif:" );
+		file.add( " gib= ana " );
+		file.add( " gyb= nna " );
+		file.add( " fof:  anna " );
+		file.add( "> comment" );
+		file.add( " | large " );
+		file.add( "> comment" );
+		file.add( " \\ large " );
 		Parser epp = new Parser();
 		// epp.parse( file );
 		epp.recognize( file );
