@@ -1,5 +1,5 @@
 /bin/
-/bin_test/
+/bin_of_tests/
 /target/
 /.pijul/
 .ignore

@@ -1,11 +1,11 @@
 
 ### Enohar
 
-Enohar is a library to serialize and unserialize Eno documents. Uses Java v8 syntax, includes a Java v9 module descriptor. (Incomplete)
+Enohar is a library to serialize and unserialize Eno documents. It uses Java v8 syntax, but includes a Java v9 module descriptor. (currently *Incomplete*)
 
-Eno is a document [file format](https://github.com/eno-lang/eno) / data structure specification.
+'Eno' is a document [file format](https://github.com/eno-lang/eno) / data structure specification.
 
-"Enojar" is a portuguese-origin, infinitive verb meaning _to anger_ . That word is [pronounced](https://en.wiktionary.org/wiki/enojar#Pronunciation) the way this is spelt, as english pronounciation is concerned.
+"Enojar" is a portuguese-origin, infinitive verb meaning _to anger_ . That word is [pronounced](https://en.wiktionary.org/wiki/enojar#Pronunciation) the way this is spelt, in US english pronounciation.
 
 &copy; Nicholas Prado. Begun 2018. Released under MIT license terms.
 
