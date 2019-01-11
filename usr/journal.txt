@@ -1,0 +1,45 @@
+
+# 181209
+
+I've still not decided whether I should just recognize the line type or put the entire value together. Which is to say, whether I recognize a line continuation and leave it there or if I have semantic analysis ensure that it gets put together. Well, I'm only going to recognize things for now. In that regard, I'm already on the right path, given that only field interior will recognize line continuations. It's probably worth noting that, if field interior is too complex, I should extract methods to recognize list elements or sets. It's a bit strange that field interior may have to dump from set to section interior or a different field interior, for sets.
+
+I've idly thought of giving Phrase a list of phrases so that it can become a tree. But then I'll need to traverse a tree.
+
+The section interior portions that complain should note that I need to substitute the canon complaint and throw a RuntimeException, if they don't already.
+
+In field, I took the rest of the line as the field. That might have whitespace. Trim the rest of line (assuming I've already not found a copy operator).
+
+# 181208
+
+Ensure that Lexeme and Syntaxeme have disjoint names so I can static import them rather than have the class name noise.
+
+Send a delimiter character to unescaped name. I'll be using it for maps (ie their delimiter is = but section level fields delimit with : ).
+
+# 181207
+
+Verb names for the semantic analyzer : impute, attribute, reckon, ascribe.
+
+# 181114
+
+The compiler book I've read suggests that I let Lexer keep the last lexeme's text representation. That way, instead of carrying around copies of the text of keywords (single char operators in this case), I can just save text for the parsemes that matter, ie text. Maybe I'd have a length for continuable operators (ex section), rather than the entire string.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
