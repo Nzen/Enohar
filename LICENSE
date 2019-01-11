@@ -1,10 +1,11 @@
 
 Enohar
 
-Copyright Nicholas Prado, released under terms of MIT license, as described at https://mitlicense.org
+Copyright Nicholas Prado (aka Nzen), released under terms of MIT license, as described at https://mitlicense.org and reproduced in mit-v1.txt, in this repository.
 
 Enohar relies on  
 * _, which is copyright released under _ license terms.
 
-Enohar attempts to conform to the eno notation spec. It is published source, but not open source, at the time of this writing.
+Enohar includes generated java source files from note_enojes, as viewable at https://github.com/Nzen/note_enojes, which is copyright Nicholas Prado but released under MIT license terms.
 
+Enohar attempts to conform to the eno notation spec, as viewable at https://github.com/eno-lang/eno. The eno spec is published source, but not open source, at the time of this writing.

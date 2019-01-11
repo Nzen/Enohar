@@ -7,12 +7,18 @@ import static ws.nzen.format.eno.Syntaxeme.*;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Queue;
+import java.util.Set;
 import java.util.Stack;
+import java.util.TreeSet;
 
 /**  */
 public class Parser
 {
 	private static final String cl = "p.";
+	static final Set<Lexeme> DELIM_END_COPY = new TreeSet<>();
+	static final Set<Lexeme> DELIM_SET_FIELD_COPY = new TreeSet<>();
+	static final Set<Lexeme> DELIM_FIELD_COPY = new TreeSet<>();
+	static final Set<Lexeme> DELIM_END = new TreeSet<>();
 	// eventually handle exception store localization, output formatter
 	Queue<String> allLines = new LinkedList<>();
 	Lexer alphabet = new Lexer();
@@ -29,6 +35,28 @@ public class Parser
 		{
 			return "PT: t-"+ type.name() +" w-"+ words;
 		}
+	}
+
+
+	public Parser()
+	{
+		prepFieldDelimiters();
+	}
+
+
+	private void prepFieldDelimiters()
+	{
+		DELIM_END_COPY.add( END );
+		DELIM_END_COPY.add( COPY_OP_DEEP );
+		DELIM_END_COPY.add( COPY_OP_THIN );
+		DELIM_SET_FIELD_COPY.add( SET_OP );
+		DELIM_SET_FIELD_COPY.add( FIELD_START_OP );
+		DELIM_SET_FIELD_COPY.add( COPY_OP_DEEP );
+		DELIM_SET_FIELD_COPY.add( COPY_OP_THIN );
+		DELIM_FIELD_COPY.add( FIELD_START_OP );
+		DELIM_FIELD_COPY.add( COPY_OP_DEEP );
+		DELIM_FIELD_COPY.add( COPY_OP_THIN );
+		DELIM_END.add( END );
 	}
 
 
@@ -55,7 +83,6 @@ public class Parser
 	private void sectionInterior()
 	{
 		String here = cl +"si ";
-		String temp;
 		while ( true )
 		{
 			switch ( currToken.type )
@@ -77,8 +104,7 @@ public class Parser
 				}
 				case ESCAPE_OP :
 				{
-					escapedName();
-					fieldInterior();
+					fieldBeginning( escapedName() );
 					break;
 				}
 				case BLOCK_OP :
@@ -88,7 +114,7 @@ public class Parser
 				}
 				case END :
 				{
-					if ( ! advanceLine() )
+					if ( ! nextLine() )
 					{
 						System.out.println( here +"recognized a valid eno document" );
 						return;
@@ -98,35 +124,34 @@ public class Parser
 				case CONTINUE_OP_BREAK :
 				case CONTINUE_OP_SAME :
 				{
-					System.out.println( here +"continuation started without assignment "+ currToken );
-					break;
+					// FIX use canon complaint
+					throw new RuntimeException( here +"continuation started without assignment "+ currToken );
 				}
 				case COPY_OP_DEEP :
 				case COPY_OP_THIN :
 				{
-					System.out.println( here +"template started without name "+ currToken );
-					break;
+					// FIx use canon complaint
+					throw new RuntimeException( here +"template started without name "+ currToken );
 				}
 				case FIELD_START_OP :
 				{
-					System.out.println( here +"field assignment started without name "+ currToken );
-					break;
+					// FIx use canon complaint
+					throw new RuntimeException( here +"field assignment started without name "+ currToken );
 				}
 				case LIST_OP :
 				{
-					System.out.println( here +"list started without name "+ currToken );
-					break;
+					// FIx use canon complaint
+					throw new RuntimeException( here +"list started without name "+ currToken );
 				}
 				case SET_OP :
 				{
-					System.out.println( here +"set started without name "+ currToken );
-					break;
+					// FIx use canon complaint
+					throw new RuntimeException( here +"set started without name "+ currToken );
 				}
 				case TEXT :
 				default :
 				{
-					unescapedName( FIELD_START_OP, true );
-					fieldInterior();
+					fieldBeginning( unescapedName( DELIM_FIELD_COPY ) );
 					break;
 				}
 			}
@@ -143,18 +168,14 @@ public class Parser
 		declaration.words = currToken.word;
 		nextToken();
 		if ( currToken.type == WHITESPACE )
-		{
 			nextToken();
-		}
 		if ( currToken.type == ESCAPE_OP )
 		{
 			escapedName();
 		}
-		else if ( currToken.type != COPY_OP_THIN
-				&& currToken.type != COPY_OP_DEEP
-				&& currToken.type != END ) // ASK is this true or can it be anything
+		else if ( ! DELIM_END_COPY.contains( currToken.type ) )
 		{
-			unescapedName( END, true );
+			unescapedName( DELIM_END_COPY );
 		}
 		else
 		{
@@ -162,9 +183,7 @@ public class Parser
 			throw new RuntimeException( here +"section name should not start with "+ currToken );
 		}
 		if ( currToken.type == WHITESPACE )
-		{
 			nextToken();
-		}
 		if ( currToken.type == COPY_OP_THIN
 				|| currToken.type == COPY_OP_DEEP )
 		{
@@ -174,41 +193,17 @@ public class Parser
 	}
 
 
-	/** a line with first non whitespace is > , ex > comment */
+	/** A line with first non whitespace is > , ex > comment.
+	 * Advances the line */
 	private void comment()
 	{
 		String here = cl +"comment ";
 		nextToken();
 		Phrase fullComment = new Phrase();
-		if ( currToken.type == WHITESPACE )
-		{
-			nextToken();
-		}
-		if ( currToken.type == END )
-		{
-			fullComment.type = COMMENT;
-			fullComment.words = "";
-		}
-		else
-		{
-			String vettedComment = "", lastNibble = "";
-			Lexeme lastNibbleType;
-			do
-			{
-				vettedComment += lastNibble;
-				lastNibble = currToken.word;
-				lastNibbleType = currToken.type;
-				nextToken();
-			}
-			while ( currToken.type != END );
-			if ( lastNibbleType != WHITESPACE )
-			{
-				vettedComment += lastNibble;
-			}
-			fullComment.type = COMMENT;
-			fullComment.words = vettedComment;
-		}
+		fullComment.type = COMMENT;
+		fullComment.words = alphabet.restOfLine().trim();
 		System.out.println( here +"recognized "+ fullComment );
+		nextLine();
 	}
 
 
@@ -222,9 +217,7 @@ public class Parser
 		// get the name
 		nextToken();
 		if ( currToken.type == WHITESPACE )
-		{
 			nextToken();
-		}
 		StringBuilder namePieces = new StringBuilder();
 		String lastNibble = "";
 		Lexeme lastLex = null;
@@ -248,6 +241,7 @@ public class Parser
 				}
 				// lastNibble is never white on first pass, as it will stay empty that round
 				name.words = namePieces.toString();
+				nextToken();
 				break;
 			}
 			else
@@ -264,16 +258,12 @@ public class Parser
 	}
 
 
-	/** ex banana || bla bla || bla>bla4 . Ends at end of line,
-	 * assignment operator, or either copy operator */
-	private Phrase unescapedName( Lexeme delimiter, boolean copyIsPossible )
+	/** a name for section, field, or set item */
+	private Phrase unescapedName( Set<Lexeme> delimiters )
 	{
-		String here = cl +"unesc field ";
+		String here = cl +"un ";
 		if ( currToken.type == WHITESPACE )
-		{
 			nextToken();
-			System.out.println( here +"check why currToken is whitespace when starting" ); // 4TESTS
-		}
 		Phrase name = new Phrase();
 		name.type = FIELD;
 		String lastPiece = currToken.word;
@@ -282,11 +272,7 @@ public class Parser
 		nextToken();
 		do
 		{
-			if ( currToken.type == END
-					|| currToken.type == delimiter
-					|| ( copyIsPossible
-						&& ( currToken.type == Lexeme.COPY_OP_THIN
-						|| currToken.type == Lexeme.COPY_OP_DEEP ) ) )
+			if ( delimiters.contains( currToken.type ) )
 			{
 				if ( lastType != WHITESPACE )
 				{
@@ -303,20 +289,6 @@ public class Parser
 			}
 		}
 		while ( true );
-		if ( currToken.type == delimiter )
-		{
-			Phrase value = new Phrase();
-			value.type = VALUE;
-			value.words = alphabet.restOfLine();
-			advanceLine();
-		}
-		else if ( copyIsPossible
-				&& ( currToken.type == Lexeme.COPY_OP_THIN
-				|| currToken.type == Lexeme.COPY_OP_DEEP ) )
-		{
-			templateInstruction();
-		}
-		// else it's end of line
 		System.out.println( here +"recognized "+ name );
 		return name;
 	}
@@ -334,9 +306,7 @@ public class Parser
 		// get the name
 		nextToken();
 		if ( currToken.type == WHITESPACE )
-		{
 			nextToken();
-		}
 		Phrase leadingName;
 		if ( currToken.type == ESCAPE_OP )
 		{
@@ -344,11 +314,10 @@ public class Parser
 		}
 		else
 		{
-			leadingName = unescapedName( END, false );
+			leadingName = unescapedName( DELIM_END );
 		}
-		// ASK handle copy here ? hopefully not
 		// save the rest as body until we match the block boundary
-		advanceLine( true, here +"opened multiline "+ blockStartedAt +" without closing before eof" );
+		nextLine( true, here +"opened multiline "+ blockStartedAt +" without closing before eof" );
 		StringBuilder blockBodyWords = new StringBuilder();
 		Phrase secondName = null;
 		Phrase secondBoundary = new Phrase();
@@ -356,25 +325,21 @@ public class Parser
 		do
 		{
 			if ( currToken.type == WHITESPACE )
-			{
 				nextToken();
-			}
 			if ( currToken.type == BLOCK_OP
 					&& boundary.words.length() == currToken.word.length() )
 			{
-				nextToken();
 				secondBoundary.words = currToken.word;
+				nextToken();
 				if ( currToken.type == WHITESPACE )
-				{
 					nextToken();
-				}
 				// try to get a name from it, check for match
 				if ( currToken.type == END )
 				{
 					blockBodyWords.append( System.lineSeparator() );
 					blockBodyWords.append( alphabet.getLine() );
 					// FIX use canon complaint
-					advanceLine( true, here +"opened multiline "+ blockStartedAt +" without closing before eof" );
+					nextLine( true, here +"opened multiline "+ blockStartedAt +" without closing before eof" );
 					continue;
 				}
 				else if ( currToken.type == ESCAPE_OP )
@@ -383,7 +348,7 @@ public class Parser
 				}
 				else
 				{
-					secondName = unescapedName( END, false );
+					secondName = unescapedName( DELIM_END );
 				}
 				// check if the name matches
 				if ( secondName.words.equals( leadingName.words ) )
@@ -396,7 +361,7 @@ public class Parser
 					blockBodyWords.append( System.lineSeparator() );
 					blockBodyWords.append( alphabet.getLine() );
 					// FIX use canon complaint
-					advanceLine( true, here +"opened multiline "+ blockStartedAt +" without closing before eof" );
+					nextLine( true, here +"opened multiline "+ blockStartedAt +" without closing before eof" );
 				}
 			}
 			else
@@ -404,14 +369,17 @@ public class Parser
 				blockBodyWords.append( System.lineSeparator() );
 				blockBodyWords.append( alphabet.getLine() );
 				// FIX use canon complaint
-				advanceLine( true, here +"opened multiline "+ blockStartedAt +" without closing before eof" );
+				nextLine( true, here +"opened multiline "+ blockStartedAt +" without closing before eof" );
 			}
 		}
 		while ( true ); // leave by finding second boundary
 		Phrase blockBody = new Phrase();
 		blockBody.type = BLOCK_TEXT;
-		blockBody.words = blockBodyWords.substring(
-				System.lineSeparator().length() ); // NOTE remove extraneous prefix
+		if ( blockBodyWords.length() > 0 )
+		{
+			blockBody.words = blockBodyWords.substring(
+					System.lineSeparator().length() ); // NOTE remove extra prefix
+		}
 		System.out.println( here +"recognized "+ boundary );
 		System.out.println( here +"recognized "+ blockBody );
 		nextToken();
@@ -433,9 +401,7 @@ public class Parser
 		}
 		nextToken();
 		if ( currToken.type == WHITESPACE )
-		{
 			nextToken();
-		}
 		Phrase targetName = new Phrase();
 		if ( currToken.type == ESCAPE_OP )
 		{
@@ -443,96 +409,168 @@ public class Parser
 		}
 		else
 		{
-			targetName = unescapedName( END, false );
+			targetName = unescapedName( DELIM_END );
 		}
 		return targetName;
 	}
 
 
-	/** get the set / list items or continued value */
-	private Phrase fieldInterior()
+	private Phrase fieldBeginning( Phrase fieldName )
 	{
-		String here = cl +"si ";
-		String temp;
-		// switch ( currToken.type )
-		// value, set, list ;; maybe I'm continuing a value or is that a different version ?
-		// TODO
-		// COPYPASTE from section interior
-		switch ( currToken.type )
+		String here = cl +"fb ";
+		if ( currToken.type == FIELD_START_OP )
+			nextToken();
+		if ( currToken.type == WHITESPACE )
+			nextToken();
+		if ( currToken.type == COPY_OP_DEEP
+				|| currToken.type == COPY_OP_THIN )
 		{
-			case COMMENT_OP :
+			templateInstruction();
+		}
+		Phrase value = new Phrase();
+		value.type = VALUE;
+		String restOfFieldLine = alphabet.restOfLine().trim();
+		if ( ! restOfFieldLine.isEmpty() )
+		{
+			value.words = restOfFieldLine;
+			System.out.println( here +"recognized "+ value );
+		}
+		return fieldInterior( value );
+	}
+
+
+	/** get the set / list items or continued value */
+	private Phrase fieldInterior( Phrase valueFromInitial )
+	{
+		String here = cl +"fi ";
+		nextLine();
+		ParseContext styleOfValue = ( ! valueFromInitial.words.isEmpty() )
+				? ParseContext.VALUE : ParseContext.DOCUMENT;
+		Phrase tempName;
+		while ( true )
+		{
+			switch ( currToken.type )
 			{
-				comment();
-				break;
-			}
-			case WHITESPACE :
-			{
-				nextToken();
-				break;
-			}
-			case SECTION_OP :
-			{
-				sectionBeginning();
-				break;
-			}
-			case ESCAPE_OP :
-			{
-				escapedName();
-				fieldInterior();
-				break;
-			}
-			case BLOCK_OP :
-			{
-				multilineBoundary();
-				break;
-			}
-			case END :
-			{
-				if ( ! advanceLine() )
+				case END :
 				{
-					System.out.println( here +"recognized a valid eno document" );
-					return null;
+					if ( ! nextLine() )
+					{
+						System.out.println( here +"recognized a valid eno document" );
+						return null;
+					}
+					break;
 				}
-				break;
-			}
-			// ASK presumably I'll use these from within field body or whatever
-			case CONTINUE_OP_BREAK :
-			case CONTINUE_OP_SAME :
-			{
-				System.out.println( here +"continuation started without assignment "+ currToken );
-				break;
-			}
-			case COPY_OP_DEEP :
-			case COPY_OP_THIN :
-			{
-				System.out.println( here +"template started without name "+ currToken );
-				break;
-			}
-			case FIELD_START_OP :
-			{
-				System.out.println( here +"field assignment started without name "+ currToken );
-				break;
-			}
-			case LIST_OP :
-			{
-				System.out.println( here +"list started without name "+ currToken );
-				break;
-			}
-			case SET_OP :
-			{
-				System.out.println( here +"set started without name "+ currToken );
-				break;
-			}
-			case TEXT :
-			default :
-			{
-				unescapedName( SET_OP, false );
-				fieldInterior();
-				break;
+				case COMMENT_OP :
+				{
+					comment();
+					// comments can separate field interior sections
+					break;
+				}
+				case SECTION_OP :
+				case BLOCK_OP :
+				{
+					// handle at section level
+					return valueFromInitial;
+				}
+				case WHITESPACE :
+				{
+					nextToken();
+					break;
+				}
+				case CONTINUE_OP_BREAK :
+				{
+					nextToken();
+					String restOfLine = alphabet.restOfLine().trim();
+					valueFromInitial.words += System.lineSeparator()
+							+ restOfLine;
+					nextLine();
+					break;
+				}
+				case CONTINUE_OP_SAME :
+				{
+					nextToken();
+					boolean spaceIsAppropriate = true;
+					String continuation = ( spaceIsAppropriate ) ? " " : "";
+					String restOfLine = alphabet.restOfLine().trim();
+					valueFromInitial.words += continuation + restOfLine;
+					nextLine();
+					break;
+				}
+				case LIST_OP :
+				{
+					if ( currToken.word.length() > 1 )
+					{
+						// NOTE it's a multiline boundary
+						return valueFromInitial;
+					}
+					if ( styleOfValue == ParseContext.DOCUMENT )
+						styleOfValue = ParseContext.LIST;
+					else if ( styleOfValue != ParseContext.LIST )
+						// FIX use canon complaint
+						throw new RuntimeException( here +"non list found list "+ currLine );
+					Phrase listItem = new Phrase();
+					listItem.type = Syntaxeme.LIST_ELEMENT;
+					listItem.words = alphabet.restOfLine().trim();
+					System.out.println( here +"recognized li "+ listItem );
+					nextLine();
+					break;
+				}
+				case ESCAPE_OP :
+				{
+					tempName = nameInFieldInterior( escapedName(), styleOfValue );
+					if ( tempName.type == FIELD )
+						return tempName; // NOTE a new field
+					else
+						nextLine();
+					break;
+				}
+				default :
+				{
+					tempName = nameInFieldInterior( unescapedName( DELIM_SET_FIELD_COPY ),
+							styleOfValue );
+					if ( tempName.type == FIELD )
+						return tempName; // NOTE a new field
+					else
+						nextLine();
+					break;
+				}
 			}
 		}
-		advanceLine();
-		return null;
+	}
+
+
+	private Phrase nameInFieldInterior( Phrase nameFound, ParseContext context )
+	{
+		String here = cl +"nifi ";
+		//nextToken();
+		if ( currToken.type == WHITESPACE )
+			nextToken();
+		if ( currToken.type == SET_OP )
+		{
+			if ( context == ParseContext.VALUE )
+			{
+				System.out.println( here +"set started after a value "
+						+ nameFound.words );
+				// FIX use canon complaint
+				throw new RuntimeException( here +"section name should not start with "+ currToken );
+			}
+			else
+			{
+				context = ParseContext.SET;
+				nameFound.type = Syntaxeme.SET;
+			}
+			nextToken();
+			Phrase setValue = new Phrase();
+			setValue.type = Syntaxeme.SET_ELEMENT;
+			setValue.words = alphabet.restOfLine().trim();
+			System.out.println( here +"recognized "+ nameFound );
+			System.out.println( here +"recognized "+ setValue );
+		}
+		else
+		{
+			fieldBeginning( nameFound );
+		}
+		return nameFound;
 	}
 
 
@@ -544,14 +582,14 @@ public class Parser
 
 
 	/** advance without complaining */
-	private boolean advanceLine()
+	private boolean nextLine()
 	{
-		return advanceLine( false, "" );
+		return nextLine( false, "" );
 	}
 
 
 	/** @return whether line has input */
-	private boolean advanceLine( boolean complainWhenFileEnds, String endOfFileComplaint )
+	private boolean nextLine( boolean complainWhenFileEnds, String endOfFileComplaint )
 	{
 		String temp = allLines.poll();
 		if ( temp == null )
@@ -562,6 +600,8 @@ public class Parser
 			}
 			else
 			{
+				currToken.type = END;
+				currToken.word = "";
 				return false;
 			}
 		}
