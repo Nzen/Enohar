@@ -3,20 +3,25 @@ digraph eno_parse_stages
 {
 	bgcolor = "#AAAAAA"
 	field_value [ label = "field value" ];
+	field_any [ label = "field any" ];
 	map_value [ label = "map value" ];
 	list_value [ label = "list value" ];
 	section_interior [ label = "section interior" ];
 
 	section_interior -> section_interior [ label = "section | block" ];
-	section_interior -> field_value [ label = "name:" ];
-	field_value -> field_value [ label = "name: | continuation" ];
+	section_interior -> field_any [ label = "name:" ];
+	field_any -> field_any [ label = "name:" ];
+	field_any -> field_value [ label = "continuation" ];
+	field_any -> map_value [ label = "name:" ];
+	field_any -> list_value [ label = "list" ];
+	field_any -> section_interior [ label = "section | block" ];
+	field_value -> field_value [ label = "continuation" ];
 	field_value -> section_interior [ label = "section | block" ];
-	field_value -> map_value [ label = "name=" ];
-	field_value -> list_value [ label = "list " ];
-	map_value -> field_value [ label = "name:" ];
+	field_value -> field_any [ label = "name:" ];
+	map_value -> field_any [ label = "name:" ];
 	map_value -> section_interior [ label = "section | block" ];
 	map_value -> map_value [ label = "name= | continuation" ];
-	list_value -> field_value [ label = "name:" ];
+	list_value -> field_any [ label = "name:" ];
 	list_value -> section_interior [ label = "section | block" ];
 	list_value -> list_value [ label = "list | continuation" ];
 }
