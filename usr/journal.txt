@@ -1,4 +1,10 @@
 
+# 190119
+
+Working on recognizing. Make sure that these things that try next line inflexibly don't just try forever. Consider catching with the complaining version, to know when to break. Or, if I have a thing that knows when the document is fully recognized (no lines left), break and let the stack unwind.
+
+Jumping back from field value (or list) into field any, rather than directly to section interior, seems like it will be less complicated. I'm probably just struggling against the areas where I'm not top down parsing. Oh well.
+
 # 181209
 
 I've still not decided whether I should just recognize the line type or put the entire value together. Which is to say, whether I recognize a line continuation and leave it there or if I have semantic analysis ensure that it gets put together. Well, I'm only going to recognize things for now. In that regard, I'm already on the right path, given that only field interior will recognize line continuations. It's probably worth noting that, if field interior is too complex, I should extract methods to recognize list elements or sets. It's a bit strange that field interior may have to dump from set to section interior or a different field interior, for sets.

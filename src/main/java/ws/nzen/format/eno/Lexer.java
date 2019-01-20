@@ -122,7 +122,7 @@ public class Lexer
 				// is it list or block or generic ?
 				if ( hasNext && line.charAt( cursorInd ) == ALPHA_LIST )
 				{
-					result.type = BLOCK_OP;
+					result.type = MULTILINE_OP;
 					bookmark = cursorInd -1;
 					cursorInd = indexOfDivergenceFrom( ALPHA_LIST );
 					result.word = line.substring( bookmark, cursorInd );

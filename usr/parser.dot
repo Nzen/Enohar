@@ -12,17 +12,14 @@ digraph eno_parse_stages
 	section_interior -> field_any [ label = "name:" ];
 	field_any -> field_any [ label = "name:" ];
 	field_any -> field_value [ label = "continuation" ];
-	field_any -> map_value [ label = "name:" ];
+	field_any -> map_value [ label = "name =" ];
 	field_any -> list_value [ label = "list" ];
-	field_any -> section_interior [ label = "section | block" ];
+	field_any -> section_interior [ label = "section | block" style = "dotted" ];
 	field_value -> field_value [ label = "continuation" ];
-	field_value -> section_interior [ label = "section | block" ];
-	field_value -> field_any [ label = "name:" ];
-	map_value -> field_any [ label = "name:" ];
-	map_value -> section_interior [ label = "section | block" ];
-	map_value -> map_value [ label = "name= | continuation" ];
-	list_value -> field_any [ label = "name:" ];
-	list_value -> section_interior [ label = "section | block" ];
+	field_value -> field_any [ label = "name: | section | block" style = "dotted" ];
+	map_value -> field_any [ label = "name: | section | block" style = "dotted" ];
+	map_value -> map_value [ label = "name = | continuation" ];
+	list_value -> field_any [ label = "name: | section | block" style = "dotted" ];
 	list_value -> list_value [ label = "list | continuation" ];
 }
 

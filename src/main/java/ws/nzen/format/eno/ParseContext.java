@@ -8,7 +8,13 @@ public enum ParseContext
 	SET,
 	LIST,
 	FIELD,
-	VALUE;
+	VALUE,
+
+	SECTION_INTERIOR,
+	FIELD_ANY,
+	FIELD_VALUE,
+	LIST_VALUE,
+	MAP_VALUE;
 }
 
 

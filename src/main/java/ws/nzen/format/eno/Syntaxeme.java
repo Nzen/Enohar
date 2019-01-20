@@ -15,9 +15,9 @@ public enum Syntaxeme
 	/** the field name and operator length */
 	BLOCK,
 	/** uninterpreted value in a multiline */
-	BLOCK_TEXT,
+	MULTILINE_TEXT,
 	/** the operator, represented as a length, maybe includes name */
-	BLOCK_BOUNDARY,
+	MULTILINE_BOUNDARY,
 	/** a name maybe escape length */
 	FIELD,
 	/** length */

@@ -1,8 +1,22 @@
 /** see ../../../../../LICENSE for release details */
 package ws.nzen.format.eno;
 
-import static ws.nzen.format.eno.Lexeme.*;
-import static ws.nzen.format.eno.Syntaxeme.*;
+import static ws.nzen.format.eno.Lexeme.COPY_OP_DEEP;
+import static ws.nzen.format.eno.Lexeme.COPY_OP_THIN;
+import static ws.nzen.format.eno.Lexeme.END;
+import static ws.nzen.format.eno.Lexeme.ESCAPE_OP;
+import static ws.nzen.format.eno.Lexeme.FIELD_START_OP;
+import static ws.nzen.format.eno.Lexeme.MULTILINE_OP;
+import static ws.nzen.format.eno.Lexeme.SET_OP;
+import static ws.nzen.format.eno.Lexeme.WHITESPACE;
+import static ws.nzen.format.eno.Syntaxeme.MULTILINE_BOUNDARY;
+import static ws.nzen.format.eno.Syntaxeme.MULTILINE_TEXT;
+import static ws.nzen.format.eno.Syntaxeme.COMMENT;
+import static ws.nzen.format.eno.Syntaxeme.DEEP_COPY;
+import static ws.nzen.format.eno.Syntaxeme.FIELD;
+import static ws.nzen.format.eno.Syntaxeme.FIELD_ESCAPE;
+import static ws.nzen.format.eno.Syntaxeme.SHALLOW_COPY;
+import static ws.nzen.format.eno.Syntaxeme.VALUE;
 
 import java.util.LinkedList;
 import java.util.List;
@@ -20,11 +34,13 @@ public class Parser
 	static final Set<Lexeme> DELIM_FIELD_COPY = new TreeSet<>();
 	static final Set<Lexeme> DELIM_END = new TreeSet<>();
 	// eventually handle exception store localization, output formatter
-	Queue<String> allLines = new LinkedList<>();
-	Lexer alphabet = new Lexer();
-	Lexer.Token currToken;
-	int currLine = 0;
-	Stack<Lexer.Token> lexed = new Stack<>(); // ASK or a deque ?
+	protected Queue<String> allLines = new LinkedList<>();
+	protected Lexer alphabet = new Lexer();
+	protected Lexer.Token currToken;
+	protected int currLine = 0;
+	protected ParseContext currState = ParseContext.SECTION_INTERIOR;
+	@Deprecated
+	private Stack<Lexer.Token> lexed = new Stack<>(); // ASK or a deque ?
 	public class Phrase
 	{
 		public Syntaxeme type;
@@ -75,12 +91,89 @@ public class Parser
 		alphabet.setLine( allLines.poll() );
 		nextToken();
 		currLine++;
-		sectionInterior();
+		sectionInteriorOld();
+	}
+	/** various whole eno elements */
+	private void sectionInterior()
+	{
+		String here = cl +"si ";
+		while ( true )
+		{
+			switch ( currToken.type )
+			{
+				case WHITESPACE :
+				{
+					nextToken();
+					break;
+				}
+				case END :
+				{
+					if ( ! nextLine() )
+					{
+						System.out.println( here +"recognized a valid eno document" );
+						return;
+					}
+					break;
+				}
+				case CONTINUE_OP_BREAK :
+				case CONTINUE_OP_SAME :
+				{
+					// FIX use canon complaint
+					throw new RuntimeException( here +"continuation started without assignment "+ currToken );
+				}
+				case COPY_OP_DEEP :
+				case COPY_OP_THIN :
+				{
+					// FIx use canon complaint
+					throw new RuntimeException( here +"template started without name "+ currToken );
+				}
+				case FIELD_START_OP :
+				{
+					// FIx use canon complaint
+					throw new RuntimeException( here +"field assignment started without name "+ currToken );
+				}
+				case LIST_OP :
+				{
+					// FIx use canon complaint
+					throw new RuntimeException( here +"list started without name "+ currToken );
+				}
+				case SET_OP :
+				{
+					// FIx use canon complaint
+					throw new RuntimeException( here +"set started without name "+ currToken );
+				}
+				case COMMENT_OP :
+				{
+					comment();
+					break;
+				}
+				case MULTILINE_OP :
+				{
+					multilineBoundary();
+					break;
+				}
+				case SECTION_OP :
+				{
+					sectionBeginning();
+					break;
+				}
+				case ESCAPE_OP :
+				{
+					fieldAny( escapedName() );
+					break;
+				}
+				default :
+				{
+					fieldAny( unescapedName( DELIM_FIELD_COPY ) );
+					break;
+				}
+			}
+		}
 	}
 
 
 	/** various whole eno elements */
-	private void sectionInterior()
+	private void sectionInteriorOld()
 	{
 		String here = cl +"si ";
 		while ( true )
@@ -104,10 +197,10 @@ public class Parser
 				}
 				case ESCAPE_OP :
 				{
-					fieldBeginning( escapedName() );
+					fieldBeginningOld( escapedName() );
 					break;
 				}
-				case BLOCK_OP :
+				case MULTILINE_OP :
 				{
 					multilineBoundary();
 					break;
@@ -151,7 +244,7 @@ public class Parser
 				case TEXT :
 				default :
 				{
-					fieldBeginning( unescapedName( DELIM_FIELD_COPY ) );
+					fieldBeginningOld( unescapedName( DELIM_FIELD_COPY ) );
 					break;
 				}
 			}
@@ -184,12 +277,11 @@ public class Parser
 		}
 		if ( currToken.type == WHITESPACE )
 			nextToken();
-		if ( currToken.type == COPY_OP_THIN
-				|| currToken.type == COPY_OP_DEEP )
+		if ( isCopyOperator( currToken.type ) )
 		{
 			templateInstruction();
 		}
-		sectionInterior();
+		currState = ParseContext.SECTION_INTERIOR;
 	}
 
 
@@ -300,7 +392,7 @@ public class Parser
 		String here = cl +"multiline ";
 		Phrase boundary = new Phrase();
 		boundary.words = currToken.word;
-		boundary.type = BLOCK_BOUNDARY;
+		boundary.type = MULTILINE_BOUNDARY;
 		int blockStartedAt = currLine;
 
 		// get the name
@@ -321,12 +413,12 @@ public class Parser
 		StringBuilder blockBodyWords = new StringBuilder();
 		Phrase secondName = null;
 		Phrase secondBoundary = new Phrase();
-		secondBoundary.type = BLOCK_BOUNDARY;
+		secondBoundary.type = MULTILINE_BOUNDARY;
 		do
 		{
 			if ( currToken.type == WHITESPACE )
 				nextToken();
-			if ( currToken.type == BLOCK_OP
+			if ( currToken.type == MULTILINE_OP
 					&& boundary.words.length() == currToken.word.length() )
 			{
 				secondBoundary.words = currToken.word;
@@ -374,12 +466,13 @@ public class Parser
 		}
 		while ( true ); // leave by finding second boundary
 		Phrase blockBody = new Phrase();
-		blockBody.type = BLOCK_TEXT;
+		blockBody.type = MULTILINE_TEXT;
 		if ( blockBodyWords.length() > 0 )
 		{
 			blockBody.words = blockBodyWords.substring(
 					System.lineSeparator().length() ); // NOTE remove extra prefix
 		}
+		currState = ParseContext.SECTION_INTERIOR;
 		System.out.println( here +"recognized "+ boundary );
 		System.out.println( here +"recognized "+ blockBody );
 		nextToken();
@@ -415,15 +508,140 @@ public class Parser
 	}
 
 
-	private Phrase fieldBeginning( Phrase fieldName )
+	private Phrase fieldAny( Phrase fieldName )
+	{
+		String here = cl +"fa ";
+		if ( currToken.type == FIELD_START_OP )
+			nextToken();
+		if ( currToken.type == WHITESPACE )
+			nextToken();
+		if ( isCopyOperator( currToken.type ) )
+		{
+			templateInstruction();
+		}
+		Phrase value = new Phrase();
+		value.type = VALUE;
+		value.words = alphabet.restOfLine().trim();
+		nextLine();
+		if ( currToken.type == WHITESPACE )
+			nextToken();
+		if ( isContinuationOperator( currToken.type ) )
+		{
+			value = moreValue( value );
+			System.out.println( here +"recognized "+ value );
+		}
+		else if ( currToken.type == Lexeme.SECTION_OP
+				|| currToken.type == Lexeme.MULTILINE_OP )
+		{
+			return value;
+		}
+		else if ( currToken.type == Lexeme.LIST_OP )
+		{
+			listElements( fieldName );
+		}
+		else if ( isCopyOperator( currToken.type ) )
+		{
+			// FIx use canon complaint
+			throw new RuntimeException( here +"template started without name "+ currToken );
+		}
+		else
+		{
+			Phrase nextName;
+			if ( currToken.type == Lexeme.ESCAPE_OP )
+			{
+				nextName = escapedName();
+			}
+			else
+			{
+				nextName = unescapedName( DELIM_SET_FIELD_COPY );
+			}
+			// NP here ; maybe handle end of document ? or just keep punting up to section
+			if ( currToken.type == Lexeme.SET_OP )
+			{
+				listElements( fieldName );
+			}
+			else if ( currToken.type == Lexeme.FIELD_START_OP )
+			{
+				return fieldAny( fieldName );
+			} 
+		}
+
+		return null; // TODO fieldInteriorOld( value );
+	}
+
+
+	private Phrase moreValue( Phrase begunValue )
+	{
+		// list of comments = new list
+		while ( true )
+		{
+			if ( currToken.type == Lexeme.CONTINUE_OP_SAME )
+			{
+				nextToken();
+				begunValue.words += " "+ alphabet.restOfLine().trim();
+			}
+			else if ( currToken.type == Lexeme.CONTINUE_OP_SAME )
+			{
+				nextToken();
+				// IMPROVE switch to empty string if rfc changes break
+				begunValue.words += System.lineSeparator()+ alphabet.restOfLine().trim();
+			}
+			else if ( currToken.type == Lexeme.WHITESPACE )
+			{
+				nextToken();
+			}
+			else if ( currToken.type == Lexeme.END )
+			{
+				nextLine();
+			}
+			else if ( currToken.type == Lexeme.COMMENT_OP )
+			{
+				comment(); // Improve list of comments.add ( comment() );
+			}
+			else
+			{
+				break;
+			}
+		}
+		return begunValue;
+	}
+
+
+	private Phrase listElements( Phrase name )
+	{
+		while ( true )
+		{
+			if ( currToken.type == WHITESPACE )
+				nextToken();
+			else if ( currToken.type == Lexeme.LIST_OP )
+			{
+				nextToken();
+				Phrase listSubnode = new Phrase();
+				listSubnode.type = Syntaxeme.LIST_ELEMENT;
+				listSubnode.words = alphabet.restOfLine();
+				listSubnode = moreValue( listSubnode );
+			}
+			else if ( currToken.type == Lexeme.END )
+			{
+				nextLine();
+			}
+			else
+			{
+				break;
+			}
+		}
+		return name;
+	}
+
+
+	private Phrase fieldBeginningOld( Phrase fieldName )
 	{
 		String here = cl +"fb ";
 		if ( currToken.type == FIELD_START_OP )
 			nextToken();
 		if ( currToken.type == WHITESPACE )
 			nextToken();
-		if ( currToken.type == COPY_OP_DEEP
-				|| currToken.type == COPY_OP_THIN )
+		if ( isCopyOperator( currToken.type ) )
 		{
 			templateInstruction();
 		}
@@ -435,12 +653,12 @@ public class Parser
 			value.words = restOfFieldLine;
 			System.out.println( here +"recognized "+ value );
 		}
-		return fieldInterior( value );
+		return fieldInteriorOld( value );
 	}
 
 
 	/** get the set / list items or continued value */
-	private Phrase fieldInterior( Phrase valueFromInitial )
+	private Phrase fieldInteriorOld( Phrase valueFromInitial )
 	{
 		String here = cl +"fi ";
 		nextLine();
@@ -467,7 +685,7 @@ public class Parser
 					break;
 				}
 				case SECTION_OP :
-				case BLOCK_OP :
+				case MULTILINE_OP :
 				{
 					// handle at section level
 					return valueFromInitial;
@@ -517,7 +735,7 @@ public class Parser
 				}
 				case ESCAPE_OP :
 				{
-					tempName = nameInFieldInterior( escapedName(), styleOfValue );
+					tempName = nameInFieldInteriorOld( escapedName(), styleOfValue );
 					if ( tempName.type == FIELD )
 						return tempName; // NOTE a new field
 					else
@@ -526,7 +744,7 @@ public class Parser
 				}
 				default :
 				{
-					tempName = nameInFieldInterior( unescapedName( DELIM_SET_FIELD_COPY ),
+					tempName = nameInFieldInteriorOld( unescapedName( DELIM_SET_FIELD_COPY ),
 							styleOfValue );
 					if ( tempName.type == FIELD )
 						return tempName; // NOTE a new field
@@ -539,7 +757,7 @@ public class Parser
 	}
 
 
-	private Phrase nameInFieldInterior( Phrase nameFound, ParseContext context )
+	private Phrase nameInFieldInteriorOld( Phrase nameFound, ParseContext context )
 	{
 		String here = cl +"nifi ";
 		//nextToken();
@@ -568,9 +786,25 @@ public class Parser
 		}
 		else
 		{
-			fieldBeginning( nameFound );
+			fieldBeginningOld( nameFound );
 		}
 		return nameFound;
+	}
+
+
+	private boolean isCopyOperator( Lexeme something )
+	{
+		// ASK not clear whether that's a lex or parse domain
+		return something == Lexeme.COPY_OP_DEEP
+				|| something == Lexeme.COPY_OP_THIN;
+	}
+
+
+	private boolean isContinuationOperator( Lexeme something )
+	{
+		// ASK not clear whether that's a lex or parse domain
+		return something == Lexeme.CONTINUE_OP_BREAK
+				|| something == Lexeme.CONTINUE_OP_SAME;
 	}
 
 

@@ -94,11 +94,11 @@ class ShouldLex
 		base = "--";
 		llk.setLine( base );
 		struct = llk.nextToken();
-		assertEquals( Lexeme.BLOCK_OP, struct.type, "min block" );
+		assertEquals( Lexeme.MULTILINE_OP, struct.type, "min block" );
 		base = "------";
 		llk.setLine( base );
 		struct = llk.nextToken();
-		assertEquals( Lexeme.BLOCK_OP, struct.type, "long block" );
+		assertEquals( Lexeme.MULTILINE_OP, struct.type, "long block" );
 		base = "#";
 		llk.setLine( base );
 		struct = llk.nextToken();
@@ -203,7 +203,7 @@ class ShouldLex
 		assertEquals( Lexeme.COPY_OP_DEEP, struct.type, "<<" );
 		assertEquals( base.length() -2, llk.charsLeft(), "block plus alba len_"+ llk.restOfLine() );
 		struct = llk.nextToken();
-		assertEquals( Lexeme.BLOCK_OP, struct.type, "block" );
+		assertEquals( Lexeme.MULTILINE_OP, struct.type, "block" );
 		assertEquals( rest, llk.restOfLine(), "colon alba" );
 	}
 

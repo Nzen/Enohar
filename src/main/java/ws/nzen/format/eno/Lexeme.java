@@ -17,7 +17,7 @@ public enum Lexeme
 	/** - dash */
 	LIST_OP( '-' ),
 	/** - hyphen */
-	BLOCK_OP( '-' ),
+	MULTILINE_OP( '-' ),
 	/** : colon */
 	FIELD_START_OP( ':' ),
 	/** &lt; greater than */

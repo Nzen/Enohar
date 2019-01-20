@@ -2,6 +2,7 @@
 /bin_of_tests/
 /target/
 /.pijul/
+/usr/canon_eno/
 .ignore
 .classpath
 .project
