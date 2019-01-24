@@ -29,7 +29,8 @@ public enum Syntaxeme
 	/** ? */
 	DEEP_COPY,
 	/** comment text */
-	COMMENT;
+	COMMENT,
+	EMPTY;
 }
 
 

@@ -18,6 +18,7 @@ import static ws.nzen.format.eno.Syntaxeme.FIELD_ESCAPE;
 import static ws.nzen.format.eno.Syntaxeme.SHALLOW_COPY;
 import static ws.nzen.format.eno.Syntaxeme.VALUE;
 
+import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Queue;
@@ -45,11 +46,21 @@ public class Parser
 	{
 		public Syntaxeme type;
 		public String words = "";
-		// public Phrase child; // or does it need to be a list ?
 		@Override
 		public String toString()
 		{
 			return "PT: t-"+ type.name() +" w-"+ words;
+		}
+	}
+	public class Word
+	{
+		public Syntaxeme type;
+		public String value = "";
+		public int modifier = 0;
+		@Override
+		public String toString()
+		{
+			return "W: t-"+ type.name() +" w-"+ value;
 		}
 	}
 
@@ -78,6 +89,143 @@ public class Parser
 
 	/** ensures this is a valid Eno document.
 	 * @throws RuntimeException otherwise */
+	public List<List<Word>> parse( List<String> fileLines )
+	{
+		String here = cl +"p ";
+		if ( fileLines == null || fileLines.isEmpty() )
+		{
+			return new LinkedList<>();
+		}
+		else
+		{
+			allLines = new LinkedList<>( fileLines );
+		}
+		List<List<Word>> parsed = new ArrayList<>( fileLines.size() );
+		int emptyLines = 0;
+		Word currWord;
+		List<Word> wordsOfLine;
+		nextLine();
+		do
+		{
+			wordsOfLine = new LinkedList<>();
+			skipWhitespace();
+			switch ( currToken.type )
+			{
+				case END :
+				{
+					emptyLines++;
+					break;
+				}
+				case COPY_OP_DEEP :
+				case COPY_OP_THIN :
+				{
+					// FIx use canon complaint
+					throw new RuntimeException( here +"template started without name "+ currToken );
+				}
+				case FIELD_START_OP :
+				{
+					// FIx use canon complaint
+					throw new RuntimeException( here +"field assignment started without name "+ currToken );
+				}
+				case SET_OP :
+				{
+					// FIx use canon complaint
+					throw new RuntimeException( here +"set started without name "+ currToken );
+				}
+				case CONTINUE_OP_BREAK :
+				case CONTINUE_OP_SAME :
+				{
+					if ( emptyLines > 0 )
+					{
+						wordsOfLine.add( emptyLines( emptyLines ) );
+						emptyLines = 0;
+					}
+					currWord = new Word();
+					currWord.type = Syntaxeme.VALUE;
+					currWord.modifier = ( currToken.type == Lexeme.CONTINUE_OP_SAME )
+							? 1 : 2;
+					currWord.value = alphabet.restOfLine().trim();
+					wordsOfLine.add( currWord );
+					parsed.add( wordsOfLine );
+					break;
+				}
+				case LIST_OP :
+				{
+					if ( emptyLines > 0 )
+					{
+						wordsOfLine.add( emptyLines( emptyLines ) );
+						emptyLines = 0;
+					}
+					currWord = new Word();
+					currWord.type = Syntaxeme.LIST_ELEMENT;
+					currWord.value = alphabet.restOfLine().trim();
+					wordsOfLine.add( currWord );
+					parsed.add( wordsOfLine );
+					break;
+				}
+				case COMMENT_OP :
+				{
+					if ( emptyLines > 0 )
+					{
+						wordsOfLine.add( emptyLines( emptyLines ) );
+						emptyLines = 0;
+					}
+					currWord = new Word();
+					currWord.type = Syntaxeme.COMMENT;
+					currWord.value = alphabet.restOfLine().trim();
+					wordsOfLine.add( currWord );
+					parsed.add( wordsOfLine );
+					break;
+				}
+				case MULTILINE_OP :
+				{
+					if ( emptyLines > 0 )
+					{
+						wordsOfLine.add( emptyLines( emptyLines ) );
+						emptyLines = 0;
+					}
+					parsed.add( multiline() );
+					break;
+				}
+				case SECTION_OP :
+				{
+					if ( emptyLines > 0 )
+					{
+						wordsOfLine.add( emptyLines( emptyLines ) );
+						emptyLines = 0;
+					}
+					// TODO sectionBeginning();
+					break;
+				}
+				case ESCAPE_OP :
+				{
+					if ( emptyLines > 0 )
+					{
+						wordsOfLine.add( emptyLines( emptyLines ) );
+						emptyLines = 0;
+					}
+					// TODO fieldAny( escapedName() );
+					break;
+				}
+				default :
+				{
+					if ( emptyLines > 0 )
+					{
+						wordsOfLine.add( emptyLines( emptyLines ) );
+						emptyLines = 0;
+					}
+					// TODO fieldAny( unescapedName( DELIM_FIELD_SET_COPY ) );
+					break;
+				}
+			}
+		}
+		while ( nextLine() );
+		return null ; // TODO
+	}
+
+
+	/** ensures this is a valid Eno document.
+	 * @throws RuntimeException otherwise */
 	public void recognize( List<String> fileLines )
 	{
 		if ( fileLines == null || fileLines.isEmpty() )
@@ -93,6 +241,8 @@ public class Parser
 		currLine++;
 		sectionInteriorOld();
 	}
+
+
 	/** various whole eno elements */
 	private void sectionInterior()
 	{
@@ -479,6 +629,48 @@ public class Parser
 	}
 
 
+	private List<Word> multiline()
+	{
+		List<Word> entireBlock = new LinkedList<>();
+		String here = cl +"multiline ";
+		Word boundary = new Word();
+		boundary.type = Syntaxeme.MULTILINE_BOUNDARY;
+		boundary.modifier = currToken.word.length();
+		entireBlock.add( boundary );
+		nextToken();
+		skipWhitespace();
+		if ( currToken.type == Lexeme.ESCAPE_OP )
+		{
+			// handle escapes
+		}
+		// FIX for now, I'm going to fake it
+		Word multilineIdentifier = new Word();
+		multilineIdentifier.type = Syntaxeme.FIELD;
+		multilineIdentifier.value = alphabet.restOfLine().trim();
+		// mod is whether it has escapes
+		entireBlock.add( multilineIdentifier );
+		String cheatingFIX = alphabet.getLine();
+		StringBuilder bla = new StringBuilder();
+		while ( nextLine( true, "didn't end multiline" ) ) // FIX canon complaint
+		{
+			if ( ! alphabet.getLine().equals( cheatingFIX ) )
+			{
+				bla.append( alphabet.getLine() );
+				bla.append( "\n" );
+			}
+			else
+			{
+				break;
+			}
+		}
+		Word mulilineValue = new Word();
+		mulilineValue.type = Syntaxeme.MULTILINE_TEXT; // ASK or value
+		mulilineValue.value = bla.substring( 0, bla.length() -1 );
+		entireBlock.add( mulilineValue );
+		return entireBlock;
+	}
+
+
 	/** get the name, basically */
 	private Phrase templateInstruction()
 	{
@@ -792,6 +984,15 @@ public class Parser
 	}
 
 
+	private Word emptyLines( int preceedingEmptyLines )
+	{
+		Word combined = new Word();
+		combined.type = Syntaxeme.EMPTY;
+		combined.modifier = preceedingEmptyLines;
+		return combined;
+	}
+
+
 	private boolean isCopyOperator( Lexeme something )
 	{
 		// ASK not clear whether that's a lex or parse domain
@@ -805,6 +1006,13 @@ public class Parser
 		// ASK not clear whether that's a lex or parse domain
 		return something == Lexeme.CONTINUE_OP_BREAK
 				|| something == Lexeme.CONTINUE_OP_SAME;
+	}
+
+
+	private void skipWhitespace()
+	{
+		if ( currToken.type == WHITESPACE )
+			nextToken();
 	}
 
 

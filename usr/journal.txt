@@ -1,4 +1,14 @@
 
+# 190123
+
+Trying a simpler parser that just classifies the tokens on the line. Then, I can have another pass check the syntax for whether there's a value continuation followed by a list sub element. When I'm there, I'm inclined to make a tree of ContainerElement, which will be section or 'field'. When looking through, I'll cast to the appropriate subclass based on the type. I'm not going to give the base class everything. I'll just have to deal with the consequence of that, rather than carry a map and list and string on every element, even components. Time over space, this round.
+
+# 190121
+
+Oh, his 'templated fields and blocks should not permit continuations' rfc needs to be rejected in syntax analysis (maybe) or syntax needs to leave a mark on the field, such that semantic analysis will notice the continued value field on a templated field and reject it. I can worry about it when I actually build the tree.
+To be clear, I may be 'interpreting' these values too early. Which is to say, maybe I shouldn't be binding all the values together, so much as recognizing the phrases in each line and just saying what it is. You know: field name ; template name ;; continuation ;; comment. Then semantic analysis vets whether there's a map list combo in the same field or whatever. Maybe.
+Actually, maybe I should do exactly that. Parser then produces a list of lines, which are a list of phrases. It can hand that to a syntax analyzer that will actually check for things like a continuation below a templated field. That sounds a bit like semantic analysis, but the latter will perform the template operations and prep the symbol table (Or each section has its own symbol table?)
+
 # 190119
 
 Working on recognizing. Make sure that these things that try next line inflexibly don't just try forever. Consider catching with the complaining version, to know when to break. Or, if I have a thing that knows when the document is fully recognized (no lines left), break and let the stack unwind.
