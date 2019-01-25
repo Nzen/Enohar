@@ -1,4 +1,12 @@
 
+# 190124
+
+Should I use eno for this journal ? le sigh.
+
+I'm in a bind with section. It needs a name, an indicator of how deep the section is, and whether the value (name) has some number of escapes. I could put another number in Word, but this seems like the only place I'll need it. Oh, multiline. But, I already happen to have synaxemes for the border and the text. Oh. That doesn't help. Right, it's not solved yet because I cheated. I'm wondering if I should split the operator in this case from the identifier. I guess so.
+
+unescaped name returns word. Maybe I should just be symmetric across both. Well, I want to include whitespace, so unless I add the collection from name to the active list, I might as well accept and return list from both, on the assumption that I should use each the same way.
+
 # 190123
 
 Trying a simpler parser that just classifies the tokens on the line. Then, I can have another pass check the syntax for whether there's a value continuation followed by a list sub element. When I'm there, I'm inclined to make a tree of ContainerElement, which will be section or 'field'. When looking through, I'll cast to the appropriate subclass based on the type. I'm not going to give the base class everything. I'll just have to deal with the consequence of that, rather than carry a map and list and string on every element, even components. Time over space, this round.

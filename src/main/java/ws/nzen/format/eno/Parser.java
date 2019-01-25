@@ -194,7 +194,7 @@ public class Parser
 						wordsOfLine.add( emptyLines( emptyLines ) );
 						emptyLines = 0;
 					}
-					// TODO sectionBeginning();
+					parsed.add( section( wordsOfLine ) );
 					break;
 				}
 				case ESCAPE_OP :
@@ -309,12 +309,12 @@ public class Parser
 				}
 				case ESCAPE_OP :
 				{
-					fieldAny( escapedName() );
+					fieldAny( recognizeEscapedName() );
 					break;
 				}
 				default :
 				{
-					fieldAny( unescapedName( DELIM_FIELD_COPY ) );
+					fieldAny( recognizeUnescapedName( DELIM_FIELD_COPY ) );
 					break;
 				}
 			}
@@ -347,7 +347,7 @@ public class Parser
 				}
 				case ESCAPE_OP :
 				{
-					fieldBeginningOld( escapedName() );
+					fieldBeginningOld( recognizeEscapedName() );
 					break;
 				}
 				case MULTILINE_OP :
@@ -394,11 +394,43 @@ public class Parser
 				case TEXT :
 				default :
 				{
-					fieldBeginningOld( unescapedName( DELIM_FIELD_COPY ) );
+					fieldBeginningOld( recognizeUnescapedName( DELIM_FIELD_COPY ) );
 					break;
 				}
 			}
 		}
+	}
+
+
+	private List<Word> section( List<Word> line )
+	{
+		String here = cl +"section ";
+		if ( line == null )
+		{
+			line = new LinkedList<>();
+		}
+		if ( currToken.type == Lexeme.SECTION_OP )
+			nextToken();
+		skipWhitespace();
+		if ( currToken.type == ESCAPE_OP )
+		{
+			// line.add( escapedName() );
+		}
+		else if ( ! DELIM_END_COPY.contains( currToken.type ) )
+		{
+			// line.add( unescapedName( DELIM_END_COPY ) );
+		}
+		else
+		{
+			// FIX use canon complaint
+			throw new RuntimeException( here +"section name should not start with "+ currToken );
+		}
+		skipWhitespace();
+		if ( isCopyOperator( currToken.type ) )
+		{
+			// line.add( templateInstruction() );
+		}
+		return line;
 	}
 
 
@@ -410,15 +442,14 @@ public class Parser
 		declaration.type = Syntaxeme.SECTION;
 		declaration.words = currToken.word;
 		nextToken();
-		if ( currToken.type == WHITESPACE )
-			nextToken();
+		skipWhitespace();
 		if ( currToken.type == ESCAPE_OP )
 		{
-			escapedName();
+			recognizeEscapedName();
 		}
 		else if ( ! DELIM_END_COPY.contains( currToken.type ) )
 		{
-			unescapedName( DELIM_END_COPY );
+			recognizeUnescapedName( DELIM_END_COPY );
 		}
 		else
 		{
@@ -450,7 +481,7 @@ public class Parser
 
 
 	/** ex `banana` || `` aba`ana`` */
-	private Phrase escapedName()
+	private Phrase recognizeEscapedName()
 	{
 		String here = cl +"escaped ";
 		Phrase escape = new Phrase();
@@ -500,8 +531,20 @@ public class Parser
 	}
 
 
+	private List<Word> escapedName( List<Word> line )
+	{
+		String here = cl +"escaped name ";
+		if (line == null )
+		{
+			line = new LinkedList<>();
+		}
+		skipWhitespace();
+		return null; // TODO
+	}
+
+
 	/** a name for section, field, or set item */
-	private Phrase unescapedName( Set<Lexeme> delimiters )
+	private Phrase recognizeUnescapedName( Set<Lexeme> delimiters )
 	{
 		String here = cl +"un ";
 		if ( currToken.type == WHITESPACE )
@@ -552,11 +595,11 @@ public class Parser
 		Phrase leadingName;
 		if ( currToken.type == ESCAPE_OP )
 		{
-			leadingName = escapedName();
+			leadingName = recognizeEscapedName();
 		}
 		else
 		{
-			leadingName = unescapedName( DELIM_END );
+			leadingName = recognizeUnescapedName( DELIM_END );
 		}
 		// save the rest as body until we match the block boundary
 		nextLine( true, here +"opened multiline "+ blockStartedAt +" without closing before eof" );
@@ -586,11 +629,11 @@ public class Parser
 				}
 				else if ( currToken.type == ESCAPE_OP )
 				{
-					secondName = escapedName();
+					secondName = recognizeEscapedName();
 				}
 				else
 				{
-					secondName = unescapedName( DELIM_END );
+					secondName = recognizeUnescapedName( DELIM_END );
 				}
 				// check if the name matches
 				if ( secondName.words.equals( leadingName.words ) )
@@ -690,11 +733,11 @@ public class Parser
 		Phrase targetName = new Phrase();
 		if ( currToken.type == ESCAPE_OP )
 		{
-			targetName = escapedName();
+			targetName = recognizeEscapedName();
 		}
 		else
 		{
-			targetName = unescapedName( DELIM_END );
+			targetName = recognizeUnescapedName( DELIM_END );
 		}
 		return targetName;
 	}
@@ -741,11 +784,11 @@ public class Parser
 			Phrase nextName;
 			if ( currToken.type == Lexeme.ESCAPE_OP )
 			{
-				nextName = escapedName();
+				nextName = recognizeEscapedName();
 			}
 			else
 			{
-				nextName = unescapedName( DELIM_SET_FIELD_COPY );
+				nextName = recognizeUnescapedName( DELIM_SET_FIELD_COPY );
 			}
 			// NP here ; maybe handle end of document ? or just keep punting up to section
 			if ( currToken.type == Lexeme.SET_OP )
@@ -927,7 +970,7 @@ public class Parser
 				}
 				case ESCAPE_OP :
 				{
-					tempName = nameInFieldInteriorOld( escapedName(), styleOfValue );
+					tempName = nameInFieldInteriorOld( recognizeEscapedName(), styleOfValue );
 					if ( tempName.type == FIELD )
 						return tempName; // NOTE a new field
 					else
@@ -936,7 +979,7 @@ public class Parser
 				}
 				default :
 				{
-					tempName = nameInFieldInteriorOld( unescapedName( DELIM_SET_FIELD_COPY ),
+					tempName = nameInFieldInteriorOld( recognizeUnescapedName( DELIM_SET_FIELD_COPY ),
 							styleOfValue );
 					if ( tempName.type == FIELD )
 						return tempName; // NOTE a new field
