@@ -18,28 +18,33 @@ import static ws.nzen.format.eno.Syntaxeme.FIELD_ESCAPE;
 import static ws.nzen.format.eno.Syntaxeme.SHALLOW_COPY;
 import static ws.nzen.format.eno.Syntaxeme.VALUE;
 
+import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Queue;
+import java.util.ResourceBundle;
 import java.util.Set;
 import java.util.Stack;
 import java.util.TreeSet;
+
+import org.eno_lang.locale.EnoAlias;
 
 /**  */
 public class Parser
 {
 	private static final String cl = "p.";
-	static final Set<Lexeme> DELIM_END_COPY = new TreeSet<>();
-	static final Set<Lexeme> DELIM_SET_FIELD_COPY = new TreeSet<>();
-	static final Set<Lexeme> DELIM_FIELD_COPY = new TreeSet<>();
-	static final Set<Lexeme> DELIM_END = new TreeSet<>();
-	// eventually handle exception store localization, output formatter
+	protected static final Set<Lexeme> DELIM_END_COPY = new TreeSet<>();
+	protected static final Set<Lexeme> DELIM_SET_FIELD_COPY = new TreeSet<>();
+	protected static final Set<Lexeme> DELIM_FIELD_COPY = new TreeSet<>();
+	protected static final Set<Lexeme> DELIM_END = new TreeSet<>();
 	protected Queue<String> allLines = new LinkedList<>();
 	protected Lexer alphabet = new Lexer();
 	protected Lexer.Token currToken;
 	protected int currLine = 0;
 	protected ParseContext currState = ParseContext.SECTION_INTERIOR;
+	// eventually handle exception store localization, output formatter
+	protected ResourceBundle rbToken;
 	@Deprecated
 	private Stack<Lexer.Token> lexed = new Stack<>(); // ASK or a deque ?
 	public class Phrase
@@ -68,10 +73,11 @@ public class Parser
 	public Parser()
 	{
 		prepFieldDelimiters();
+		prepExceptionMessages();
 	}
 
 
-	private void prepFieldDelimiters()
+	protected void prepFieldDelimiters()
 	{
 		DELIM_END_COPY.add( END );
 		DELIM_END_COPY.add( COPY_OP_DEEP );
@@ -84,6 +90,13 @@ public class Parser
 		DELIM_FIELD_COPY.add( COPY_OP_DEEP );
 		DELIM_FIELD_COPY.add( COPY_OP_THIN );
 		DELIM_END.add( END );
+	}
+
+
+	protected void prepExceptionMessages()
+	{
+		String tokenization = "Tokenization";
+		rbToken = ResourceBundle.getBundle( tokenization );
 	}
 
 
@@ -531,7 +544,9 @@ public class Parser
 	}
 
 
-	private List<Word> escapedName( List<Word> line )
+	/** Recognize token sequence of ` text ` with matching number of
+	 * backticks at the border. */
+	protected List<Word> escapedName( List<Word> line )
 	{
 		String here = cl +"escaped name ";
 		if (line == null )
@@ -539,7 +554,82 @@ public class Parser
 			line = new LinkedList<>();
 		}
 		skipWhitespace();
-		return null; // TODO
+		StringBuilder namePieces = new StringBuilder();
+		String lastNibble = "";
+		Lexeme lastLex = null;
+		Word name = new Word();
+		name.type = Syntaxeme.FIELD;
+		name.modifier = currToken.word.length();
+		do
+		{
+			if ( currToken.type == END )
+			{
+				MessageFormat problem = new MessageFormat(
+						rbToken.getString( EnoAlias.UNTERMINATED_ESCAPED_NAME ) );
+				throw new RuntimeException( problem.format( new Object[]{ currLine } ) );
+			}
+			else if ( currToken.type == ESCAPE_OP
+					&& currToken.word.length() == name.modifier
+					&& ( namePieces.length() >= 1 || ! lastNibble.isEmpty() ) )
+			{
+				// NOTE this is the closing escape boundary
+				if ( lastLex != WHITESPACE )
+				{
+					namePieces.append( lastNibble );
+				}
+				name.value = namePieces.toString();
+				break;
+			}
+			else
+			{
+				namePieces.append( lastNibble );
+				lastNibble = currToken.word;
+				nextToken();
+			}
+		}
+		while ( true );
+		line.add( name );
+		return line;
+	}
+
+
+	protected List<Word> unescapedName( List<Word> line, Set<Lexeme> delimiters )
+	{
+		if ( ! delimiters.contains( END ) )
+		{
+			// assert paranoid
+			throw new RuntimeException( cl +"un will not terminate"
+					+ " without End as a delimiter; quitting" );
+		}
+		skipWhitespace();
+		Word name = new Word();
+		name.type = FIELD;
+		String lastPiece = currToken.word;
+		Lexeme lastType = currToken.type;
+		StringBuilder pieces = new StringBuilder();
+		nextToken();
+		do
+		{
+			if ( delimiters.contains( currToken.type ) )
+			{
+				if ( lastType != WHITESPACE )
+				{
+					pieces.append( lastPiece );
+				}
+				name.value = pieces.toString();
+				break;
+			}
+			else
+			{
+				pieces.append( lastPiece );
+				lastPiece = currToken.word;
+				lastType = currToken.type;
+				nextToken();
+			}
+		}
+		while ( true );
+		line.add( name );
+		return line;
 	}
 
 
@@ -684,7 +774,11 @@ public class Parser
 		skipWhitespace();
 		if ( currToken.type == Lexeme.ESCAPE_OP )
 		{
-			// handle escapes
+			entireBlock = escapedName( entireBlock );
+		}
+		else
+		{
+			entireBlock = unescapedName( entireBlock, DELIM_END );
 		}
 		// FIX for now, I'm going to fake it
 		Word multilineIdentifier = new Word();
@@ -706,6 +800,91 @@ public class Parser
 				break;
 			}
 		}
+		/*
+		Phrase boundary = new Phrase();
+		boundary.words = currToken.word;
+		boundary.type = MULTILINE_BOUNDARY;
+		int blockStartedAt = currLine;
+
+		// get the name
+		nextToken();
+		if ( currToken.type == WHITESPACE )
+			nextToken();
+		Phrase leadingName;
+		if ( currToken.type == ESCAPE_OP )
+		{
+			leadingName = recognizeEscapedName();
+		}
+		else
+		{
+			leadingName = recognizeUnescapedName( DELIM_END );
+		}
+		// save the rest as body until we match the block boundary
+		nextLine( true, here +"opened multiline "+ blockStartedAt +" without closing before eof" );
+		StringBuilder blockBodyWords = new StringBuilder();
+		Phrase secondName = null;
+		Phrase secondBoundary = new Phrase();
+		secondBoundary.type = MULTILINE_BOUNDARY;
+		do
+		{
+			if ( currToken.type == WHITESPACE )
+				nextToken();
+			if ( currToken.type == MULTILINE_OP
+					&& boundary.words.length() == currToken.word.length() )
+			{
+				secondBoundary.words = currToken.word;
+				nextToken();
+				if ( currToken.type == WHITESPACE )
+					nextToken();
+				// try to get a name from it, check for match
+				if ( currToken.type == END )
+				{
+					blockBodyWords.append( System.lineSeparator() );
+					blockBodyWords.append( alphabet.getLine() );
+					// FIX use canon complaint
+					nextLine( true, here +"opened multiline "+ blockStartedAt +" without closing before eof" );
+					continue;
+				}
+				else if ( currToken.type == ESCAPE_OP )
+				{
+					secondName = recognizeEscapedName();
+				}
+				else
+				{
+					secondName = recognizeUnescapedName( DELIM_END );
+				}
+				// check if the name matches
+				if ( secondName.words.equals( leadingName.words ) )
+				{
+					// entire boundary matches, block is over
+					break;
+				}
+				else
+				{
+					blockBodyWords.append( System.lineSeparator() );
+					blockBodyWords.append( alphabet.getLine() );
+					// FIX use canon complaint
+					nextLine( true, here +"opened multiline "+ blockStartedAt +" without closing before eof" );
+				}
+			}
+			else
+			{
+				blockBodyWords.append( System.lineSeparator() );
+				blockBodyWords.append( alphabet.getLine() );
+				// FIX use canon complaint
+				nextLine( true, here +"opened multiline "+ blockStartedAt +" without closing before eof" );
+			}
+		}
+		while ( true ); // leave by finding second boundary
+		Phrase blockBody = new Phrase();
+		blockBody.type = MULTILINE_TEXT;
+		if ( blockBodyWords.length() > 0 )
+		{
+			blockBody.words = blockBodyWords.substring(
+					System.lineSeparator().length() ); // NOTE remove extra prefix
+		}
+		currState = ParseContext.SECTION_INTERIOR;
+		*/
 		Word mulilineValue = new Word();
 		mulilineValue.type = Syntaxeme.MULTILINE_TEXT; // ASK or value
 		mulilineValue.value = bla.substring( 0, bla.length() -1 );
