@@ -18,7 +18,7 @@ public class Lexer
 			ALPHA_LIST = '-', ALPHA_SET = '=',
 			ALPHA_FIELD = ':', ALPHA_REM = '>',
 			ALPHA_COPY = '<', ALPHA_ESCAPE = '`',
-			ALPHA_LC_SAME = '\\', ALPHA_LC_BREAK = '|',
+			ALPHA_LC_SAME = '\\', ALPHA_LC_BLANK = '|',
 			ALPHA_SPACE = ' ', ALPHA_TAB = '\t';
 	/** valid characters */
 	private Set<Character> alphabet;
@@ -41,8 +41,8 @@ public class Lexer
 		alphabet.add( COPY_OP_THIN.getChar() );
 		alphabet.add( ESCAPE_OP.getChar() );
 		alphabet.add( FIELD_START_OP.getChar() );
-		alphabet.add( CONTINUE_OP_BREAK.getChar() );
-		alphabet.add( CONTINUE_OP_SAME.getChar() );
+		alphabet.add( CONTINUE_OP_EMPTY.getChar() );
+		alphabet.add( CONTINUE_OP_SPACE.getChar() );
 		alphabet.add( LIST_OP.getChar() );
 		alphabet.add( COMMENT_OP.getChar() );
 		alphabet.add( SECTION_OP.getChar() );
@@ -105,15 +105,15 @@ public class Lexer
 				result.word = ":";
 				break;
 			}
-			case ALPHA_LC_BREAK :
+			case ALPHA_LC_BLANK :
 			{
-				result.type = CONTINUE_OP_BREAK;
+				result.type = CONTINUE_OP_EMPTY;
 				result.word = "|";
 				break;
 			}
 			case ALPHA_LC_SAME :
 			{
-				result.type = CONTINUE_OP_SAME;
+				result.type = CONTINUE_OP_SPACE;
 				result.word = "\\";
 				break;
 			}
@@ -144,7 +144,7 @@ public class Lexer
 			{
 				result.type = SECTION_OP;
 				bookmark = cursorInd -1;
-				cursorInd = indexOfDivergenceFrom( ALPHA_ESCAPE );
+				cursorInd = indexOfDivergenceFrom( ALPHA_SECTION );
 				result.word = line.substring( bookmark, cursorInd );
 				break;
 			}

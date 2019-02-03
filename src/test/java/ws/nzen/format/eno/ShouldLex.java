@@ -59,7 +59,7 @@ class ShouldLex
 		base = "\\";
 		llk.setLine( base );
 		struct = llk.nextToken();
-		assertEquals( Lexeme.CONTINUE_OP_SAME, struct.type, "backslash" );
+		assertEquals( Lexeme.CONTINUE_OP_SPACE, struct.type, "backslash" );
 		base = "<";
 		llk.setLine( base );
 		struct = llk.nextToken();
@@ -71,7 +71,7 @@ class ShouldLex
 		base = "|";
 		llk.setLine( base );
 		struct = llk.nextToken();
-		assertEquals( Lexeme.CONTINUE_OP_BREAK, struct.type, "pipe" );
+		assertEquals( Lexeme.CONTINUE_OP_EMPTY, struct.type, "pipe" );
 		base = "=";
 		llk.setLine( base );
 		struct = llk.nextToken();
@@ -87,18 +87,22 @@ class ShouldLex
 		llk.setLine( base );
 		struct = llk.nextToken();
 		assertEquals( Lexeme.ESCAPE_OP, struct.type, "single escape" );
+		assertEquals( base.length(), struct.word.length() );
 		base = "`````";
 		llk.setLine( base );
 		struct = llk.nextToken();
 		assertEquals( Lexeme.ESCAPE_OP, struct.type, "long escape" );
+		assertEquals( base.length(), struct.word.length() );
 		base = "--";
 		llk.setLine( base );
 		struct = llk.nextToken();
 		assertEquals( Lexeme.MULTILINE_OP, struct.type, "min block" );
+		assertEquals( base.length(), struct.word.length() );
 		base = "------";
 		llk.setLine( base );
 		struct = llk.nextToken();
 		assertEquals( Lexeme.MULTILINE_OP, struct.type, "long block" );
+		assertEquals( base.length(), struct.word.length() );
 		base = "#";
 		llk.setLine( base );
 		struct = llk.nextToken();
@@ -107,6 +111,7 @@ class ShouldLex
 		llk.setLine( base );
 		struct = llk.nextToken();
 		assertEquals( Lexeme.SECTION_OP, struct.type, "long section" );
+		assertEquals( base.length(), struct.word.length() );
 		base = " ";
 		llk.setLine( base );
 		struct = llk.nextToken();
@@ -115,22 +120,27 @@ class ShouldLex
 		llk.setLine( base );
 		struct = llk.nextToken();
 		assertEquals( Lexeme.WHITESPACE, struct.type, "long space" );
+		assertEquals( base.length(), struct.word.length() );
 		base = "\t";
 		llk.setLine( base );
 		struct = llk.nextToken();
 		assertEquals( Lexeme.WHITESPACE, struct.type, "tab" );
+		assertEquals( base.length(), struct.word.length() );
 		base = "\t\t\t";
 		llk.setLine( base );
 		struct = llk.nextToken();
 		assertEquals( Lexeme.WHITESPACE, struct.type, "long tab" );
+		assertEquals( base.length(), struct.word.length() );
 		base = "\t ";
 		llk.setLine( base );
 		struct = llk.nextToken();
 		assertEquals( Lexeme.WHITESPACE, struct.type, "mixed tab space" );
+		assertEquals( base.length(), struct.word.length() );
 		base = "<<";
 		llk.setLine( base );
 		struct = llk.nextToken();
 		assertEquals( Lexeme.COPY_OP_DEEP, struct.type, "" );
+		assertEquals( base.length(), struct.word.length() );
 		// base = "<<<<";
 		base = "a";
 		llk.setLine( base );
@@ -144,6 +154,7 @@ class ShouldLex
 		llk.setLine( base );
 		struct = llk.nextToken();
 		assertEquals( Lexeme.TEXT, struct.type, "long text" );
+		assertEquals( base.length(), struct.word.length() );
 	}
 
 
@@ -174,7 +185,7 @@ class ShouldLex
 		struct = llk.nextToken();
 		assertEquals( Lexeme.WHITESPACE, struct.type, "space" );
 		struct = llk.nextToken();
-		assertEquals( Lexeme.CONTINUE_OP_SAME, struct.type, "backslash" );
+		assertEquals( Lexeme.CONTINUE_OP_SPACE, struct.type, "backslash" );
 		struct = llk.nextToken();
 		assertEquals( Lexeme.WHITESPACE, struct.type, "space" );
 		struct = llk.nextToken();
