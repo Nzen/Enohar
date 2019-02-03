@@ -5,9 +5,9 @@ public enum Lexeme
 	/** space or tab */
 	WHITESPACE( ' ' ),
 	/** \ backslash */
-	CONTINUE_OP_SAME( '\\' ),
+	CONTINUE_OP_SPACE( '\\' ),
 	/** | pipe */
-	CONTINUE_OP_BREAK( '|' ),
+	CONTINUE_OP_EMPTY( '|' ),
 	/** # octothorpe */
 	SECTION_OP( '#' ),
 	/** &gt; greater than */

@@ -31,8 +31,11 @@ public class Parser
 	// eventually handle exception store localization, output formatter
 	protected ResourceBundle rbToken;
 	protected ResourceBundle rbAnalysis;
+	/** Word.modifier value for empty continuation, ie | */
 	public static final int WORD_MOD_CONT_EMPTY = 1;
-	public static final int WORD_MOD_CONT_SPACE = WORD_MOD_CONT_EMPTY +1;
+	/** Word.modifier value for space continuation, ie \ */
+	public static final int WORD_MOD_CONT_SPACE
+			= WORD_MOD_CONT_EMPTY +1;
 	public class Phrase
 	{
 		public Syntaxeme type;
@@ -138,8 +141,8 @@ public class Parser
 							rbAnalysis.getString( EnoAlias.MISSING_NAME_FOR_FIELDSET_ENTRY ) );
 					throw new RuntimeException( problem.format( new Object[]{ currLine } ) );
 				}
-				case CONTINUE_OP_BREAK :
-				case CONTINUE_OP_SAME :
+				case CONTINUE_OP_EMPTY :
+				case CONTINUE_OP_SPACE :
 				{
 					if ( emptyLines > 0 )
 					{
@@ -148,7 +151,7 @@ public class Parser
 					}
 					currWord = new Word();
 					currWord.type = Syntaxeme.VALUE;
-					currWord.modifier = ( currToken.type == CONTINUE_OP_SAME )
+					currWord.modifier = ( currToken.type == CONTINUE_OP_SPACE )
 							? WORD_MOD_CONT_SPACE
 							: WORD_MOD_CONT_EMPTY;
 					currWord.value = alphabet.restOfLine().trim();
@@ -228,6 +231,312 @@ public class Parser
 	}
 
 
+	/** op, name, maybe template */
+	private List<Word> section( List<Word> line )
+	{
+		String here = cl +"section ";
+		if ( line == null )
+		{
+			line = new LinkedList<>();
+		}
+		if ( currToken.type == Lexeme.SECTION_OP )
+		{
+			nextToken();
+		}
+		skipWhitespace();
+		if ( currToken.type == ESCAPE_OP )
+		{
+			line = escapedName( line );
+		}
+		else if ( ! DELIM_END_COPY.contains( currToken.type ) )
+		{
+			line = unescapedName( line, DELIM_END_COPY );
+		}
+		else
+		{
+			// NOTE line looks like # < nn OR # /n;; It needs a name
+			MessageFormat problem = new MessageFormat(
+					rbToken.getString( EnoAlias.INVALID_LINE ) );
+			throw new RuntimeException( problem.format( new Object[]{ currLine } ) );
+		}
+		skipWhitespace();
+		if ( isCopyOperator( currToken.type ) )
+		{
+			line = template( line );
+		}
+		return line;
+	}
+
+
+	/** Recognize token sequence of ` text ` with matching number of
+	 * backticks at the border. */
+	protected List<Word> escapedName( List<Word> line )
+	{
+		String here = cl +"escaped name ";
+		if (line == null )
+		{
+			line = new LinkedList<>();
+		}
+		skipWhitespace();
+		StringBuilder namePieces = new StringBuilder();
+		String lastNibble = "";
+		Lexeme lastLex = null;
+		Word name = new Word();
+		name.type = Syntaxeme.FIELD;
+		name.modifier = currToken.word.length();
+		do
+		{
+			if ( currToken.type == END )
+			{
+				MessageFormat problem = new MessageFormat(
+						rbToken.getString( EnoAlias.UNTERMINATED_ESCAPED_NAME ) );
+				throw new RuntimeException( problem.format( new Object[]{ currLine } ) );
+			}
+			else if ( currToken.type == ESCAPE_OP
+					&& currToken.word.length() == name.modifier
+					&& ( namePieces.length() >= 1 || ! lastNibble.isEmpty() ) )
+			{
+				// NOTE this is the closing escape boundary
+				if ( lastLex != WHITESPACE )
+				{
+					namePieces.append( lastNibble );
+				}
+				name.value = namePieces.toString();
+				break;
+			}
+			else
+			{
+				namePieces.append( lastNibble );
+				lastNibble = currToken.word;
+				nextToken();
+			}
+		}
+		while ( true );
+		line.add( name );
+		return line;
+	}
+
+
+	/** text trimmed of white, delimited by specified lexemes */
+	protected List<Word> unescapedName( List<Word> line, Set<Lexeme> delimiters )
+	{
+		if ( ! delimiters.contains( END ) )
+		{
+			// assert paranoid
+			throw new RuntimeException( cl +"un will not terminate"
+					+ " without End as a delimiter; quitting" );
+		}
+		if ( line == null )
+		{
+			line = new LinkedList<>();
+		}
+		skipWhitespace();
+		Word name = new Word();
+		name.type = FIELD;
+		String lastPiece = currToken.word;
+		Lexeme lastType = currToken.type;
+		StringBuilder pieces = new StringBuilder();
+		nextToken();
+		do
+		{
+			if ( delimiters.contains( currToken.type ) )
+			{
+				if ( lastType != WHITESPACE )
+				{
+					pieces.append( lastPiece );
+				}
+				name.value = pieces.toString();
+				break;
+			}
+			else
+			{
+				pieces.append( lastPiece );
+				lastPiece = currToken.word;
+				lastType = currToken.type;
+				nextToken();
+			}
+		}
+		while ( true );
+		line.add( name );
+		return line;
+	}
+
+
+	/** consume lines until one matches the first line */
+	private List<Word> multiline( List<Word>entireBlock )
+	{
+		String here = cl +"multiline ";
+		if ( entireBlock == null )
+		{
+			entireBlock = new LinkedList<>();
+		}
+		Word boundary = new Word();
+		boundary.type = Syntaxeme.MULTILINE_BOUNDARY;
+		boundary.modifier = currToken.word.length();
+		entireBlock.add( boundary );
+		// NOTE get the name
+		nextToken();
+		skipWhitespace();
+		if ( currToken.type == Lexeme.ESCAPE_OP )
+		{
+			entireBlock = escapedName( entireBlock );
+		}
+		else
+		{
+			entireBlock = unescapedName( entireBlock, DELIM_END );
+		}
+		// NOTE save the rest as body until we match the block boundary
+		int blockStartedAt = currLine;
+		Word multilineIdentifier = entireBlock.get( entireBlock.size() -1 );
+		Word secondIdentifier;
+		List<Word> lineProxy = new ArrayList<>( 2 );
+		StringBuilder multilineText = new StringBuilder();
+		MessageFormat problem = new MessageFormat(
+				rbToken.getString( EnoAlias.UNTERMINATED_BLOCK ) );
+		String complaint = problem.format( new Object[]{ multilineIdentifier.value, blockStartedAt } );
+		nextLine( true, complaint );
+		do
+		{
+			skipWhitespace();
+			if ( currToken.type == MULTILINE_OP
+					&& currToken.word.length() == boundary.modifier )
+			{
+				nextToken();
+				skipWhitespace();
+				if ( currToken.type == END )
+				{
+					multilineText.append( System.lineSeparator() );
+					multilineText.append( alphabet.getLine() );
+					nextLine( true, complaint );
+					continue;
+				}
+				else if ( currToken.type == ESCAPE_OP
+						&& multilineIdentifier.modifier > 0 )
+				{
+					lineProxy = escapedName( lineProxy );
+				}
+				else
+				{
+					lineProxy = unescapedName( lineProxy, DELIM_END );
+				}
+				// NOTE check if the name matches
+				secondIdentifier = lineProxy.get( lineProxy.size() -1 );
+				if ( multilineIdentifier.value == secondIdentifier.value
+						&& multilineIdentifier.modifier == secondIdentifier.modifier )
+				{
+					// NOTE entire boundary matches, block is over, not saving the bottom
+					break;
+				}
+				else
+				{
+					// NOTE not a match, continue
+					multilineText.append( System.lineSeparator() );
+					multilineText.append( alphabet.getLine() );
+					lineProxy.clear();
+					nextLine( true, complaint );
+					continue;
+				}
+			}
+			else
+			{
+				multilineText.append( System.lineSeparator() );
+				multilineText.append( alphabet.getLine() );
+				lineProxy.clear();
+				nextLine( true, complaint );
+			}
+		}
+		while ( true );
+		Word mulilineValue = new Word();
+		mulilineValue.type = Syntaxeme.MULTILINE_TEXT;
+		if ( multilineText.length() > 0 )
+		{
+			// NOTE cut leading newline
+			mulilineValue.value = multilineText
+					.substring( System.lineSeparator().length() );
+		}
+		entireBlock.add( mulilineValue );
+		return entireBlock;
+	}
+
+
+	/** op, name */
+	protected List<Word> template( List<Word> line )
+	{
+		if ( line == null )
+		{
+			line = new LinkedList<>();
+		}
+		if ( ! isCopyOperator( currToken.type ) )
+		{
+			throw new RuntimeException( cl +"template unable to record copy depth;"
+					+ " cursor has moved past it "+ currToken );
+		}
+		Word copyOperator = new Word();
+		copyOperator.modifier = currToken.word.length();
+		line.add( copyOperator );
+		nextToken();
+		skipWhitespace();
+		if ( currToken.type == Lexeme.ESCAPE_OP )
+		{
+			line = escapedName( line );
+		}
+		else
+		{
+			line = unescapedName( line, DELIM_END );
+		}
+		return line;
+	}
+
+
+	/** name, value or template */
+	protected List<Word> fieldAny( List<Word> line )
+	{
+		String here = cl +"field or set ";
+		if ( line == null )
+		{
+			line = new LinkedList<>();
+		}
+		if ( currToken.type == Lexeme.ESCAPE_OP )
+		{
+			line = escapedName( line );
+		}
+		else
+		{
+			line = unescapedName( line, DELIM_SET_FIELD_COPY );
+		}
+		if ( currToken.type == Lexeme.SET_OP )
+		{
+			nextToken();
+			Word setEntry = new Word();
+			setEntry.type = Syntaxeme.SET_ELEMENT;
+			setEntry.value = alphabet.restOfLine().trim();
+			line.add( setEntry );
+		}
+		else if ( currToken.type == FIELD_START_OP )
+		{
+			nextToken();
+			skipWhitespace();
+			if ( isCopyOperator( currToken.type ) )
+			{
+				line = template( line );
+			}
+		}
+		else if ( isCopyOperator( currToken.type ) )
+		{
+			line = template( line );
+		}
+		else
+		{
+			Word value = new Word();
+			value.type = Syntaxeme.VALUE;
+			value.value = alphabet.restOfLine().trim();
+			line.add( value );
+		}
+		return line;
+	}
+
+
+	@Deprecated
 	/** ensures this is a valid Eno document.
 	 * @throws RuntimeException otherwise */
 	public void recognize( List<String> fileLines )
@@ -270,8 +579,8 @@ public class Parser
 					}
 					break;
 				}
-				case CONTINUE_OP_BREAK :
-				case CONTINUE_OP_SAME :
+				case CONTINUE_OP_EMPTY :
+				case CONTINUE_OP_SPACE :
 				{
 					// FIX use canon complaint
 					throw new RuntimeException( here +"continuation started without assignment "+ currToken );
@@ -370,8 +679,8 @@ public class Parser
 					}
 					break;
 				}
-				case CONTINUE_OP_BREAK :
-				case CONTINUE_OP_SAME :
+				case CONTINUE_OP_EMPTY :
+				case CONTINUE_OP_SPACE :
 				{
 					// FIX use canon complaint
 					throw new RuntimeException( here +"continuation started without assignment "+ currToken );
@@ -405,41 +714,6 @@ public class Parser
 				}
 			}
 		}
-	}
-
-
-	/** op, name, maybe template */
-	private List<Word> section( List<Word> line )
-	{
-		String here = cl +"section ";
-		if ( line == null )
-		{
-			line = new LinkedList<>();
-		}
-		if ( currToken.type == Lexeme.SECTION_OP )
-			nextToken();
-		skipWhitespace();
-		if ( currToken.type == ESCAPE_OP )
-		{
-			line = escapedName( line );
-		}
-		else if ( ! DELIM_END_COPY.contains( currToken.type ) )
-		{
-			line = unescapedName( line, DELIM_END_COPY );
-		}
-		else
-		{
-			// NOTE line looks like # < nn OR # /n;; It needs a name
-			MessageFormat problem = new MessageFormat(
-					rbToken.getString( EnoAlias.INVALID_LINE ) );
-			throw new RuntimeException( problem.format( new Object[]{ currLine } ) );
-		}
-		skipWhitespace();
-		if ( isCopyOperator( currToken.type ) )
-		{
-			line = template( line );
-		}
-		return line;
 	}
 
 
@@ -540,100 +814,6 @@ public class Parser
 		System.out.println( here +"recognized "+ escape );
 		System.out.println( here +"recognized "+ name );
 		return name;
-	}
-
-
-	/** Recognize token sequence of ` text ` with matching number of
-	 * backticks at the border. */
-	protected List<Word> escapedName( List<Word> line )
-	{
-		String here = cl +"escaped name ";
-		if (line == null )
-		{
-			line = new LinkedList<>();
-		}
-		skipWhitespace();
-		StringBuilder namePieces = new StringBuilder();
-		String lastNibble = "";
-		Lexeme lastLex = null;
-		Word name = new Word();
-		name.type = Syntaxeme.FIELD;
-		name.modifier = currToken.word.length();
-		do
-		{
-			if ( currToken.type == END )
-			{
-				MessageFormat problem = new MessageFormat(
-						rbToken.getString( EnoAlias.UNTERMINATED_ESCAPED_NAME ) );
-				throw new RuntimeException( problem.format( new Object[]{ currLine } ) );
-			}
-			else if ( currToken.type == ESCAPE_OP
-					&& currToken.word.length() == name.modifier
-					&& ( namePieces.length() >= 1 || ! lastNibble.isEmpty() ) )
-			{
-				// NOTE this is the closing escape boundary
-				if ( lastLex != WHITESPACE )
-				{
-					namePieces.append( lastNibble );
-				}
-				name.value = namePieces.toString();
-				break;
-			}
-			else
-			{
-				namePieces.append( lastNibble );
-				lastNibble = currToken.word;
-				nextToken();
-			}
-		}
-		while ( true );
-		line.add( name );
-		return line;
-	}
-
-
-	/** text trimmed of white, delimited by specified lexemes */
-	protected List<Word> unescapedName( List<Word> line, Set<Lexeme> delimiters )
-	{
-		if ( ! delimiters.contains( END ) )
-		{
-			// assert paranoid
-			throw new RuntimeException( cl +"un will not terminate"
-					+ " without End as a delimiter; quitting" );
-		}
-		if ( line == null )
-		{
-			line = new LinkedList<>();
-		}
-		skipWhitespace();
-		Word name = new Word();
-		name.type = FIELD;
-		String lastPiece = currToken.word;
-		Lexeme lastType = currToken.type;
-		StringBuilder pieces = new StringBuilder();
-		nextToken();
-		do
-		{
-			if ( delimiters.contains( currToken.type ) )
-			{
-				if ( lastType != WHITESPACE )
-				{
-					pieces.append( lastPiece );
-				}
-				name.value = pieces.toString();
-				break;
-			}
-			else
-			{
-				pieces.append( lastPiece );
-				lastPiece = currToken.word;
-				lastType = currToken.type;
-				nextToken();
-			}
-		}
-		while ( true );
-		line.add( name );
-		return line;
 	}
 
 
@@ -768,103 +948,6 @@ public class Parser
 	}
 
 
-	/** consume lines until one matches the first line */
-	private List<Word> multiline( List<Word>entireBlock )
-	{
-		String here = cl +"multiline ";
-		if ( entireBlock == null )
-		{
-			entireBlock = new LinkedList<>();
-		}
-		Word boundary = new Word();
-		boundary.type = Syntaxeme.MULTILINE_BOUNDARY;
-		boundary.modifier = currToken.word.length();
-		entireBlock.add( boundary );
-		// NOTE get the name
-		nextToken();
-		skipWhitespace();
-		if ( currToken.type == Lexeme.ESCAPE_OP )
-		{
-			entireBlock = escapedName( entireBlock );
-		}
-		else
-		{
-			entireBlock = unescapedName( entireBlock, DELIM_END );
-		}
-		// NOTE save the rest as body until we match the block boundary
-		int blockStartedAt = currLine;
-		Word multilineIdentifier = entireBlock.get( entireBlock.size() -1 );
-		Word secondIdentifier;
-		List<Word> lineProxy = new ArrayList<>( 2 );
-		StringBuilder multilineText = new StringBuilder();
-		MessageFormat problem = new MessageFormat(
-				rbToken.getString( EnoAlias.UNTERMINATED_BLOCK ) );
-		String complaint = problem.format( new Object[]{ multilineIdentifier.value, blockStartedAt } );
-		nextLine( true, complaint );
-		do
-		{
-			skipWhitespace();
-			if ( currToken.type == MULTILINE_OP
-					&& currToken.word.length() == boundary.modifier )
-			{
-				nextToken();
-				skipWhitespace();
-				if ( currToken.type == END )
-				{
-					multilineText.append( System.lineSeparator() );
-					multilineText.append( alphabet.getLine() );
-					nextLine( true, complaint );
-					continue;
-				}
-				else if ( currToken.type == ESCAPE_OP
-						&& multilineIdentifier.modifier > 0 )
-				{
-					lineProxy = escapedName( lineProxy );
-				}
-				else
-				{
-					lineProxy = unescapedName( lineProxy, DELIM_END );
-				}
-				// NOTE check if the name matches
-				secondIdentifier = lineProxy.get( lineProxy.size() -1 );
-				if ( multilineIdentifier.value == secondIdentifier.value
-						&& multilineIdentifier.modifier == secondIdentifier.modifier )
-				{
-					// NOTE entire boundary matches, block is over, not saving the bottom
-					break;
-				}
-				else
-				{
-					// NOTE not a match, continue
-					multilineText.append( System.lineSeparator() );
-					multilineText.append( alphabet.getLine() );
-					lineProxy.clear();
-					nextLine( true, complaint );
-					continue;
-				}
-			}
-			else
-			{
-				multilineText.append( System.lineSeparator() );
-				multilineText.append( alphabet.getLine() );
-				lineProxy.clear();
-				nextLine( true, complaint );
-			}
-		}
-		while ( true );
-		Word mulilineValue = new Word();
-		mulilineValue.type = Syntaxeme.MULTILINE_TEXT;
-		if ( multilineText.length() > 0 )
-		{
-			// NOTE cut leading newline
-			mulilineValue.value = multilineText
-					.substring( System.lineSeparator().length() );
-		}
-		entireBlock.add( mulilineValue );
-		return entireBlock;
-	}
-
-
 	@Deprecated
 	/** get the name, basically */
 	private Phrase templateInstruction()
@@ -892,81 +975,6 @@ public class Parser
 			targetName = recognizeUnescapedName( DELIM_END );
 		}
 		return targetName;
-	}
-
-
-	/** op, name */
-	protected List<Word> template( List<Word> line )
-	{
-		if ( line == null )
-		{
-			line = new LinkedList<>();
-		}
-		if ( ! isCopyOperator( currToken.type ) )
-		{
-			throw new RuntimeException( cl +"template unable to record copy depth;"
-					+ " cursor has moved past it "+ currToken );
-		}
-		Word copyOperator = new Word();
-		copyOperator.modifier = currToken.word.length();
-		line.add( copyOperator );
-		nextToken();
-		skipWhitespace();
-		if ( currToken.type == Lexeme.ESCAPE_OP )
-		{
-			line = escapedName( line );
-		}
-		else
-		{
-			line = unescapedName( line, DELIM_END );
-		}
-		return line;
-	}
-
-
-	/** name, value or template */
-	protected List<Word> fieldAny( List<Word> line )
-	{
-		String here = cl +"section ";
-		if ( line == null )
-		{
-			line = new LinkedList<>();
-		}
-		if ( currToken.type == Lexeme.ESCAPE_OP )
-		{
-			line = escapedName( line );
-		}
-		else
-		{
-			line = unescapedName( line, DELIM_SET_FIELD_COPY );
-		}
-		if ( currToken.type == Lexeme.SET_OP )
-		{
-			nextToken();
-			Word setEntry = new Word();
-			setEntry.type = Syntaxeme.SET_ELEMENT;
-			setEntry.value = alphabet.restOfLine().trim();
-		}
-		else if ( currToken.type == FIELD_START_OP )
-		{
-			nextToken();
-			skipWhitespace();
-			if ( isCopyOperator( currToken.type ) )
-			{
-				line = template( line );
-			}
-		}
-		else if ( isCopyOperator( currToken.type ) )
-		{
-			line = template( line );
-		}
-		else
-		{
-			Word value = new Word();
-			value.type = Syntaxeme.VALUE;
-			value.value = alphabet.restOfLine().trim();
-		}
-		return line;
 	}
 
 
@@ -1039,12 +1047,12 @@ public class Parser
 		// list of comments = new list
 		while ( true )
 		{
-			if ( currToken.type == Lexeme.CONTINUE_OP_SAME )
+			if ( currToken.type == Lexeme.CONTINUE_OP_SPACE )
 			{
 				nextToken();
 				begunValue.words += " "+ alphabet.restOfLine().trim();
 			}
-			else if ( currToken.type == Lexeme.CONTINUE_OP_SAME )
+			else if ( currToken.type == Lexeme.CONTINUE_OP_SPACE )
 			{
 				nextToken();
 				// IMPROVE switch to empty string if rfc changes break
@@ -1162,7 +1170,7 @@ public class Parser
 					nextToken();
 					break;
 				}
-				case CONTINUE_OP_BREAK :
+				case CONTINUE_OP_EMPTY :
 				{
 					nextToken();
 					String restOfLine = alphabet.restOfLine().trim();
@@ -1171,7 +1179,7 @@ public class Parser
 					nextLine();
 					break;
 				}
-				case CONTINUE_OP_SAME :
+				case CONTINUE_OP_SPACE :
 				{
 					nextToken();
 					boolean spaceIsAppropriate = true;
@@ -1281,8 +1289,8 @@ public class Parser
 	/** either continuation operator */
 	protected boolean isContinuationOperator( Lexeme something )
 	{
-		return something == Lexeme.CONTINUE_OP_BREAK
-				|| something == Lexeme.CONTINUE_OP_SAME;
+		return something == Lexeme.CONTINUE_OP_EMPTY
+				|| something == Lexeme.CONTINUE_OP_SPACE;
 	}
 
 
