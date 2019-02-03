@@ -1,4 +1,15 @@
 
+# 190202
+
+I've left a dissonant state regarding prefix words for operators. Which is to say, decide whether field escapes become a separate, empty word or not. If not, remove it from the start of escapedName() and the corresponding tests. If so, vet that I'm doing the right thing.
+
+Operator words for names : section, multiline boundary, copy/template.
+Not a concern for field, list, map, values of any style, comments.
+
+It's looking like the answer is remove what I did and fix the test. It's late, but should be quick.
+
+Oh. You know that part where I tested the output of note_enojes ? It turns out I didn't do that part. Good thing it hasn't been published yet. I think that's just a formality, though.
+
 # 190124
 
 Should I use eno for this journal ? le sigh.

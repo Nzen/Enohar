@@ -31,6 +31,7 @@ public class Parser
 	// eventually handle exception store localization, output formatter
 	protected ResourceBundle rbToken;
 	protected ResourceBundle rbAnalysis;
+	protected ResourceBundle rbValidation;
 	/** Word.modifier value for empty continuation, ie | */
 	public static final int WORD_MOD_CONT_EMPTY = 1;
 	/** Word.modifier value for space continuation, ie \ */
@@ -54,7 +55,7 @@ public class Parser
 		@Override
 		public String toString()
 		{
-			return "W: t-"+ type.name() +" w-"+ value;
+			return "W: t-"+ type.name() +" "+ modifier +" w-"+ value;
 		}
 	}
 
@@ -88,6 +89,8 @@ public class Parser
 		rbToken = ResourceBundle.getBundle( filePrefixTokenize );
 		String filePrefixAnalysis = "Analysis";
 		rbAnalysis = ResourceBundle.getBundle( filePrefixAnalysis );
+		String filePrefixValidation = "Validation";
+		rbValidation = ResourceBundle.getBundle( filePrefixValidation );
 	}
 
 
@@ -241,6 +244,10 @@ public class Parser
 		}
 		if ( currToken.type == Lexeme.SECTION_OP )
 		{
+			Word sectionOperator = new Word();
+			sectionOperator.type = SECTION;
+			sectionOperator.modifier = currToken.word.length();
+			line.add( sectionOperator );
 			nextToken();
 		}
 		skipWhitespace();
@@ -269,13 +276,18 @@ public class Parser
 
 
 	/** Recognize token sequence of ` text ` with matching number of
-	 * backticks at the border. */
+	 * backticks at the border. Word for name has a modifier for the
+	 * number of escape chars */
 	protected List<Word> escapedName( List<Word> line )
 	{
 		String here = cl +"escaped name ";
 		if (line == null )
 		{
 			line = new LinkedList<>();
+		}
+		if ( currToken.type == ESCAPE_OP )
+		{
+			nextToken();
 		}
 		skipWhitespace();
 		StringBuilder namePieces = new StringBuilder();
@@ -320,12 +332,7 @@ public class Parser
 	/** text trimmed of white, delimited by specified lexemes */
 	protected List<Word> unescapedName( List<Word> line, Set<Lexeme> delimiters )
 	{
-		if ( ! delimiters.contains( END ) )
-		{
-			// assert paranoid
-			throw new RuntimeException( cl +"un will not terminate"
-					+ " without End as a delimiter; quitting" );
-		}
+		String here = cl +"un ";
 		if ( line == null )
 		{
 			line = new LinkedList<>();
@@ -347,6 +354,14 @@ public class Parser
 				}
 				name.value = pieces.toString();
 				break;
+			}
+			else if ( currToken.type == END )
+			{
+				// NOTE end isn't a delimiter right now, but we've exhausted input
+				MessageFormat problem = new MessageFormat(
+						rbToken.getString( EnoAlias.EXCESS_NAME ) );
+				String complaint = problem.format( new Object[]{ pieces.toString() } );
+				throw new RuntimeException( complaint );
 			}
 			else
 			{
@@ -472,6 +487,8 @@ public class Parser
 					+ " cursor has moved past it "+ currToken );
 		}
 		Word copyOperator = new Word();
+		copyOperator.type = ( currToken.type == Lexeme.COPY_OP_THIN )
+				? SHALLOW_COPY : DEEP_COPY;
 		copyOperator.modifier = currToken.word.length();
 		line.add( copyOperator );
 		nextToken();
