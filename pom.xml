@@ -12,13 +12,13 @@
 	</mavenVersion>
 	-->
 	<groupId>
-		ws.nzen.format
+		ws.nzen.format.eno
 	</groupId>
 	<artifactId>
 		enohar
 	</artifactId>
 	<version>
-		0.0
+		0.0.2-SNAPSHOT
 	</version>
 	<description>
 		An eno document serialization library
@@ -73,7 +73,7 @@
 	<build>
 	    <plugins>
 			<plugin>
-			    <!-- path to java 9+ jdk -->
+			    <!-- path to java jdk -->
 				<groupId>
 					org.apache.maven.plugins
 				</groupId>
@@ -87,8 +87,7 @@
 					<toolchains>
 						<jdk>
 							<version>
-								[1.9,)
-    							<!-- or 9, depending on numbering convention -->
+								[11,)
 							</version>
 						</jdk>
 					</toolchains>
@@ -104,7 +103,7 @@
 				</executions>
 			</plugin>
 			<plugin>
-	    		<!-- compile with java v9+ -->
+	    		<!-- compile with desired java -->
 				<groupId>
 					org.apache.maven.plugins
 				</groupId>
@@ -116,10 +115,10 @@
 				</version>
 				<configuration>
 					<source>
-						1.11
+						11
 					</source>
 					<target>
-						1.11
+						11
 					</target>
 					<release>
 						11
@@ -129,32 +128,137 @@
 					</encoding>
 				</configuration>
 			</plugin>
+			<plugin>
+				<groupId>
+					org.apache.maven.plugins
+					</groupId>
+				<artifactId>
+					maven-jdeps-plugin
+					</artifactId>
+				<version>
+					3.1.1
+					</version>
+				<executions>
+					<execution>
+						<goals>
+							<goal>
+								jdkinternals
+								</goal>
+							</goals>
+						</execution>
+					</executions>
+				<!-- <configuration>
+					</configuration> -->
+				</plugin>
 		    <plugin>
 	    		<!-- make source jar -->
 				<groupId>
 					org.apache.maven.plugins
-				</groupId>
+					</groupId>
 				<artifactId>
 					maven-source-plugin
-				</artifactId>
+					</artifactId>
 				<version>
 					3.0.1
-				</version>
+					</version>
 				<executions>
 					<execution>
 						<id>
 							attach-sources
-						</id>
+							</id>
+						<goals>
+						<goal>
+							jar-no-fork
+							</goal>
+							</goals>
+						</execution>
+					</executions>
+				</plugin>
+			<plugin>
+				<!-- config for jar -->
+				<groupId>
+					org.apache.maven.plugins
+					</groupId>
+				<artifactId>
+					maven-jar-plugin
+					</artifactId>
+				<version>
+					3.1.0
+					</version>
+				<configuration>
+					<archive>
+						<index>
+							true
+							</index>
+						<manifest>
+							<addClasspath>
+								true
+								</addClasspath>
+							</manifest>
+						<manifestEntries>
+							<mode>
+								development
+								</mode>
+							<Automatic-Module-Name>
+								ws.nzen.format.eno.note_enojes
+								</Automatic-Module-Name>
+							</manifestEntries>
+						</archive>
+					</configuration>
+				</plugin>
+			<plugin>
+				<!-- javadoc jar -->
+				<groupId>
+					org.apache.maven.plugins
+					</groupId>
+				<artifactId>
+					maven-javadoc-plugin
+					</artifactId>
+				<version>
+					3.0.1
+					</version>
+				<executions>
+					<execution>
+						<id>
+							attach-javadocs
+							</id>
 						<goals>
 							<goal>
 								jar
-							</goal>
-						</goals>
-					</execution>
-				</executions>
-			</plugin>
+								</goal>
+							</goals>
+						</execution>
+					</executions>
+				</plugin>
 			<plugin>
-	    		<!-- skip tests -->
+				<!-- sign the jars -->
+				<groupId>
+					org.apache.maven.plugins
+					</groupId>
+				<artifactId>
+					maven-gpg-plugin
+					</artifactId>
+				<version>
+					1.6
+					</version>
+				<executions>
+					<execution>
+						<id>
+							sign-artifacts
+							</id>
+						<phase>
+							verify
+							</phase>
+						<goals>
+							<goal>
+								sign
+								</goal>
+							</goals>
+						</execution>
+					</executions>
+				</plugin>
+			<!-- <plugin>
+	    		skip tests
 				<groupId>
 					org.apache.maven.plugins
 				</groupId>
@@ -168,6 +272,32 @@
 					<skipTests>
 						true
 					</skipTests>
+				</configuration>
+			</plugin> -->
+		<plugin>
+		    <!-- deploy releases to sonatype's server -->
+			<groupId>
+				org.sonatype.plugins
+				</groupId>
+			<artifactId>
+				nexus-staging-maven-plugin
+				</artifactId>
+			<version>
+				1.6.7
+				</version>
+			<extensions>
+				true
+				</extensions>
+			<configuration>
+				<serverId>
+					ossrh
+					</serverId>
+				<nexusUrl>
+					https://oss.sonatype.org/
+					</nexusUrl>
+				<autoReleaseAfterClose>
+					false
+					</autoReleaseAfterClose>
 				</configuration>
 			</plugin>
 		</plugins>
@@ -196,4 +326,33 @@
 			</timezone>
 		</developer>
 	</developers>
+	<scm>
+		<connection>
+			scm:git:https://github.com/Nzen/Enohar.git
+			</connection>
+		<developerConnection>
+			scm:git:https://github.com/Nzen/Enohar.git
+			</developerConnection>
+		<url>
+			https://github.com/Nzen/Enohar
+			</url>
+		</scm>
+	<distributionManagement>
+		<snapshotRepository>
+			<id>
+				ossrh
+				</id>
+			<url>
+				https://oss.sonatype.org/content/repositories/snapshots
+				</url>
+			</snapshotRepository>
+		<repository>
+			<id>
+				ossrh
+			</id>
+			<url>
+				https://oss.sonatype.org/service/local/staging/deploy/maven2/
+			</url>
+			</repository>
+	</distributionManagement>
 </project>
