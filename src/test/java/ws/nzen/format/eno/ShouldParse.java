@@ -99,7 +99,6 @@ class ShouldParse
 		// field bare, escaped
 		pwName.type = FIELD; pwName.modifier = esc.length(); pwName.value = name;
 		expectedWords.clear();
-		expectedWords.add( operator );
 		expectedWords.add( pwName );
 		singleLineViaWords( mvp, fileContent, expectedWords,
 				" "+ escaped  +"\t"+ FIELD_START_OP.getChar() +"\t" );
@@ -117,7 +116,6 @@ class ShouldParse
 		copyOp.type = SHALLOW_COPY; copyOp.modifier = 1;
 		copyName.type = FIELD; copyName.value = name;
 		expectedWords.clear();
-		expectedWords.add( operator );
 		expectedWords.add( pwName );
 		expectedWords.add( copyOp );
 		expectedWords.add( copyName );

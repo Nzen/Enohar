@@ -281,21 +281,23 @@ public class Parser
 	protected List<Word> escapedName( List<Word> line )
 	{
 		String here = cl +"escaped name ";
+		if ( currToken.type != ESCAPE_OP )
+		{
+			throw new RuntimeException( here
+					+"parser should not have moved past escape chars" );
+		}
 		if (line == null )
 		{
 			line = new LinkedList<>();
 		}
-		if ( currToken.type == ESCAPE_OP )
-		{
-			nextToken();
-		}
+		Word name = new Word();
+		name.type = Syntaxeme.FIELD;
+		name.modifier = currToken.word.length();
+		nextToken();
 		skipWhitespace();
 		StringBuilder namePieces = new StringBuilder();
 		String lastNibble = "";
 		Lexeme lastLex = null;
-		Word name = new Word();
-		name.type = Syntaxeme.FIELD;
-		name.modifier = currToken.word.length();
 		do
 		{
 			if ( currToken.type == END )
@@ -516,18 +518,23 @@ public class Parser
 		if ( currToken.type == Lexeme.ESCAPE_OP )
 		{
 			line = escapedName( line );
+			nextToken();
 		}
 		else
 		{
 			line = unescapedName( line, DELIM_SET_FIELD_COPY );
 		}
+		skipWhitespace();
 		if ( currToken.type == Lexeme.SET_OP )
 		{
 			nextToken();
-			Word setEntry = new Word();
-			setEntry.type = Syntaxeme.SET_ELEMENT;
-			setEntry.value = alphabet.restOfLine().trim();
-			line.add( setEntry );
+			if ( currToken.type != END )
+			{
+				Word value = new Word();
+				value.type = Syntaxeme.SET_ELEMENT;
+				value.value = currToken.word.trim() + alphabet.restOfLine().trim();
+				line.add( value );
+			}
 		}
 		else if ( currToken.type == FIELD_START_OP )
 		{
@@ -537,17 +544,21 @@ public class Parser
 			{
 				line = template( line );
 			}
+			else if ( currToken.type != END )
+			{
+				Word value = new Word();
+				value.type = Syntaxeme.VALUE;
+				value.value = currToken.word.trim() + alphabet.restOfLine().trim();
+				line.add( value );
+			}
 		}
 		else if ( isCopyOperator( currToken.type ) )
 		{
 			line = template( line );
 		}
-		else
+		else if ( currToken.type != END )
 		{
-			Word value = new Word();
-			value.type = Syntaxeme.VALUE;
-			value.value = alphabet.restOfLine().trim();
-			line.add( value );
+			throw new RuntimeException( here +"shouldn't happen" );
 		}
 		return line;
 	}

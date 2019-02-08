@@ -3,6 +3,7 @@
 		xmlns = "http://maven.apache.org/POM/4.0.0"
 		xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 		xsi:schemaLocation="http://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<?xml-stylesheet type="text/xsl" href="basic.xsl"?>
 	<modelVersion>
 		4.0.0
 	</modelVersion>
@@ -13,29 +14,29 @@
 	-->
 	<groupId>
 		ws.nzen.format.eno
-	</groupId>
+		</groupId>
 	<artifactId>
 		enohar
-	</artifactId>
+		</artifactId>
 	<version>
 		0.0.2-SNAPSHOT
-	</version>
+		</version>
 	<description>
 		An eno document serialization library
-	</description>
+		</description>
 	<name>
 		Enohar
-	</name>
+		</name>
 	<licenses>
 		<license>
 			<name>
 				MIT v1.0
-			</name>
+				</name>
 			<url>
 				https://mitlicense.org
-			</url>
-		</license>
-	</licenses>
+				</url>
+			</license>
+		</licenses>
 	<dependencies>
 		<!--
 		<dependency>
