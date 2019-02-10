@@ -25,6 +25,8 @@ class ShouldParse
 	{
 		shouldIgnoreEmptyBody();
 		shouldParseSingleLine();
+		shouldParseSingleElementMultiLine();
+		shouldParseHeterogeneousLines();
 	}
 
 
@@ -54,10 +56,10 @@ class ShouldParse
 		assertEquals( EMPTY.ordinal(), resultElement.type.ordinal(),
 				"type should be empty, not "+ resultElement.type.name() );
 		// comment
-		singleLineElementWithValue( fileContent, COMMENT_OP.getChar() +" "+ value,
+		singleLineElementWithValue( fileContent, ""+ COMMENT_OP.getChar() +" "+ value,
 				mvp, COMMENT, value );
 		// continuation empty
-		singleLineElementWithValue( fileContent, CONTINUE_OP_EMPTY.getChar() +"   "+ value,
+		singleLineElementWithValue( fileContent, ""+ CONTINUE_OP_EMPTY.getChar() +"   "+ value,
 				mvp, VALUE, value, Parser.WORD_MOD_CONT_EMPTY );
 		// continuation space
 		singleLineElementWithValue( fileContent, "\t"+ CONTINUE_OP_SPACE.getChar() +"   "+ escaped,
@@ -134,14 +136,16 @@ class ShouldParse
 		singleLineViaWords( mvp, fileContent, expectedWords,
 				name + SET_OP.getChar() +"  "+ value );
 		// reject field op at start
-		rejectInvalidLine( mvp, FIELD_START_OP.getChar() + escaped,
+		rejectInvalidLine( mvp, ""+ FIELD_START_OP.getChar() + escaped,
 				"field op at beginning" );
 		// reject set op at start
-		rejectInvalidLine( mvp, SET_OP.getChar() +"\t"+ COMMENT_OP.getChar(),
+		rejectInvalidLine( mvp, ""+ SET_OP.getChar() +"\t"+ COMMENT_OP.getChar(),
 				"set op at beginning" );
 		// reject copy op at start
 		rejectInvalidLine( mvp, "    "+ COPY_OP_DEEP.getChar() +"  "+ ESCAPE_OP.getChar() +" ",
 				"copy op at beginning" );
+		// reject unclosed escaped name
+		rejectInvalidLine( mvp, esc + name, "must match escape" );
 	}
 
 
@@ -197,12 +201,193 @@ class ShouldParse
 	}
 
 
+	void shouldParseSingleElementMultiLine()
+	{
+		List<String> fileContent = new ArrayList<>();
+		String name = "banana", esc = ""+ ESCAPE_OP.getChar() + ESCAPE_OP.getChar(),
+				escaped = esc +" "+ name + esc, value = "harbor";
+		Parser mvp = new Parser();
+		List<List<Parser.Word>> expectedResult = new ArrayList<>();
+		List<Parser.Word> expectedLine = new ArrayList<>();
+		Parser.Word currWord;
+		// empty lines before unescaped field and value
+		fileContent.clear();
+		expectedLine.clear();
+		fileContent.add( "" );
+		fileContent.add( "" );
+		currWord = mvp.new Word();
+		currWord.type = EMPTY;
+		currWord.modifier = 2;
+		expectedLine.add( currWord );
+		fileContent.add( " "+ name +"\t"+ FIELD_START_OP.getChar() + value );
+		currWord = mvp.new Word();
+		currWord.type = FIELD;
+		currWord.value = name;
+		expectedLine.add( currWord );
+		currWord = mvp.new Word();
+		currWord.type = VALUE;
+		currWord.value = value;
+		expectedLine.add( currWord );
+		expectedResult.clear();
+		expectedResult.add( expectedLine );
+		elementsMatch( mvp, fileContent, expectedResult );
+		// multiline block, unescaped
+		fileContent.clear();
+		expectedLine.clear();
+		fileContent.add( ""+ MULTILINE_OP.getChar() + MULTILINE_OP.getChar()
+				+ MULTILINE_OP.getChar() +"     "+ name );
+		currWord = mvp.new Word();
+		currWord.type = MULTILINE_BOUNDARY;
+		currWord.modifier = 3;
+		expectedLine.add( currWord );
+		currWord = mvp.new Word();
+		currWord.type = FIELD;
+		currWord.value = name;
+		expectedLine.add( currWord );
+		fileContent.add( " "+ value );
+		currWord = mvp.new Word();
+		currWord.type = MULTILINE_TEXT;
+		currWord.value = " "+ value;
+		expectedLine.add( currWord );
+		fileContent.add( ""+ MULTILINE_OP.getChar() + MULTILINE_OP.getChar()
+		+ MULTILINE_OP.getChar() +"     "+ name );
+		// expectedResult.add( expectedLine );
+		elementsMatch( mvp, fileContent, expectedResult );
+		// reject unclosed multiline
+		fileContent.clear();
+		fileContent.add( "  "+ MULTILINE_OP.getChar() + MULTILINE_OP.getChar()
+		+ MULTILINE_OP.getChar() +"     "+ name );
+		fileContent.add( " "+ value );
+		rejectInvalidDocument( mvp, fileContent, "must match multiline boundary" );
+		// reject multiline with unescaped + escaped
+		fileContent.clear();
+		fileContent.add( ""+ MULTILINE_OP.getChar() + MULTILINE_OP.getChar()
+		+ MULTILINE_OP.getChar() +"     "+ name );
+		fileContent.add( " "+ value );
+		fileContent.add( ""+ MULTILINE_OP.getChar() + MULTILINE_OP.getChar()
+		+ MULTILINE_OP.getChar() +"     "+ escaped );
+		rejectInvalidDocument( mvp, fileContent, "multiline boundary name escapes must match" );
+	}
+
+
+	void shouldParseHeterogeneousLines()
+	{
+		List<String> fileContent = new ArrayList<>();
+		String name = "banana", esc = ""+ ESCAPE_OP.getChar() + ESCAPE_OP.getChar(),
+				escaped = esc +" "+ name + esc, value = "harbor";
+		Parser mvp = new Parser();
+		List<List<Parser.Word>> expectedResult = new ArrayList<>();
+		List<Parser.Word> expectedLine = new ArrayList<>();
+		Parser.Word currWord;
+		fileContent.clear();
+		expectedResult.clear();
+		expectedLine.clear();
+		// section
+		fileContent.add( SECTION_OP.getChar() +"     "+ name
+				+ FIELD_START_OP.getChar() +" "+ value +"\t" );
+		currWord = mvp.new Word();
+		currWord.type = SECTION;
+		currWord.modifier = 1;
+		expectedLine.add( currWord );
+		currWord = mvp.new Word();
+		currWord.type = FIELD;
+		currWord.value = name + FIELD_START_OP.getChar() +" "+ value;
+		expectedLine.add( currWord );
+		expectedResult.add( expectedLine );
+		// bare escaped field
+		expectedLine = new ArrayList<>();
+		fileContent.add( "" );
+		fileContent.add( "" );
+		fileContent.add( escaped + FIELD_START_OP.getChar() +"   " );
+		currWord = mvp.new Word();
+		currWord.type = EMPTY;
+		currWord.modifier = 2;
+		expectedLine.add( currWord );
+		currWord = mvp.new Word();
+		currWord.type = FIELD;
+		currWord.value = name;
+		currWord.modifier = esc.length();
+		expectedLine.add( currWord );
+		expectedResult.add( expectedLine );
+		expectedLine = new ArrayList<>();
+		// list element
+		fileContent.add( ""+ LIST_OP.getChar() +"\t"+ value );
+		expectedLine = new ArrayList<>();
+		currWord = mvp.new Word();
+		currWord.type = LIST_ELEMENT;
+		currWord.value = value;
+		expectedLine.add( currWord );
+		expectedResult.add( expectedLine );
+		// comment
+		fileContent.add( ""+ COMMENT_OP.getChar() +" "+ value );
+		expectedLine = new ArrayList<>();
+		currWord = mvp.new Word();
+		currWord.type = COMMENT;
+		currWord.value = value;
+		expectedLine.add( currWord );
+		expectedResult.add( expectedLine );
+		// list element
+		fileContent.add( ""+ LIST_OP.getChar() +"\t"+ name );
+		expectedLine = new ArrayList<>();
+		currWord = mvp.new Word();
+		currWord.type = LIST_ELEMENT;
+		currWord.value = name;
+		expectedLine.add( currWord );
+		expectedResult.add( expectedLine );
+		// continuation
+		fileContent.add( ""+ CONTINUE_OP_EMPTY.getChar() +" "+ value );
+		expectedLine = new ArrayList<>();
+		currWord = mvp.new Word();
+		currWord.type = Syntaxeme.VALUE;
+		currWord.modifier = Parser.WORD_MOD_CONT_EMPTY;
+		currWord.value = value;
+		expectedLine.add( currWord );
+		expectedResult.add( expectedLine );
+
+		elementsMatch( mvp, fileContent, expectedResult );
+		// org.junit.jupiter.api.Assertions.fail(" not over yet");
+	}
+
+
+	private void elementsMatch(  Parser mvp, List<String> fileContent,
+			List<List<Parser.Word>> expectedWords )
+	{
+		List<List<Parser.Word>> entireResult = mvp.parse( fileContent );
+		assertTrue( expectedWords.size() == entireResult.size(), "num lines: ew"
+				+ expectedWords.size() +" er"+ entireResult.size() );
+		for ( int lineInd = 0; lineInd < entireResult.size(); lineInd++ )
+		{
+			List<Parser.Word> resultLine = entireResult.get( lineInd );
+			List<Parser.Word> expectedLine = expectedWords.get( lineInd );
+			assertTrue( expectedLine.size() == resultLine.size(), "line words should match" );
+			for ( int wordInd = 0; wordInd < resultLine.size(); wordInd++ )
+			{
+				Parser.Word tester = expectedLine.get( wordInd );
+				Parser.Word parsed = resultLine.get( wordInd );
+				assertEquals( tester.type.ordinal(), parsed.type.ordinal(), "types should match" );
+				assertTrue( tester.value.equals( parsed.value ), "value doesn't match" );
+				assertEquals( tester.modifier, parsed.modifier, "modifiers differ" );
+			}
+		}
+	}
+
+
 	private void rejectInvalidLine( Parser mvp, String line, String why )
 	{
 		assertThrows( RuntimeException.class,
 				() -> {
 					List<String> file = new LinkedList<>();
 					file.add( line );
+					mvp.parse( file );
+				},
+			why );
+	}
+
+
+	private void rejectInvalidDocument( Parser mvp, List<String> file, String why )
+	{
+		assertThrows( RuntimeException.class,
+				() -> {
 					mvp.parse( file );
 				},
 			why );

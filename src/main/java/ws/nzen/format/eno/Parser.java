@@ -361,7 +361,7 @@ public class Parser
 			{
 				// NOTE end isn't a delimiter right now, but we've exhausted input
 				MessageFormat problem = new MessageFormat(
-						rbToken.getString( EnoAlias.EXCESS_NAME ) );
+						rbValidation.getString( EnoAlias.EXCESS_NAME ) );
 				String complaint = problem.format( new Object[]{ pieces.toString() } );
 				throw new RuntimeException( complaint );
 			}
@@ -419,6 +419,7 @@ public class Parser
 					&& currToken.word.length() == boundary.modifier )
 			{
 				nextToken();
+				// NOTE this is just for line proxy, we'll get the whole line if this isn't a boundary
 				skipWhitespace();
 				if ( currToken.type == END )
 				{
@@ -438,7 +439,7 @@ public class Parser
 				}
 				// NOTE check if the name matches
 				secondIdentifier = lineProxy.get( lineProxy.size() -1 );
-				if ( multilineIdentifier.value == secondIdentifier.value
+				if ( multilineIdentifier.value.equals( secondIdentifier.value )
 						&& multilineIdentifier.modifier == secondIdentifier.modifier )
 				{
 					// NOTE entire boundary matches, block is over, not saving the bottom

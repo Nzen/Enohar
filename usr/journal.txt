@@ -1,4 +1,16 @@
 
+# 190209
+
+having a problem loading properties, try
+https://stackoverflow.com/questions/9983426/loading-properties-file-in-junit-beforeclass
+Actually, I had not fixed the copy paste of a different resource bundle that, indeed, did not have the key I asked for. In unrelated news, maven's test runner apparently doesn't run my tests without configuration.
+
+Next:
+maybe more tests of parser, but maybe not; this is basically ready
+remove the recognition methods from parser
+change the lines to a tree of sections and fields
+save the names of these to a 'stack' of symbol tables (to fill in templates)
+
 # 190202
 
 I've left a dissonant state regarding prefix words for operators. Which is to say, decide whether field escapes become a separate, empty word or not. If not, remove it from the start of escapedName() and the corresponding tests. If so, vet that I'm doing the right thing.
