@@ -13,7 +13,7 @@ import java.util.List;
 import java.util.Queue;
 
 /** A class for testing outside of junit */
-public class Toss
+public class Example
 {
 	private static final String cl = "t.";
 
@@ -49,8 +49,7 @@ public class Toss
 		file.add( "> comment" );
 		file.add( " \\ large " );
 		Parser epp = new Parser();
-		// epp.parse( file );
-		epp.recognize( file );
+		epp.parse( file );
 	}
 
 
@@ -78,7 +77,14 @@ public class Toss
 							&& visitee.getFileName().toString().endsWith( ".eno" ) )
 					{
 						System.out.println( "\t"+ here +"trying to recognize "+ visitee );
-						epp.recognize( Files.readAllLines( visitee ) );
+						for ( List<Parser.Word> line : epp.parse( Files.readAllLines( visitee ) ) )
+						{
+							for ( Parser.Word aWord : line )
+							{
+								System.out.println( "\t"+ here + aWord );
+							}
+							System.out.println( "\t"+ here +"(next line)" );
+						}
 					}
 					else
 					{

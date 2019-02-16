@@ -15,6 +15,7 @@ Enohar is a library to serialize and unserialize Eno documents. It uses Java v8 
 * >use canon localization
 * ~expose elements~
 * ~emit eno document~
+* ~try to move past errors~
 * ~html,terminal-color logging~
 * ~recognize some types ('loaders')~
 * ~schema validator?~

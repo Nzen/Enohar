@@ -11,6 +11,8 @@ remove the recognition methods from parser
 change the lines to a tree of sections and fields
 save the names of these to a 'stack' of symbol tables (to fill in templates)
 
+I added 'try to ignore errors' to the todo list. That means that, rather than throwing an exception and dying, I'd try to find the next field or section and continue parsing. Otherwise, enohar couldn't be used in some realtime editor. Of course, that's a very far future feature, but I think that it deserves to be on the list.
+
 # 190202
 
 I've left a dissonant state regarding prefix words for operators. Which is to say, decide whether field escapes become a separate, empty word or not. If not, remove it from the start of escapedName() and the corresponding tests. If so, vet that I'm doing the right thing.

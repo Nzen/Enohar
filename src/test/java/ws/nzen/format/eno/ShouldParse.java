@@ -85,7 +85,7 @@ class ShouldParse
 		pwName.type = FIELD; pwName.value = name;
 		Parser.Word copyOp = mvp.new Word();
 		Parser.Word copyName = mvp.new Word();
-		copyOp.type = SHALLOW_COPY; copyOp.modifier = 1;
+		copyOp.type = COPY; copyOp.modifier = 1;
 		copyName.type = FIELD; copyName.value = name;
 		expectedWords.clear();
 		expectedWords.add( operator );
@@ -115,7 +115,7 @@ class ShouldParse
 				name + FIELD_START_OP.getChar() + value );
 		// field with copy
 		pwName.type = FIELD; pwName.modifier = esc.length(); pwName.value = name;
-		copyOp.type = SHALLOW_COPY; copyOp.modifier = 1;
+		copyOp.type = COPY; copyOp.modifier = 1;
 		copyName.type = FIELD; copyName.value = name;
 		expectedWords.clear();
 		expectedWords.add( pwName );
