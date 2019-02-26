@@ -41,6 +41,7 @@ public class Parser
 		public Syntaxeme type;
 		public String value = "";
 		public int modifier = 0;
+		public int line = 0;
 		@Override
 		public String toString()
 		{
@@ -148,6 +149,7 @@ public class Parser
 							? WORD_MOD_CONT_SPACE
 							: WORD_MOD_CONT_EMPTY;
 					currWord.value = alphabet.restOfLine().trim();
+					currWord.line = currLine;
 					wordsOfLine.add( currWord );
 					parsed.add( wordsOfLine );
 					break;
@@ -162,6 +164,7 @@ public class Parser
 					currWord = new Word();
 					currWord.type = Syntaxeme.LIST_ELEMENT;
 					currWord.value = alphabet.restOfLine().trim();
+					currWord.line = currLine;
 					wordsOfLine.add( currWord );
 					parsed.add( wordsOfLine );
 					break;
@@ -175,7 +178,8 @@ public class Parser
 					}
 					currWord = new Word();
 					currWord.type = Syntaxeme.COMMENT;
-					currWord.value = alphabet.restOfLine().trim();
+					currWord.value = alphabet.restOfLine();
+					currWord.line = currLine;
 					wordsOfLine.add( currWord );
 					parsed.add( wordsOfLine );
 					break;
@@ -237,6 +241,7 @@ public class Parser
 			Word sectionOperator = new Word();
 			sectionOperator.type = SECTION;
 			sectionOperator.modifier = currToken.word.length();
+			sectionOperator.line = currLine;
 			line.add( sectionOperator );
 			nextToken();
 		}
@@ -283,6 +288,7 @@ public class Parser
 		Word name = new Word();
 		name.type = Syntaxeme.FIELD;
 		name.modifier = currToken.word.length();
+		name.line = currLine;
 		nextToken();
 		skipWhitespace();
 		StringBuilder namePieces = new StringBuilder();
@@ -332,6 +338,7 @@ public class Parser
 		skipWhitespace();
 		Word name = new Word();
 		name.type = FIELD;
+		name.line = currLine;
 		String lastPiece = currToken.word;
 		Lexeme lastType = currToken.type;
 		StringBuilder pieces = new StringBuilder();
@@ -380,6 +387,7 @@ public class Parser
 		Word boundary = new Word();
 		boundary.type = Syntaxeme.MULTILINE_BOUNDARY;
 		boundary.modifier = currToken.word.length();
+		boundary.line = currLine;
 		entireBlock.add( boundary );
 		// NOTE get the name
 		nextToken();
@@ -482,6 +490,7 @@ public class Parser
 		Word copyOperator = new Word();
 		copyOperator.type = COPY;
 		copyOperator.modifier = currToken.word.length();
+		copyOperator.line = currLine;
 		line.add( copyOperator );
 		nextToken();
 		skipWhitespace();
@@ -523,6 +532,7 @@ public class Parser
 				Word value = new Word();
 				value.type = Syntaxeme.SET_ELEMENT;
 				value.value = currToken.word.trim() + alphabet.restOfLine().trim();
+				value.line = currLine;
 				line.add( value );
 			}
 		}
@@ -539,6 +549,7 @@ public class Parser
 				Word value = new Word();
 				value.type = Syntaxeme.VALUE;
 				value.value = currToken.word.trim() + alphabet.restOfLine().trim();
+				value.line = currLine;
 				line.add( value );
 			}
 		}
@@ -559,6 +570,7 @@ public class Parser
 		Word combined = new Word();
 		combined.type = Syntaxeme.EMPTY;
 		combined.modifier = preceedingEmptyLines;
+		combined.line = currLine - preceedingEmptyLines;
 		return combined;
 	}
 
