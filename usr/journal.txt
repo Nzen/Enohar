@@ -1,4 +1,12 @@
 
+# 190215
+
+Todo:
+Remove recognition code
+Add expected types
+(move parsing stuff to a different package ?)
+Use or ditch ExceptionStore
+
 # 190209
 
 having a problem loading properties, try

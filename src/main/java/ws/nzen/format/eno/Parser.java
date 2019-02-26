@@ -15,7 +15,7 @@ import java.util.TreeSet;
 
 import org.eno_lang.locale.EnoAlias;
 
-/**  */
+/** Convert list of String to List List of Parser.Word */
 public class Parser
 {
 	private static final String cl = "p.";
@@ -72,6 +72,7 @@ public class Parser
 	}
 
 
+/** Convert strings to  */
 	protected void prepExceptionMessages()
 	{
 		String filePrefixTokenize = "Tokenization";
