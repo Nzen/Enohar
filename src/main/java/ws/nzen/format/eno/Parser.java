@@ -514,7 +514,7 @@ public class Parser
 		{
 			line = new LinkedList<>();
 		}
-		if ( currToken.type == Lexeme.ESCAPE_OP )
+		if ( currToken.type == ESCAPE_OP )
 		{
 			line = escapedName( line );
 			nextToken();
@@ -524,13 +524,15 @@ public class Parser
 			line = unescapedName( line, DELIM_SET_FIELD_COPY );
 		}
 		skipWhitespace();
-		if ( currToken.type == Lexeme.SET_OP )
+		if ( currToken.type == SET_OP )
 		{
 			nextToken();
 			if ( currToken.type != END )
 			{
+				// NOTE distinguishing field from set, as not all will have a value
+				line.get( line.size() -1 ).type = SET_ELEMENT;
 				Word value = new Word();
-				value.type = Syntaxeme.SET_ELEMENT;
+				value.type = VALUE;
 				value.value = currToken.word.trim() + alphabet.restOfLine().trim();
 				value.line = currLine;
 				line.add( value );
@@ -547,7 +549,7 @@ public class Parser
 			else if ( currToken.type != END )
 			{
 				Word value = new Word();
-				value.type = Syntaxeme.VALUE;
+				value.type = VALUE;
 				value.value = currToken.word.trim() + alphabet.restOfLine().trim();
 				value.line = currLine;
 				line.add( value );

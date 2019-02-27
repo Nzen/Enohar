@@ -57,7 +57,7 @@ class ShouldParse
 				"type should be empty, not "+ resultElement.type.name() );
 		// comment
 		singleLineElementWithValue( fileContent, ""+ COMMENT_OP.getChar() +" "+ value,
-				mvp, COMMENT, value );
+				mvp, COMMENT, " "+ value );
 		// continuation empty
 		singleLineElementWithValue( fileContent, ""+ CONTINUE_OP_EMPTY.getChar() +"   "+ value,
 				mvp, VALUE, value, Parser.WORD_MOD_CONT_EMPTY );
@@ -126,10 +126,10 @@ class ShouldParse
 				+"\t"+ COPY_OP_THIN.getChar() + name );
 		// set bare
 		singleLineElementWithValue( fileContent, name  +"  "+ SET_OP.getChar() +"  ",
-				mvp, FIELD, name );
+				mvp, SET_ELEMENT, name );
 		// set with value
-		pwName.type = FIELD; pwName.modifier = 0; pwName.value = name;
-		pwValue.type = SET_ELEMENT; pwValue.value = value;
+		pwName.type = SET_ELEMENT; pwName.modifier = 0; pwName.value = name;
+		pwValue.type = VALUE; pwValue.value = value;
 		expectedWords.clear();
 		expectedWords.add( pwName );
 		expectedWords.add( pwValue );
@@ -323,7 +323,7 @@ class ShouldParse
 		expectedLine = new ArrayList<>();
 		currWord = mvp.new Word();
 		currWord.type = COMMENT;
-		currWord.value = value;
+		currWord.value = " "+ value;
 		expectedLine.add( currWord );
 		expectedResult.add( expectedLine );
 		// list element
