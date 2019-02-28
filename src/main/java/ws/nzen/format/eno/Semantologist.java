@@ -14,9 +14,10 @@ public class Semantologist
 {
 	private static final String cl = "s.";
 	private List<List<Word>> parsedLines;
-	private Map<String, EnoElement> fieldNames = new HashMap<>();
-	private Map<String, Section> sectionNames = new HashMap<>();
+	private List<EnoElement> fields = new ArrayList<>();
+	private List<Section> sections = new ArrayList<>();
 	private int lineChecked = 0;
+	private int wordIndOfLine = 0;
 
 
 	public Section analyze( List<String> fileLines )
@@ -55,7 +56,6 @@ public class Semantologist
 				// FIX use canon complaint
 				throw new RuntimeException( here +"section depth jumped too fa at "+ lineChecked );
 			}
-			sectionNames.put( currElem.getName(), currElem );
 			/*
 			get comments until we find a non comment (skip past empty, if need be
 			handle template
@@ -71,8 +71,15 @@ public class Semantologist
 	private int wordIndOfLine;
 	private List fields;
 	private List sections; // or map<string, list<section> >
+	
 
-	private Section document()
+	 private Section analyze( L<S> )
+	 {
+	 	build document
+	 	resolve forward references
+	 }
+
+	private Section buildDocument()
 	{
 		Section theDocument = new Section();
 		EnoElement currElem;
@@ -110,15 +117,23 @@ public class Semantologist
 		if next elment starts with empty or there isn't a non comment
 			return blank
 		else
-			// find the common whitespace, le sigh, probably exact, not 'number of spaces'
-			// use alphabet to extract the leading whitespace, maybe put it in a counting map
-			// sin, it's not a map, it's a trie
 			save the list line range
-			int min leading whitespace
-			|
-			// fix fake
-			copy all those comments together, trimmed, but preceede with common whitespace
-			return as a single string 
+			// find the common whitespace, le sigh, probably exact, not 'number of spaces'
+			Lexer kindergartener = new Lexer();
+			Set<C> whitespace = new TreeSet<>();
+			whitespace.add( space tab );
+			NaiveTrie notDynamic = new NaiveTrie( whitespace )
+			 for ( L<P.W> line in range )
+				kg.lex( line )
+				l.t first = kg.nextToken();
+				if ( first.type == space )
+					notDynamic.add( first.word );
+			String commentPrefix = notDynamic.longestCommonPrefix();
+			StringBuilder wholeComment
+			for ( L<P.W> line in range )
+				wC.append( commentPrefix );
+				wC.append( line.get( comment.word.trim() ) )
+			return wC.toString()
 	}
 
 	/ will handle getting own children
@@ -172,24 +187,21 @@ public class Semantologist
 		return currField;
 	}
 
+	*/
+
+
 	private boolean advanceLine()
 	{
-		if ( lineNumber < words.size() )
+		if ( lineChecked < parsedLines.size() )
 		{
-			lineNumber++;
+			lineChecked++;
 			wordIndOfLine = 0;
+			return true;
 		}
 		else
 		{
 			return false;
 		}
-	}
-	*/
-
-
-	private List<EnoElement> sectionInterior()
-	{
-		return null; // TODO
 	}
 
 }

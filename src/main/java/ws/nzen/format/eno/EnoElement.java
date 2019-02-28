@@ -12,6 +12,8 @@ public class EnoElement
 	protected int nameEscapes = 0;
 	protected List<String> comments = new LinkedList<>();
 	protected boolean firstCommentPreceededName = false;
+	protected String templateElementName = "";
+	protected boolean shallowTemplate = false;
 
 
 	protected EnoElement( EnoType typeToBe )
@@ -75,6 +77,24 @@ public class EnoElement
 	public void setFirstCommentPreceededName( boolean firstCommentPreceededName )
 	{
 		this.firstCommentPreceededName = firstCommentPreceededName;
+	}
+
+	public String getTemplateElementName()
+	{
+		return templateElementName;
+	}
+	public void setTemplateElementName( String templateElementName )
+	{
+		this.templateElementName = templateElementName;
+	}
+
+	public boolean isShallowTemplate()
+	{
+		return shallowTemplate;
+	}
+	public void setShallowTemplate( boolean shallowTemplate )
+	{
+		this.shallowTemplate = shallowTemplate;
 	}
 
 }

@@ -76,6 +76,7 @@ public class NaiveTrie
 	public void clear()
 	{
 		rootNode = null;
+		// Improve recursively zero the usage arrays
 	}
 
 
