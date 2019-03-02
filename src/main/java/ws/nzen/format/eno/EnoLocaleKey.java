@@ -1,12 +1,12 @@
 /* (for template) 1 is the package ; 2 is version ; 3 is class name ; 4 is the class body */
-package org.eno_lang.locale;
+package ws.nzen.format.eno;
 
 /*
 	Generated v3.0 at 2019-02-03T22:46:03.874
 	Using eno-locale messages.json v0.8.0 buillt 2018-07-21T07:50:30.125Z
 */
 
-public class EnoAlias
+public class EnoLocaleKey
 {
 
 	// Analysis
