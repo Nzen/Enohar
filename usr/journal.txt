@@ -1,4 +1,10 @@
 
+# 190302
+
+I'm ambivalent about moving the parsing classes to their own package. I'm also ambivalent about making their private methods protected.
+
+I watched [Gil Tene talk](https://www.youtube.com/watch?v=kczX1y1oR2w) about making software libraries and things to consider. It's something I searched for a little when starting Enohar. I'd read that I should keep to the oldest version of java (or my platform in general) that I could withstand, to maximize the audience for my library. I know I use java 8 Path, and I'm ambivalent about java 9 module descriptor. I don't think that I'll roll back the use of Path and Files, but I can keep to 8.
+
 # 190227
 
 I'm inclined to have a symbol resolution pass before building the document. Specifically, note all the names, whether they are templates of other things, the list line of that name, and a reference if it's valid. That way, as I build the document, if I encounter a copy operation, I can save the global line, assemble that thing, return its children, paste them into the current context, restore the global line, and handle merging this thing's children in a fashion that reflects the copy depth. The preassembly is recursive, so if I have an antagonistic document that forward references a template, it will try to assemble that element, and go down to assemble the concrete element. Alternatively, if the element already exists, it will just make a copy of its children and merge.

@@ -1,13 +1,17 @@
 /** see ../../../../../LICENSE for release details */
 package ws.nzen.format.eno;
 
+import static ws.nzen.format.eno.Syntaxeme.*;
+
+import java.text.MessageFormat;
 import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.List;
-import java.util.Map;
+import java.util.ResourceBundle;
+import java.util.Set;
+import java.util.TreeSet;
 
 import ws.nzen.format.eno.Parser.Word;
-import static ws.nzen.format.eno.Syntaxeme.*;
 
 /**  */
 public class Semantologist
@@ -16,19 +20,26 @@ public class Semantologist
 	private List<List<Word>> parsedLines;
 	private List<EnoElement> fields = new ArrayList<>();
 	private List<Section> sections = new ArrayList<>();
+	private List<Dependence> transitiveFields = new LinkedList<>();
+	private List<Dependence> transitiveSections = new LinkedList<>();
 	private int lineChecked = 0;
 	private int wordIndOfLine = 0;
 
-
-	public Section analyze( List<String> fileLines )
+	private class Dependence
 	{
-		parsedLines = new Parser().parse( fileLines );
-		
-
-		return null; // TODO
+		EnoElement hasReference = null;
+		EnoElement isReferredTo = null;
+		// minimum needed in case this is a forward reference
+		String nameOfReferredTo = "";
 	}
 
 
+	public Semantologist()
+	{
+	}
+
+
+	@Deprecated
 	public void foolAround()
 	{
 		final String here = cl +"fa ";
@@ -65,80 +76,141 @@ public class Semantologist
 	}
 
 
-	/*
-	private List words;
-	private int lineNumber;
-	private int wordIndOfLine;
-	private List fields;
-	private List sections; // or map<string, list<section> >
-	
+	public Section analyze( List<String> fileLines )
+	{
+		parsedLines = new Parser().parse( fileLines );
+		Section entireResult = buildDocument();
+		resolveForwardReferences();
+		return entireResult;
+	}
 
-	 private Section analyze( L<S> )
-	 {
-	 	build document
-	 	resolve forward references
-	 }
 
 	private Section buildDocument()
 	{
 		Section theDocument = new Section();
-		EnoElement currElem;
-		lineNumber = -1;
-		while( advanceLine() )
+		EnoElement currElem = null;
+		lineChecked = -1;
+		int sectionDepth = 0;
+		while ( advanceLine() )
 		{
 			String firstComment = getPreceedingComment();
+			// ASK already dissonant about line number here, perhaps subtract or have gPrecComm() use do while
 			if ( ! firstComment.isEmpty() )
 				advanceLine();
-			if ( wordOfLine is section )
-				if section depth > 1
-					canon complaint about depth
-				else
-				currElem = section( firstComment )
-			else if wordOfLine is field
-				currElem = field( firstComment )
-			else if wordOfLine is multi boundary
-				currElem = multiLine( firstComment )
-			else if wordOfLine is comment
-				theDocument.addComment( word.trim );
-				continue;
-			else
-				throw new RuntimeException( use canon complaint about
-					orphan fieldset, list, unknown thing )
-			if ( currElem != null )
-				theDocument.addElement( currElem )
+			List<Word> line = parsedLines.get( lineChecked );
+			Word currWord = line.get( wordIndOfLine );
+			if ( currWord.type == EMPTY )
+			{
+				wordIndOfLine++;
+				currWord = line.get( wordIndOfLine );
+			}
+			switch ( currWord.type )
+			{
+				case SECTION :
+				{
+					currElem = section( firstComment, sectionDepth );
+					break;
+				}
+				case FIELD :
+				{
+					currElem = field( firstComment );
+					break;
+				}
+				case MULTILINE_BOUNDARY :
+				{
+					currElem = multiline( firstComment );
+					break;
+				}
+				case COMMENT :
+				{
+					if ( currElem == null )
+					{
+						theDocument.addComment( currWord.value.trim() );
+					}
+					else
+					{
+						currElem.addComment( currWord.value.trim() );
+					}
+					continue;
+				}
+				case VALUE :
+				{
+					MessageFormat problem = new MessageFormat(
+							ExceptionStore.getStore().getExceptionMessage(
+									ExceptionStore.ANALYSIS, EnoLocaleKey
+										.MISSING_ELEMENT_FOR_CONTINUATION ) );
+					throw new RuntimeException( problem.format( new Object[]{ currWord.line } ) );
+				}
+				case LIST_ELEMENT :
+				{
+					MessageFormat problem = new MessageFormat(
+							ExceptionStore.getStore().getExceptionMessage(
+									ExceptionStore.ANALYSIS, EnoLocaleKey
+										.MISSING_NAME_FOR_LIST_ITEM ) );
+					throw new RuntimeException( problem.format( new Object[]{ currWord.line } ) );
+				}
+				case SET_ELEMENT :
+				{
+					MessageFormat problem = new MessageFormat(
+							ExceptionStore.getStore().getExceptionMessage(
+									ExceptionStore.ANALYSIS, EnoLocaleKey
+										.MISSING_NAME_FOR_FIELDSET_ENTRY ) );
+					throw new RuntimeException( problem.format( new Object[]{ currWord.line } ) );
+				}
+				case MULTILINE_TEXT :
+				case COPY :
+				default :
+				{
+					MessageFormat problem = new MessageFormat(
+							ExceptionStore.getStore().getExceptionMessage(
+									ExceptionStore.TOKENIZATION,
+									EnoLocaleKey.INVALID_LINE ) );
+					// NOTE likely a Parser implementation problem, not user error
+					throw new RuntimeException( problem.format( new Object[]{ currWord.line } ) );
+				}
+			}
+			if ( currElem != null ) // ASK do I need this ?
+			{
+				theDocument.addChild( currElem );
+				// ASK I'm assuming section handles dependence
+			}
 		}
+		return theDocument;
 	}
 
-	private String getPreceedingComment()
-	{
-		if first non empty element of actual current line is not comment
-		  return blank
-		advance past contiguous comments to non comment or end
-		if next elment starts with empty or there isn't a non comment
-			return blank
-		else
-			save the list line range
-			// find the common whitespace, le sigh, probably exact, not 'number of spaces'
-			Lexer kindergartener = new Lexer();
-			Set<C> whitespace = new TreeSet<>();
-			whitespace.add( space tab );
-			NaiveTrie notDynamic = new NaiveTrie( whitespace )
-			 for ( L<P.W> line in range )
-				kg.lex( line )
-				l.t first = kg.nextToken();
-				if ( first.type == space )
-					notDynamic.add( first.word );
-			String commentPrefix = notDynamic.longestCommonPrefix();
-			StringBuilder wholeComment
-			for ( L<P.W> line in range )
-				wC.append( commentPrefix );
-				wC.append( line.get( comment.word.trim() ) )
-			return wC.toString()
-	}
 
-	/ will handle getting own children
-	private Section section( String preceedingComment )
+	private Section section( String firstComment, int parentDepth )
 	{
+		
+		/*
+			-- from above
+					if ( currWord.modifier > sectionDepth +1 )
+					{
+						MessageFormat problem = new MessageFormat(
+							ExceptionStore.getStore().getExceptionMessage(
+									ExceptionStore.ANALYSIS, EnoLocaleKey.SECTION_HIERARCHY_LAYER_SKIP ) );
+						throw new RuntimeException( problem.format( new Object[]{ currWord.line } ) );
+					}
+					else
+					{
+						int currSecDepth = currWord.modifier;
+						wordIndOfLine++;
+						currWord = line.get( wordIndOfLine );
+						if ( currWord.type != FIELD )
+						{
+							MessageFormat problem = new MessageFormat(
+							ExceptionStore.getStore().getExceptionMessage(
+									ExceptionStore.ANALYSIS, EnoLocaleKey.MISSING_SECTION ) );
+							throw new RuntimeException( problem.format( new Object[]{ "name" } ) );
+							// NOTE likely a Parser implementation problem, not user error
+						}
+						currElem = new Section( currWord.value, currWord.modifier );
+						currElem.addComment( firstComment );
+						currElem.setFirstCommentPreceededName( true );
+					}
+
+				== pseudo
+
 		// if wordOfLine past empty is not section, return null
 		// no need to track prevailing depth, only get child if the depth is +1; hmm, who complains ?
 		Section currSection = new Section()
@@ -177,17 +249,159 @@ public class Semantologist
 				currSection.addElement( currElem )
 		}
 		return currSection;
+		*/
+		return null; // FIX todo
 	}
 
-	private Field field( preceedingComment )
+
+	private EnoElement field( String preceedingComment )
 	{
+		/*
 		fill immediate values, decide initial type
 		find children, first non comment corroborates type, mix provokes complaint
 		um maybe let each get a preceeding comment, so list items have comment and so on
 		return currField;
+		*/
+		return null; // FIX todo
 	}
 
-	*/
+
+	private EnoElement multiline( String preceedingComment )
+	{
+		wordIndOfLine = 0;
+		List<Word> line = parsedLines.get( lineChecked );
+		Word currWord = line.get( wordIndOfLine );
+		int emptyLines = 0;
+		if ( currWord.type == EMPTY )
+		{
+			emptyLines = currWord.modifier;
+			wordIndOfLine++;
+			currWord = line.get( wordIndOfLine );
+		}
+		if ( currWord.type != MULTILINE_BOUNDARY )
+		{
+			MessageFormat problem = new MessageFormat(
+					ExceptionStore.getStore().getExceptionMessage(
+							ExceptionStore.TOKENIZATION,
+							EnoLocaleKey.INVALID_LINE ) );
+			// NOTE likely a Parser implementation problem, not user error
+			throw new RuntimeException( problem.format( new Object[]{ currWord.line } ) );
+		}
+		int boundaryHyphens = currWord.modifier;
+		wordIndOfLine++;
+		currWord = line.get( wordIndOfLine );
+		if ( currWord.type != FIELD )
+		{
+			MessageFormat problem = new MessageFormat(
+					ExceptionStore.getStore().getExceptionMessage(
+							ExceptionStore.TOKENIZATION,
+							EnoLocaleKey.INVALID_LINE ) );
+			// NOTE likely a Parser implementation problem, not user error
+			throw new RuntimeException( problem.format( new Object[]{ currWord.line } ) );
+		}
+		Multiline currElem = new Multiline( currWord.value, currWord.modifier );
+		currElem.setPreceedingEmptyLines( emptyLines );
+		currElem.setBoundaryLength( boundaryHyphens );
+		wordIndOfLine++;
+		currWord = line.get( wordIndOfLine );
+		if ( currWord.type != MULTILINE_TEXT )
+		{
+			MessageFormat problem = new MessageFormat(
+					ExceptionStore.getStore().getExceptionMessage(
+							ExceptionStore.TOKENIZATION,
+							EnoLocaleKey.INVALID_LINE ) );
+			// NOTE likely a Parser implementation problem, not user error
+			throw new RuntimeException( problem.format( new Object[]{ currWord.line } ) );
+		}
+		currElem.setValue( currWord.value );
+		// NOTE look for succeeding comments
+		
+		/*
+		get child comments up to a preceeding comment or different element
+		*/
+		fields.add( currElem );
+		return null; // FIX todo
+	}
+
+
+	/** Copy contiguous, immediately-preceeding comments into a block
+	 * with the minimum common whitespace, blank otherwise.
+	 * Loses the preceeding empty line count. */
+	private String getPreceedingComment()
+	{
+		List<String> comments = new ArrayList<>();
+		boolean firstTime = true;
+		while ( advanceLine() )
+		{
+			advanceLine();
+			List<Word> line = parsedLines.get( lineChecked );
+			if ( line.get( wordIndOfLine ).type == EMPTY )
+			{
+				if ( firstTime )
+				{
+					// NOTE only allow empty to preceed this comment block, not separate it
+					wordIndOfLine++;
+					firstTime = false;
+				}
+				else
+				{
+					break;
+				}
+			}
+			if ( line.get( wordIndOfLine ).type == COMMENT )
+			{
+				comments.add( line.get( wordIndOfLine ).value );
+			}
+			else
+			{
+				break;
+			}
+		}
+		if ( comments.isEmpty() || lineChecked == parsedLines.size() )
+		{
+			// NOTE didn't find any or separated or last comments of document
+			return "";
+		}
+		Set<Character> whitespace = new TreeSet<>();
+		whitespace.add( Character.valueOf( ' ' ) );
+		whitespace.add( Character.valueOf( '\t' ) );
+		NaiveTrie sequenceAware = new NaiveTrie( whitespace );
+		Lexer reader = new Lexer();
+		String commonPrefix = null;
+		for ( String entire : comments )
+		{
+			reader.setLine( entire );
+			Lexer.Token first = reader.nextToken();
+			if ( first.type != Lexeme.WHITESPACE )
+			{
+				commonPrefix = "";
+				break;
+			}
+			else
+			{
+				sequenceAware.add( first.word );
+			}
+		}
+		if ( commonPrefix == null )
+		{
+			commonPrefix = sequenceAware.longestCommonPrefix();
+		}
+		StringBuilder wholeBlock = new StringBuilder( comments.size() * 10 );
+		for ( String entire : comments )
+		{
+			wholeBlock.append( commonPrefix );
+			wholeBlock.append( entire.trim() );
+			wholeBlock.append( System.lineSeparator() );
+		}
+		return wholeBlock.substring( 0, wholeBlock.length()
+				- System.lineSeparator().length() ); // NOTE remove trailing \n
+	}
+
+
+	private void resolveForwardReferences()
+	{
+		// FIX todo
+	}
 
 
 	private boolean advanceLine()

@@ -23,6 +23,16 @@ public class Section extends EnoElement
 	}
 
 
+	public void addChild( EnoElement another )
+	{
+		if ( another != null
+				&& another.getType() != EnoType.UNKNOWN )
+		{
+			children.add( another );
+		}
+	}
+
+
 	public int getDepth()
 	{
 		return depth;

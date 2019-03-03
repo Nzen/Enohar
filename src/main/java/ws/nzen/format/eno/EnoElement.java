@@ -10,6 +10,7 @@ public class EnoElement
 	protected final EnoType type;
 	protected String name = "";
 	protected int nameEscapes = 0;
+	protected int preceedingEmptyLines = 0;
 	protected List<String> comments = new LinkedList<>();
 	protected boolean firstCommentPreceededName = false;
 	protected String templateElementName = "";
@@ -52,7 +53,10 @@ public class EnoElement
 	}
 	public void setNameEscapes( int nameEscapes )
 	{
-		this.nameEscapes = nameEscapes;
+		if ( nameEscapes >= 0 )
+		{
+			this.nameEscapes = nameEscapes;
+		}
 	}
 
 
@@ -60,6 +64,18 @@ public class EnoElement
 	{
 		comments.add( another );
 	}
+	public String getAssociatedComment()
+	{
+		if ( ! comments.isEmpty() && firstCommentPreceededName )
+		{
+			return comments.get( 0 );
+		}
+		else
+		{
+			return "";
+		}
+	}
+
 	public List<String> getComments()
 	{
 		return comments;
@@ -77,6 +93,19 @@ public class EnoElement
 	public void setFirstCommentPreceededName( boolean firstCommentPreceededName )
 	{
 		this.firstCommentPreceededName = firstCommentPreceededName;
+	}
+
+
+	public int getPreceedingEmptyLines()
+	{
+		return preceedingEmptyLines;
+	}
+	public void setPreceedingEmptyLines( int preceedingEmptyLines )
+	{
+		if ( preceedingEmptyLines >= 0 )
+		{
+			this.preceedingEmptyLines = preceedingEmptyLines;
+		}
 	}
 
 	public String getTemplateElementName()

@@ -13,8 +13,6 @@ import java.util.ResourceBundle;
 import java.util.Set;
 import java.util.TreeSet;
 
-import org.eno_lang.locale.EnoAlias;
-
 /** Convert list of String to List List of Parser.Word */
 public class Parser
 {
@@ -27,10 +25,6 @@ public class Parser
 	protected Lexer alphabet = new Lexer();
 	protected Lexer.Token currToken;
 	protected int currLine = 0;
-	// eventually handle exception store localization, output formatter
-	protected ResourceBundle rbToken;
-	protected ResourceBundle rbAnalysis;
-	protected ResourceBundle rbValidation;
 	/** Word.modifier value for empty continuation, ie | */
 	public static final int WORD_MOD_CONT_EMPTY = 1;
 	/** Word.modifier value for space continuation, ie \ */
@@ -53,7 +47,6 @@ public class Parser
 	public Parser()
 	{
 		prepFieldDelimiters();
-		prepExceptionMessages();
 	}
 
 
@@ -70,18 +63,6 @@ public class Parser
 		DELIM_FIELD_COPY.add( COPY_OP_DEEP );
 		DELIM_FIELD_COPY.add( COPY_OP_THIN );
 		DELIM_END.add( END );
-	}
-
-
-/** Convert strings to  */
-	protected void prepExceptionMessages()
-	{
-		String filePrefixTokenize = "Tokenization";
-		rbToken = ResourceBundle.getBundle( filePrefixTokenize );
-		String filePrefixAnalysis = "Analysis";
-		rbAnalysis = ResourceBundle.getBundle( filePrefixAnalysis );
-		String filePrefixValidation = "Validation";
-		rbValidation = ResourceBundle.getBundle( filePrefixValidation );
 	}
 
 
@@ -119,20 +100,24 @@ public class Parser
 				{
 					// NOTE line looks like < nn ;; It needs a name
 					MessageFormat problem = new MessageFormat(
-							rbToken.getString( EnoAlias.INVALID_LINE ) );
+							ExceptionStore.getStore().getExceptionMessage(
+									ExceptionStore.TOKENIZATION, EnoLocaleKey.INVALID_LINE ) );
 					throw new RuntimeException( problem.format( new Object[]{ currLine } ) );
 				}
 				case FIELD_START_OP :
 				{
 					// NOTE names can't start with :
 					MessageFormat problem = new MessageFormat(
-							rbToken.getString( EnoAlias.INVALID_LINE ) );
+							ExceptionStore.getStore().getExceptionMessage(
+									ExceptionStore.TOKENIZATION, EnoLocaleKey.INVALID_LINE ) );
 					throw new RuntimeException( problem.format( new Object[]{ currLine } ) );
 				}
 				case SET_OP :
 				{
 					MessageFormat problem = new MessageFormat(
-							rbAnalysis.getString( EnoAlias.MISSING_NAME_FOR_FIELDSET_ENTRY ) );
+							ExceptionStore.getStore().getExceptionMessage(
+									ExceptionStore.ANALYSIS, EnoLocaleKey
+										.MISSING_NAME_FOR_FIELDSET_ENTRY ) );
 					throw new RuntimeException( problem.format( new Object[]{ currLine } ) );
 				}
 				case CONTINUE_OP_EMPTY :
@@ -258,7 +243,8 @@ public class Parser
 		{
 			// NOTE line looks like # < nn OR # /n;; It needs a name
 			MessageFormat problem = new MessageFormat(
-					rbToken.getString( EnoAlias.INVALID_LINE ) );
+					ExceptionStore.getStore().getExceptionMessage(
+							ExceptionStore.TOKENIZATION, EnoLocaleKey.INVALID_LINE ) );
 			throw new RuntimeException( problem.format( new Object[]{ currLine } ) );
 		}
 		skipWhitespace();
@@ -299,7 +285,9 @@ public class Parser
 			if ( currToken.type == END )
 			{
 				MessageFormat problem = new MessageFormat(
-						rbToken.getString( EnoAlias.UNTERMINATED_ESCAPED_NAME ) );
+						ExceptionStore.getStore().getExceptionMessage(
+								ExceptionStore.TOKENIZATION, EnoLocaleKey
+									.UNTERMINATED_ESCAPED_NAME ) );
 				throw new RuntimeException( problem.format( new Object[]{ currLine } ) );
 			}
 			else if ( currToken.type == ESCAPE_OP
@@ -358,7 +346,8 @@ public class Parser
 			{
 				// NOTE end isn't a delimiter right now, but we've exhausted input
 				MessageFormat problem = new MessageFormat(
-						rbValidation.getString( EnoAlias.EXCESS_NAME ) );
+						ExceptionStore.getStore().getExceptionMessage(
+								ExceptionStore.VALIDATION, EnoLocaleKey.EXCESS_NAME ) );
 				String complaint = problem.format( new Object[]{ pieces.toString() } );
 				throw new RuntimeException( complaint );
 			}
@@ -407,7 +396,9 @@ public class Parser
 		List<Word> lineProxy = new ArrayList<>( 2 );
 		StringBuilder multilineText = new StringBuilder();
 		MessageFormat problem = new MessageFormat(
-				rbToken.getString( EnoAlias.UNTERMINATED_BLOCK ) );
+				ExceptionStore.getStore().getExceptionMessage(
+						ExceptionStore.TOKENIZATION, EnoLocaleKey
+							.UNTERMINATED_BLOCK ) );
 		String complaint = problem.format( new Object[]{ multilineIdentifier.value, blockStartedAt } );
 		nextLine( true, complaint );
 		do
