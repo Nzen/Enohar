@@ -398,6 +398,30 @@ public class Semantologist
 	}
 
 
+	private Syntaxeme nextLineType()
+	{
+		int nextLineInd = lineChecked +1;
+		if ( nextLineInd >= parsedLines.size() )
+		{
+			return EMPTY;
+		}
+		int wordInd = 0;
+		List<Word> line = parsedLines.get( wordInd );
+		if ( line.isEmpty() )
+		{
+			// warn about nonstandard parser line
+		}
+		/*
+		if list is empty, continue, nonstandard parser
+		if the first of it is empty, check next word
+		if not comment, return that
+		if comment iterate until a line starts with empty or noncomment
+			if empty return comment, else return noncomment
+		*/
+		return null; // TODO
+	}
+
+
 	private void resolveForwardReferences()
 	{
 		// FIX todo
