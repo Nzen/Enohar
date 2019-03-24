@@ -1,8 +1,8 @@
-<?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<project
-		xmlns = "http://maven.apache.org/POM/4.0.0"
+<?xml version="1.0" encoding="UTF-8"?>
+ <project
+		xmlns="http://maven.apache.org/POM/4.0.0"
 		xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-		xsi:schemaLocation="http://maven.apache.org/xsd/maven-4.0.0.xsd">
+		xsi:schemaLocation="http://maven.apache.org/xsd/maven-4.0.0.xsd"S>
 	<modelVersion>
 		4.0.0
 	</modelVersion>
@@ -268,7 +268,7 @@
 					<execution>
 						<id>
 							sign-artifacts
-							</id>
+							</id>wh
 						<phase>
 							verify
 							</phase>
@@ -297,7 +297,7 @@
 				</configuration>
 			</plugin>
 		<plugin>
-		    <!-- deploy releases to sonatype's server -->
+		    <!-- deploy releases to sonatype's server
 			<groupId>
 				org.sonatype.plugins
 				</groupId>
@@ -321,7 +321,7 @@
 					false
 					</autoReleaseAfterClose>
 				</configuration>
-			</plugin>
+			</plugin> -->
 		</plugins>
 	</build>
 	<inceptionYear>

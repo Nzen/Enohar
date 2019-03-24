@@ -65,7 +65,7 @@ public class Semantologist
 			if ( currElem.getDepth() > sectionDepth +1 )
 			{
 				// FIX use canon complaint
-				throw new RuntimeException( here +"section depth jumped too fa at "+ lineChecked );
+				throw new RuntimeException( here +"section depth jumped too far at "+ lineChecked );
 			}
 			/*
 			get comments until we find a non comment (skip past empty, if need be
@@ -102,6 +102,11 @@ public class Semantologist
 			if ( currWord.type == EMPTY )
 			{
 				wordIndOfLine++;
+				if ( wordIndOfLine >= line.size() )
+				{
+					// complain about nonstandard parser
+					continue;
+				}
 				currWord = line.get( wordIndOfLine );
 			}
 			switch ( currWord.type )
@@ -254,12 +259,70 @@ public class Semantologist
 	}
 
 
-	private EnoElement field( String preceedingComment )
+	private Field field( String preceedingComment )
 	{
+		Syntaxeme fieldType = null; // maybe ditch by just using which is nonnull ?
+		List<Word> line = parsedLines.get( lineChecked );
+		Word fieldName = line.get( wordIndOfLine );
+		Word currElem;
+		Word template = null, copyType = null;
+		Field emptySelf = null;
+		Value lineSelf = null;
+		// list ; set
+		wordIndOfLine++;
+		if ( line.size() > wordIndOfLine )
+		{
+			// do I have value here ?
+			currElem = line.get( wordIndOfLine );
+			if ( currElem.type == VALUE )
+			{
+				lineSelf = new Value( fieldName.value, fieldName.modifier );
+				lineSelf.append( currElem.value );
+			}
+			else if ( currElem.type == COPY )
+			{
+				copyType = currElem;
+				wordIndOfLine++;
+				if ( line.size() > wordIndOfLine )
+				{
+					currElem = line.get( wordIndOfLine );
+					if ( currElem.type != FIELD )
+					{
+						// malformed line, complain about parser; expected field
+					}
+					else
+					{
+						template = currElem;
+					}
+				}
+				else
+				{
+					// malformed line, complain about parser; expected field
+				}
+			}
+			else
+			{
+				// malformed line, complain about parser
+			}
+		}
+		// loop
+		Syntaxeme nextType = nextLineType();
+		if ( nextType == COMMENT )
+		{
+			// get that comment, put in self
+		}
+		else if ( nextType == VALUE )
+		{
+			if ( lineSelf == null )
+			{
+				
+			}
+			// am I adding to list ? do children handle themselves ?
+		}
 		/*
 		fill immediate values, decide initial type
 		find children, first non comment corroborates type, mix provokes complaint
-		um maybe let each get a preceeding comment, so list items have comment and so on
+		um maybe let each get a preceeding comment, so list items have comment and so on, per spec
 		return currField;
 		*/
 		return null; // FIX todo
@@ -400,17 +463,6 @@ public class Semantologist
 
 	private Syntaxeme nextLineType()
 	{
-		int nextLineInd = lineChecked +1;
-		if ( nextLineInd >= parsedLines.size() )
-		{
-			return EMPTY;
-		}
-		int wordInd = 0;
-		List<Word> line = parsedLines.get( wordInd );
-		if ( line.isEmpty() )
-		{
-			// warn about nonstandard parser line
-		}
 		/*
 		if list is empty, continue, nonstandard parser
 		if the first of it is empty, check next word
@@ -418,7 +470,69 @@ public class Semantologist
 		if comment iterate until a line starts with empty or noncomment
 			if empty return comment, else return noncomment
 		*/
-		return null; // TODO
+		boolean vettingComment = false, firstTime = true;
+		int nextLineInd = lineChecked, wordInd = 0;
+		Word currMeme = null;
+		List<Word> line = null;
+		while ( true )
+		{
+			nextLineInd += 1;
+			if ( nextLineInd >= parsedLines.size() )
+			{
+				if ( vettingComment )
+				{
+					return COMMENT;
+				}
+				else
+				{
+					return EMPTY;
+				}
+			}
+			wordInd = 0;
+			line = parsedLines.get( wordInd );
+			if ( line.isEmpty() )
+			{
+				// warn about nonstandard parser line
+				continue;
+			}
+			while ( wordInd < line.size() )
+			{
+				currMeme = line.get( wordInd );
+				if ( currMeme.type == Syntaxeme.EMPTY
+						&& ! vettingComment )
+				{
+					wordInd++;
+				}
+				else if ( vettingComment )
+				{
+					return  Syntaxeme.COMMENT;
+				}
+				else
+				{
+					break;
+				}
+			}
+			if ( wordInd >= line.size() )
+			{
+				continue;
+			}
+			if ( currMeme.type == COMMENT 
+					&& firstTime )
+			{
+				vettingComment = true;
+				firstTime = false;
+				continue;
+			}
+			else if ( currMeme.type == COMMENT 
+					&& vettingComment )
+			{
+				continue;
+			}
+			else
+			{
+				return currMeme.type;
+			}
+		}
 	}
 
 

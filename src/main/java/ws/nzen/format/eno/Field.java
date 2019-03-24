@@ -30,6 +30,13 @@ public class Field extends EnoElement
 	}
 
 
+	protected Field( EnoType which,
+			String nameToHave, int escapes )
+	{
+		super( which, nameToHave, escapes );
+	}
+
+
 	// not sure if I'll use this or not
 	public Field adopt( EnoType which )
 	{
