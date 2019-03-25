@@ -261,8 +261,9 @@ public class Semantologist
 
 	private Field field( String preceedingComment )
 	{
-		Syntaxeme fieldType = null; // maybe ditch by just using which is nonnull ?
+		Syntaxeme fieldType = EMPTY;
 		List<Word> line = parsedLines.get( lineChecked );
+		List<String> intermediateComments = new LinkedList<>();
 		Word fieldName = line.get( wordIndOfLine );
 		Word currElem;
 		Word template = null, copyType = null;
@@ -278,6 +279,7 @@ public class Semantologist
 			{
 				lineSelf = new Value( fieldName.value, fieldName.modifier );
 				lineSelf.append( currElem.value );
+				fieldType = VALUE;
 			}
 			else if ( currElem.type == COPY )
 			{
@@ -305,26 +307,69 @@ public class Semantologist
 				// malformed line, complain about parser
 			}
 		}
-		// loop
-		Syntaxeme nextType = nextLineType();
-		if ( nextType == COMMENT )
+		String docComment = "";
+		boolean nonChild = false;
+		while ( true )
 		{
-			// get that comment, put in self
-		}
-		else if ( nextType == VALUE )
-		{
-			if ( lineSelf == null )
+			Syntaxeme nextType = nextLineType();
+			switch ( nextType )
 			{
-				
+				case COMMENT :
+				{
+					lineChecked++;
+					wordIndOfLine = 0;
+					// Improve, maybe don't assume that this is well formed ?
+					line = parsedLines.get( lineChecked );
+					currElem = line.get( wordIndOfLine );
+					if ( currElem.type == EMPTY )
+					{
+						wordIndOfLine++;;
+						currElem = line.get( wordIndOfLine );
+					}
+					if ( currElem.type == COMMENT )
+					{
+						if ( fieldType == EMPTY )
+						{
+							intermediateComments.add( currElem.value );
+						}
+						else if ( fieldType == VALUE )
+						{
+							lineSelf.addComment( currElem.value );
+						}
+					}
+					// else complain about next line type, or check next line
+					break;
+				}
+				case VALUE :
+				{
+					break;
+				}
+				case LIST_ELEMENT :
+				{
+					break;
+				}
+				case SET_ELEMENT :
+				{
+					break;
+				}
+				default :
+				{
+					nonChild = true;
+					break;
+				}
 			}
-			// am I adding to list ? do children handle themselves ?
+			if ( nonChild )
+			{
+				// cleanup here or below
+				break;
+			}
+			/*
+			fill immediate values, decide initial type
+			find children, first non comment corroborates type, mix provokes complaint
+			um maybe let each get a preceeding comment, so list items have comment and so on, per spec
+			return currField;
+			*/
 		}
-		/*
-		fill immediate values, decide initial type
-		find children, first non comment corroborates type, mix provokes complaint
-		um maybe let each get a preceeding comment, so list items have comment and so on, per spec
-		return currField;
-		*/
 		return null; // FIX todo
 	}
 
