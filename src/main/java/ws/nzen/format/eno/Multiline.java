@@ -1,7 +1,10 @@
 /** see ../../../../../LICENSE for release details */
 package ws.nzen.format.eno;
 
-/**  */
+import java.text.MessageFormat;
+import java.util.NoSuchElementException;
+
+/** A field that preserves the formatting */
 public class Multiline extends Field
 {
 	private int boundaryLength = 2;
@@ -16,7 +19,7 @@ public class Multiline extends Field
 
 	public Multiline( String nameToHave, int escapes )
 	{
-		super( nameToHave, escapes );
+		super( EnoType.MULTILINE, nameToHave, escapes );
 	}
 
 
@@ -24,10 +27,28 @@ public class Multiline extends Field
 	{
 		formattedValue = updated;
 	}
-	@Override
-	public String getValue()
+
+	/** returns null for uninitialized value */
+	public String optionalStringValue()
 	{
 		return formattedValue;
+	}
+
+	/** @throws NoSuchElementException if has no value */
+	public String requiredStringValue()
+	{
+		if ( formattedValue == null )
+		{
+			MessageFormat problem = new MessageFormat(
+					ExceptionStore.getStore().getExceptionMessage(
+							ExceptionStore.VALIDATION,
+							EnoLocaleKey.MISSING_FIELD_VALUE ) );
+			throw new NoSuchElementException( problem.format( new Object[]{ name } ) );
+		}
+		else
+		{
+			return formattedValue;
+		}
 	}
 
 

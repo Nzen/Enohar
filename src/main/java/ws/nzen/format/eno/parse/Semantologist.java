@@ -16,6 +16,8 @@ import ws.nzen.format.eno.EnoLocaleKey;
 import ws.nzen.format.eno.EnoType;
 import ws.nzen.format.eno.ExceptionStore;
 import ws.nzen.format.eno.Field;
+import ws.nzen.format.eno.FieldList;
+import ws.nzen.format.eno.FieldSet;
 import ws.nzen.format.eno.Multiline;
 import ws.nzen.format.eno.Section;
 import ws.nzen.format.eno.Value;
@@ -271,12 +273,28 @@ public class Semantologist
 	{
 		EnoType fieldType = FIELD_EMPTY;
 		List<Word> line = parsedLines.get( lineChecked );
-		List<String> intermediateComments = new LinkedList<>();
+		Word emptyLines = null;
+		Word currElem = line.get( wordIndOfLine );
+		if ( currElem.type == EMPTY )
+		{
+			emptyLines = currElem;
+			wordIndOfLine++;
+		}
 		Word fieldName = line.get( wordIndOfLine );
-		Word currElem;
 		Word template = null, copyType = null;
-		Field emptySelf = null;
+		Field emptySelf = new Field( fieldName.value, fieldName.modifier );
+		if ( ! preceedingComment.isEmpty() )
+		{
+			emptySelf.addComment( preceedingComment );
+			emptySelf.setFirstCommentPreceededName( true );
+		}
+		if ( emptyLines != null )
+		{
+			emptySelf.setPreceedingEmptyLines( emptyLines.modifier );
+		}
 		Value lineSelf = null;
+		FieldList listSelf = null;
+		FieldSet pairedSelf = null;
 		// list ; set
 		wordIndOfLine++;
 		if ( line.size() > wordIndOfLine )
@@ -285,7 +303,7 @@ public class Semantologist
 			currElem = line.get( wordIndOfLine );
 			if ( currElem.type == VALUE )
 			{
-				lineSelf = new Value( fieldName.value, fieldName.modifier );
+				lineSelf = new Value( emptySelf );
 				lineSelf.append( currElem.value );
 				fieldType = FIELD_VALUE;
 			}
@@ -296,16 +314,13 @@ public class Semantologist
 				if ( line.size() > wordIndOfLine )
 				{
 					currElem = line.get( wordIndOfLine );
-					if ( currElem.type != FIELD )
-					{
-						// malformed line, complain about parser; expected field
-					}
-					else
+					if ( currElem.type == FIELD )
 					{
 						template = currElem;
 					}
+					// else malformed line, complain about parser; expected field
 				}
-				// else malformed line, complain about parser; expected field
+				// else malformed line, complain about parser; expected field after copy
 			}
 			// else malformed line, complain about parser; expected only value or copy
 		}
@@ -332,11 +347,19 @@ public class Semantologist
 					{
 						if ( fieldType == FIELD_EMPTY )
 						{
-							intermediateComments.add( currElem.value );
+							emptySelf.addComment( currElem.value );
 						}
 						else if ( fieldType == FIELD_VALUE )
 						{
 							lineSelf.addComment( currElem.value );
+						}
+						else if ( fieldType == FIELD_SET )
+						{
+							pairedSelf.addComment( currElem.value );
+						}
+						else if ( fieldType == FIELD_LIST )
+						{
+							listSelf.addComment( currElem.value );
 						}
 					}
 					// else complain about next line type, or check next line
@@ -344,6 +367,39 @@ public class Semantologist
 				}
 				case VALUE :
 				{
+					lineChecked++;
+					wordIndOfLine = 0;
+					// Improve, maybe don't assume that this is well formed ?
+					line = parsedLines.get( lineChecked );
+					currElem = line.get( wordIndOfLine );
+					if ( currElem.type == EMPTY )
+					{
+						wordIndOfLine++;;
+						currElem = line.get( wordIndOfLine );
+					}
+					if ( currElem.type == VALUE )
+					{
+						String continuation = ( currElem.modifier == Parser
+								.WORD_MOD_CONT_EMPTY ) ? "" : " ";
+						if ( fieldType == FIELD_EMPTY )
+						{
+							lineSelf = new Value( emptySelf );
+							lineSelf.append( currElem.value );
+							fieldType = FIELD_VALUE;
+						}
+						else if ( fieldType == FIELD_VALUE )
+						{
+							lineSelf.append( continuation + currElem.value );
+						}
+						else if ( fieldType == FIELD_LIST )
+						{
+							// TODO add to latest item
+						}
+						else if ( fieldType == FIELD_SET )
+						{
+							// TODO add to latest entry
+						}
+					}
 					break;
 				}
 				case LIST_ELEMENT :
@@ -372,6 +428,8 @@ public class Semantologist
 			return currField;
 			*/
 		}
+		// cleanup here or above
+		// return the field that corresponds to this type
 		return null; // FIX todo
 	}
 

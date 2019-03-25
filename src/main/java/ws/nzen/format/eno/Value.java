@@ -17,6 +17,18 @@ public class Value extends Field
 	}
 
 
+	public Value( Field likelyEmpty )
+	{
+		this( new String( likelyEmpty.getName() ), likelyEmpty.getNameEscapes() );
+		cloneFrom( likelyEmpty );
+		if ( likelyEmpty.getType() == EnoType.FIELD_VALUE )
+		{
+			Value notEmpty = (Value)likelyEmpty;
+			setStringValue( new String( notEmpty.optionalStringValue() ) );
+		}
+	}
+
+
 	public void append( String more )
 	{
 		if ( value == null )
@@ -52,6 +64,11 @@ public class Value extends Field
 		{
 			return value;
 		}
+	}
+
+	public void setStringValue( String newValue )
+	{
+		value = newValue;
 	}
 
 

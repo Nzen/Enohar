@@ -84,6 +84,14 @@ public class EnoElement
 	{
 		this.comments = comments;
 	}
+	public void cloneComments( List<String> comments )
+	{
+		this.comments.clear();
+		for ( String one : comments )
+		{
+			comments.add( new String( one ) );
+		}
+	}
 
 
 	public boolean firstCommentPreceededName()

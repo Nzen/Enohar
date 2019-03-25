@@ -45,7 +45,7 @@ class ShouldSemantics
 		Multiline field = (Multiline)fieldsOfDoc.get( 0 );
 		assertTrue( field.getNameEscapes() == 0 );
 		assertTrue( field.getBoundaryLength() == 2 );
-		assertTrue( field.getValue().equals( multiText ) );
+		assertTrue( field.optionalStringValue().equals( multiText ) );
 		comments = field.getComments();
 		assertTrue( field.firstCommentPreceededName() );
 		assertTrue( field.getAssociatedComment().equals( associatedComment ) );

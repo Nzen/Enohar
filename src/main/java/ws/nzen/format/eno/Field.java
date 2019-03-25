@@ -37,6 +37,23 @@ public class Field extends EnoElement
 	}
 
 
+	public Field( Field likelyEmpty )
+	{
+		this( new String( likelyEmpty.getName() ), likelyEmpty.getNameEscapes() );
+		cloneFrom( likelyEmpty );
+	}
+
+
+	protected void cloneFrom( Field likelyEmpty )
+	{
+		setPreceedingEmptyLines( likelyEmpty.getPreceedingEmptyLines() );
+		cloneComments( likelyEmpty.getComments() );
+		setTemplateElementName( new String( likelyEmpty.getTemplateElementName()) );
+		setShallowTemplate( likelyEmpty.isShallowTemplate() );
+	}
+
+
+	@Deprecated
 	// not sure if I'll use this or not
 	public Field adopt( EnoType which )
 	{
@@ -57,12 +74,6 @@ public class Field extends EnoElement
 	public boolean isEmpty()
 	{
 		return type == FIELD_EMPTY;
-	}
-
-
-	public String getValue()
-	{
-		return "";
 	}
 
 }
