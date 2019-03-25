@@ -1,17 +1,19 @@
 /** see ../../../../../LICENSE for release details */
-package ws.nzen.format.eno;
+package ws.nzen.format.eno.parse;
 
-import static ws.nzen.format.eno.Lexeme.*;
-import static ws.nzen.format.eno.Syntaxeme.*;
+import static ws.nzen.format.eno.parse.Lexeme.*;
+import static ws.nzen.format.eno.parse.Syntaxeme.*;
 
 import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Queue;
-import java.util.ResourceBundle;
 import java.util.Set;
 import java.util.TreeSet;
+
+import ws.nzen.format.eno.EnoLocaleKey;
+import ws.nzen.format.eno.ExceptionStore;
 
 /** Convert list of String to List List of Parser.Word */
 public class Parser

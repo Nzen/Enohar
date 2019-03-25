@@ -1,5 +1,5 @@
 /** see ../../../../../LICENSE for release details */
-package ws.nzen.format.eno;
+package ws.nzen.format.eno.parse;
 
 import java.util.Map;
 import java.util.Set;

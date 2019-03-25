@@ -1,5 +1,5 @@
 /** see ../../../../../LICENSE for release details */
-package ws.nzen.format.eno;
+package ws.nzen.format.eno.parse;
 
 import static org.junit.Assert.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
@@ -9,12 +9,17 @@ import java.util.List;
 
 import org.junit.jupiter.api.Test;
 
+import ws.nzen.format.eno.EnoElement;
+import ws.nzen.format.eno.Multiline;
+import ws.nzen.format.eno.Section;
+import ws.nzen.format.eno.parse.Semantologist;
+
 /**  */
 class ShouldSemantics
 {
 
 	/**
-	 * Test method for {@link ws.nzen.format.eno.Semantologist#analyze(java.util.List)}.
+	 * Test method for {@link ws.nzen.format.eno.parse.Semantologist#analyze(java.util.List)}.
 	 */
 	@Test
 	void testAnalyze()

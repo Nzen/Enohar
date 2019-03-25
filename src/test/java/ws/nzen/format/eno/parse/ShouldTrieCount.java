@@ -1,21 +1,22 @@
 /** see ../../../../../LICENSE for release details */
-package ws.nzen.format.eno;
+package ws.nzen.format.eno.parse;
 
 import static org.junit.Assert.assertTrue;
 import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.fail;
 
 import java.util.Set;
 import java.util.TreeSet;
 
 import org.junit.jupiter.api.Test;
 
+import ws.nzen.format.eno.parse.NaiveTrie;
+
 /**  */
 class ShouldTrieCount
 {
 
 	/**
-	 * Test method for {@link ws.nzen.format.eno.NaiveTrie#contains(java.lang.String)}.
+	 * Test method for {@link ws.nzen.format.eno.parse.NaiveTrie#contains(java.lang.String)}.
 	 */
 	@Test
 	void testContains()
@@ -40,7 +41,7 @@ class ShouldTrieCount
 
 
 	/**
-	 * Test method for {@link ws.nzen.format.eno.NaiveTrie#longestCommonPrefix()}.
+	 * Test method for {@link ws.nzen.format.eno.parse.NaiveTrie#longestCommonPrefix()}.
 	 */
 	@Test
 	void testLongestCommonPrefix()

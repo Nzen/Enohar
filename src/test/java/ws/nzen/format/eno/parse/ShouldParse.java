@@ -1,11 +1,11 @@
 /** see ../../../../../LICENSE for release details */
-package ws.nzen.format.eno;
+package ws.nzen.format.eno.parse;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static ws.nzen.format.eno.Lexeme.*;
-import static ws.nzen.format.eno.Syntaxeme.*;
+import static ws.nzen.format.eno.parse.Lexeme.*;
+import static ws.nzen.format.eno.parse.Syntaxeme.*;
 
 import java.util.ArrayList;
 import java.util.LinkedList;
@@ -13,12 +13,15 @@ import java.util.List;
 
 import org.junit.jupiter.api.Test;
 
+import ws.nzen.format.eno.parse.Parser;
+import ws.nzen.format.eno.parse.Syntaxeme;
+
 /**  */
 class ShouldParse
 {
 
 	/**
-	 * Test method for {@link ws.nzen.format.eno.Parser#parse(java.util.List)}.
+	 * Test method for {@link ws.nzen.format.eno.parse.Parser#parse(java.util.List)}.
 	 */
 	@Test
 	void testParse()

@@ -1,7 +1,7 @@
 /** see ../../../../../LICENSE for release details */
-package ws.nzen.format.eno;
+package ws.nzen.format.eno.parse;
 
-import static ws.nzen.format.eno.Lexeme.*;
+import static ws.nzen.format.eno.parse.Lexeme.*;
 
 import java.util.Set;
 import java.util.TreeSet;

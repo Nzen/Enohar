@@ -1,17 +1,20 @@
 /** see ../../../../../LICENSE for release details */
-package ws.nzen.format.eno;
+package ws.nzen.format.eno.parse;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import org.junit.jupiter.api.Test;
 
+import ws.nzen.format.eno.parse.Lexeme;
+import ws.nzen.format.eno.parse.Lexer;
+
 /**  */
 class ShouldLex
 {
 
 	/**
-	 * Test method for {@link ws.nzen.format.eno.Lexer#nextToken()}.
+	 * Test method for {@link ws.nzen.format.eno.parse.Lexer#nextToken()}.
 	 */
 	@Test
 	void testNextToken()

@@ -12,6 +12,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Queue;
 
+import ws.nzen.format.eno.parse.Parser;
+
 /** A class for testing outside of junit */
 public class Example
 {

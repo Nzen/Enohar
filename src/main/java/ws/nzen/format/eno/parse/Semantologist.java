@@ -1,17 +1,25 @@
 /** see ../../../../../LICENSE for release details */
-package ws.nzen.format.eno;
+package ws.nzen.format.eno.parse;
 
-import static ws.nzen.format.eno.Syntaxeme.*;
+import static ws.nzen.format.eno.EnoType.*;
+import static ws.nzen.format.eno.parse.Syntaxeme.*;
 
 import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.ResourceBundle;
 import java.util.Set;
 import java.util.TreeSet;
 
-import ws.nzen.format.eno.Parser.Word;
+import ws.nzen.format.eno.EnoElement;
+import ws.nzen.format.eno.EnoLocaleKey;
+import ws.nzen.format.eno.EnoType;
+import ws.nzen.format.eno.ExceptionStore;
+import ws.nzen.format.eno.Field;
+import ws.nzen.format.eno.Multiline;
+import ws.nzen.format.eno.Section;
+import ws.nzen.format.eno.Value;
+import ws.nzen.format.eno.parse.Parser.Word;
 
 /**  */
 public class Semantologist
@@ -57,7 +65,7 @@ public class Semantologist
 			throw new RuntimeException( here +"every line should have something" );
 		}
 		Word first = line.get( inLineInd );
-		if ( first.type == SECTION )
+		if ( first.type == Syntaxeme.SECTION )
 		{
 			inLineInd++;
 			Word name = line.get( inLineInd );
@@ -261,7 +269,7 @@ public class Semantologist
 
 	private Field field( String preceedingComment )
 	{
-		Syntaxeme fieldType = EMPTY;
+		EnoType fieldType = FIELD_EMPTY;
 		List<Word> line = parsedLines.get( lineChecked );
 		List<String> intermediateComments = new LinkedList<>();
 		Word fieldName = line.get( wordIndOfLine );
@@ -279,7 +287,7 @@ public class Semantologist
 			{
 				lineSelf = new Value( fieldName.value, fieldName.modifier );
 				lineSelf.append( currElem.value );
-				fieldType = VALUE;
+				fieldType = FIELD_VALUE;
 			}
 			else if ( currElem.type == COPY )
 			{
@@ -297,15 +305,9 @@ public class Semantologist
 						template = currElem;
 					}
 				}
-				else
-				{
-					// malformed line, complain about parser; expected field
-				}
+				// else malformed line, complain about parser; expected field
 			}
-			else
-			{
-				// malformed line, complain about parser
-			}
+			// else malformed line, complain about parser; expected only value or copy
 		}
 		String docComment = "";
 		boolean nonChild = false;
@@ -328,11 +330,11 @@ public class Semantologist
 					}
 					if ( currElem.type == COMMENT )
 					{
-						if ( fieldType == EMPTY )
+						if ( fieldType == FIELD_EMPTY )
 						{
 							intermediateComments.add( currElem.value );
 						}
-						else if ( fieldType == VALUE )
+						else if ( fieldType == FIELD_VALUE )
 						{
 							lineSelf.addComment( currElem.value );
 						}
