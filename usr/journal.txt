@@ -1,4 +1,16 @@
 
+# 190329
+
+Oh, maybe I could infer the type of the field from the type of the referenced element. On the other hand, these may be forward referenced, so it's an occasion for complaint, not assistance. At best, I could change an empty to a whatever when resolving forward references.
+
+Add canon complaints for when I find a set element in a list. Fill in the FieldSet and SetElement api`s. Fill in the set element section of field() much as I did the list section. Break from the loop; return the field that corresponds to the real one. Then, I'll spend a later session filling in section() and make initial tests for this second pass of parsing. In the farther future, after that's debugged (as I'm doubtless forgetting where I've left the cursor), then I could work on enabling forward references.
+
+# 190325
+
+Semantologist field needs to have a local variable for the current child, that way, if when I find a loose comment, I can add it to that, rather than the larger element. Or maybe punt and just add it to the field. It's just space, it doesn't seem particularly hard. Okay. I need to make classes for ListItem and SetElement, so they can store associated and other comments. Um, the list item shouldn't really have a name though. Oh well. If it's vital that it not be of the heirarchy, I can reimplement that section. Then, I'll switch to the section() and vet this draft.
+
+While I am of a desire to say 'and that's mvp' (which it can be, if I choose), the part after that would involve resolving template references. With that done, then I'd be at a comfortable mvp, such that I could start reading from eno files.
+
 # 190302
 
 I'm ambivalent about moving the parsing classes to their own package. I'm also ambivalent about making their private methods protected.

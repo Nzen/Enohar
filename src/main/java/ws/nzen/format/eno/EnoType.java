@@ -8,6 +8,8 @@ public enum EnoType
 	FIELD_SET,
 	FIELD_LIST,
 	MULTILINE,
+	LIST_ITEM,
+	SET_ELEMENT,
 	UNKNOWN;
 }
 

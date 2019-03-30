@@ -12,12 +12,16 @@ public class FieldSet extends Field
 	}
 
 
-	/** @param nameToHave
-	/** @param escapes */
 	public FieldSet( String nameToHave, int escapes )
 	{
 		super( EnoType.FIELD_SET, nameToHave, escapes );
-		// FIX Auto-generated constructor stub
+	}
+
+
+	public FieldSet( Field likelyEmpty )
+	{
+		this( new String( likelyEmpty.getName() ), likelyEmpty.getNameEscapes() );
+		cloneFrom( likelyEmpty );
 	}
 
 }

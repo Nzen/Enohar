@@ -18,6 +18,7 @@ import ws.nzen.format.eno.ExceptionStore;
 import ws.nzen.format.eno.Field;
 import ws.nzen.format.eno.FieldList;
 import ws.nzen.format.eno.FieldSet;
+import ws.nzen.format.eno.ListItem;
 import ws.nzen.format.eno.Multiline;
 import ws.nzen.format.eno.Section;
 import ws.nzen.format.eno.Value;
@@ -324,8 +325,9 @@ public class Semantologist
 			}
 			// else malformed line, complain about parser; expected only value or copy
 		}
+		Value currChild = null;
 		String docComment = "";
-		boolean nonChild = false;
+		boolean nonChild = false; // NOTE encountered sibling field or parent section
 		while ( true )
 		{
 			Syntaxeme nextType = nextLineType();
@@ -340,7 +342,7 @@ public class Semantologist
 					currElem = line.get( wordIndOfLine );
 					if ( currElem.type == EMPTY )
 					{
-						wordIndOfLine++;;
+						wordIndOfLine++;
 						currElem = line.get( wordIndOfLine );
 					}
 					if ( currElem.type == COMMENT )
@@ -355,11 +357,11 @@ public class Semantologist
 						}
 						else if ( fieldType == FIELD_SET )
 						{
-							pairedSelf.addComment( currElem.value );
+							currChild.addComment( currElem.value );
 						}
 						else if ( fieldType == FIELD_LIST )
 						{
-							listSelf.addComment( currElem.value );
+							currChild.addComment( currElem.value );
 						}
 					}
 					// else complain about next line type, or check next line
@@ -374,7 +376,7 @@ public class Semantologist
 					currElem = line.get( wordIndOfLine );
 					if ( currElem.type == EMPTY )
 					{
-						wordIndOfLine++;;
+						wordIndOfLine++;
 						currElem = line.get( wordIndOfLine );
 					}
 					if ( currElem.type == VALUE )
@@ -391,19 +393,57 @@ public class Semantologist
 						{
 							lineSelf.append( continuation + currElem.value );
 						}
-						else if ( fieldType == FIELD_LIST )
+						else if ( fieldType == FIELD_LIST
+								|| fieldType == FIELD_SET )
 						{
-							// TODO add to latest item
-						}
-						else if ( fieldType == FIELD_SET )
-						{
-							// TODO add to latest entry
+							currChild.append( continuation + currElem.value );
 						}
 					}
 					break;
 				}
 				case LIST_ELEMENT :
 				{
+					docComment = getPreceedingComment();
+					wordIndOfLine = 0;
+					// Improve, maybe don't assume that this is well formed ?
+					line = parsedLines.get( lineChecked );
+					currElem = line.get( wordIndOfLine );
+					if ( currElem.type == EMPTY )
+					{
+						wordIndOfLine++;
+						currElem = line.get( wordIndOfLine );
+					}
+					if ( fieldType == FIELD_EMPTY )
+					{
+						fieldType = FIELD_LIST;
+						listSelf = new FieldList( emptySelf );
+						currChild = new ListItem( currElem.value );
+						if ( ! docComment.isEmpty() )
+						{
+							currChild.addComment( docComment );
+							currChild.setFirstCommentPreceededName( true );
+						}
+						listSelf.addItem( (ListItem)currChild );
+					}
+					else if ( fieldType == FIELD_LIST )
+					{
+						currChild = new ListItem( currElem.value );
+						if ( ! docComment.isEmpty() )
+						{
+							currChild.addComment( docComment );
+							currChild.setFirstCommentPreceededName( true );
+						}
+						listSelf.addItem( (ListItem)currChild );
+					}
+					else if ( fieldType == FIELD_VALUE )
+					{
+						// todo use canon complaint
+					}
+					else if ( fieldType == FIELD_SET )
+					{
+						// todo use canon complaint
+					}
+					
 					break;
 				}
 				case SET_ELEMENT :

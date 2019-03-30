@@ -9,11 +9,17 @@ public class Value extends Field
 {
 	private String value = null; // per spec, I'd prefer empty string
 
-	/** @param nameToHave
-	/** @param escapes */
+
 	public Value( String nameToHave, int escapes )
 	{
 		super( EnoType.FIELD_VALUE, nameToHave, escapes );
+	}
+
+
+	protected Value( EnoType childType,
+			String nameToHave, int escapes )
+	{
+		super( childType, nameToHave, escapes );
 	}
 
 
