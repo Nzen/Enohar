@@ -437,11 +437,19 @@ public class Semantologist
 					}
 					else if ( fieldType == FIELD_VALUE )
 					{
-						// todo use canon complaint
+						MessageFormat problem = new MessageFormat(
+								ExceptionStore.getStore().getExceptionMessage(
+										ExceptionStore.ANALYSIS, EnoLocaleKey
+											.LIST_ITEM_IN_FIELD ) );
+						throw new RuntimeException( problem.format( new Object[]{ currElem.line } ) );
 					}
 					else if ( fieldType == FIELD_SET )
 					{
-						// todo use canon complaint
+						MessageFormat problem = new MessageFormat(
+								ExceptionStore.getStore().getExceptionMessage(
+										ExceptionStore.ANALYSIS, EnoLocaleKey
+											.LIST_ITEM_IN_FIELDSET ) );
+						throw new RuntimeException( problem.format( new Object[]{ currElem.line } ) );
 					}
 					
 					break;
