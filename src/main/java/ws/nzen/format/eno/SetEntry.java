@@ -2,10 +2,10 @@
 package ws.nzen.format.eno;
 
 /**  */
-public class SetElement extends Value
+public class SetEntry extends Value
 {
 
-	public SetElement( String nameToHave, int escapes )
+	public SetEntry( String nameToHave, int escapes )
 	{
 		super( EnoType.FIELD_VALUE, nameToHave, escapes );
 	}

@@ -1,4 +1,10 @@
 
+# 190331
+
+Oh. The eno locale repository merged with enoLib and doesn't create a json file anymore. le sigh. I'll need to complain, not satisfy spec by trailing, donate a generator for listresourcebundle, or reimplement the locales generator project. For the moment, I'll trail the spec.
+
+Next is section() and prepare tests for when I have this draft ready.
+
 # 190329
 
 Oh, maybe I could infer the type of the field from the type of the referenced element. On the other hand, these may be forward referenced, so it's an occasion for complaint, not assistance. At best, I could change an empty to a whatever when resolving forward references.

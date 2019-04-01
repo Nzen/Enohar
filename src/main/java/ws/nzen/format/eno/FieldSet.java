@@ -1,9 +1,13 @@
 /** see ../../../../../LICENSE for release details */
 package ws.nzen.format.eno;
 
+import java.util.ArrayList;
+import java.util.List;
+
 /**  */
 public class FieldSet extends Field
 {
+	private List<SetEntry> entries = new ArrayList<>();
 
 	/**  */
 	public FieldSet()
@@ -23,6 +27,35 @@ public class FieldSet extends Field
 		this( new String( likelyEmpty.getName() ), likelyEmpty.getNameEscapes() );
 		cloneFrom( likelyEmpty );
 	}
+
+
+	public void addEntry( SetEntry anotherChild )
+	{
+		if ( anotherChild != null )
+		{
+			entries.add( anotherChild );
+		}
+	}
+
+
+	/** returns null if the name isn't in this list;
+	 * returns the first with that name, when multiple added. */
+	public SetEntry entry( String name )
+	{
+		if ( name == null )
+		{
+			return null;
+		}
+		for ( SetEntry child : entries )
+		{
+			if ( child.getName().equals( name ) )
+			{
+				return child;
+			}
+		}
+		return null;
+	}
+
 
 }
 

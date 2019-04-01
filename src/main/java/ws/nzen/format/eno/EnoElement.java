@@ -1,8 +1,10 @@
 /** see ../../../../../LICENSE for release details */
 package ws.nzen.format.eno;
 
+import java.text.MessageFormat;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.NoSuchElementException;
 
 /** Using a composite rather than insisting on casting */
 public class EnoElement
@@ -13,8 +15,10 @@ public class EnoElement
 	protected int preceedingEmptyLines = 0;
 	protected List<String> comments = new LinkedList<>();
 	protected boolean firstCommentPreceededName = false;
-	protected String templateElementName = "";
+	protected String templateName = "";
+	protected int templateEscapes = 0;
 	protected boolean shallowTemplate = false;
+	protected int line = 0;
 
 
 	protected EnoElement( EnoType typeToBe )
@@ -64,15 +68,31 @@ public class EnoElement
 	{
 		comments.add( another );
 	}
-	public String getAssociatedComment()
+	public String requiredStringComment()
+	{
+		return getFirstComment( true );
+	}
+	public String optionalStringComment()
+	{
+		return getFirstComment( false );
+	}
+	protected String getFirstComment( boolean complain )
 	{
 		if ( ! comments.isEmpty() && firstCommentPreceededName )
 		{
 			return comments.get( 0 );
 		}
+		else if ( complain )
+		{
+			MessageFormat problem = new MessageFormat(
+					ExceptionStore.getStore().getExceptionMessage(
+							ExceptionStore.VALIDATION,
+							EnoLocaleKey.MISSING_FIELD_VALUE ) ); // FIX use required comment missing
+			throw new NoSuchElementException( problem.format( new Object[]{ name } ) );
+		}
 		else
 		{
-			return "";
+			return null; // per spec
 		}
 	}
 
@@ -116,13 +136,22 @@ public class EnoElement
 		}
 	}
 
-	public String getTemplateElementName()
+	public String getTemplateName()
 	{
-		return templateElementName;
+		return templateName;
 	}
-	public void setTemplateElementName( String templateElementName )
+	public void setTemplateName( String templateElementName )
 	{
-		this.templateElementName = templateElementName;
+		this.templateName = templateElementName;
+	}
+
+	public int getTemplateEscapes()
+	{
+		return templateEscapes;
+	}
+	public void setTemplateEscapes( int templateEscapes )
+	{
+		this.templateEscapes = templateEscapes;
 	}
 
 	public boolean isShallowTemplate()
@@ -132,6 +161,15 @@ public class EnoElement
 	public void setShallowTemplate( boolean shallowTemplate )
 	{
 		this.shallowTemplate = shallowTemplate;
+	}
+
+	public int getLine()
+	{
+		return line;
+	}
+	public void setLine( int line )
+	{
+		this.line = line;
 	}
 
 }

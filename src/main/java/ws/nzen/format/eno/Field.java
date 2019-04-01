@@ -48,8 +48,11 @@ public class Field extends EnoElement
 	{
 		setPreceedingEmptyLines( likelyEmpty.getPreceedingEmptyLines() );
 		cloneComments( likelyEmpty.getComments() );
-		setTemplateElementName( new String( likelyEmpty.getTemplateElementName()) );
+		setFirstCommentPreceededName( likelyEmpty.firstCommentPreceededName() );
+		setTemplateName( new String( likelyEmpty.getTemplateName()) );
+		setTemplateEscapes( likelyEmpty.getTemplateEscapes() );
 		setShallowTemplate( likelyEmpty.isShallowTemplate() );
+		setLine( likelyEmpty.getLine() );
 	}
 
 

@@ -21,6 +21,7 @@ import ws.nzen.format.eno.FieldSet;
 import ws.nzen.format.eno.ListItem;
 import ws.nzen.format.eno.Multiline;
 import ws.nzen.format.eno.Section;
+import ws.nzen.format.eno.SetEntry;
 import ws.nzen.format.eno.Value;
 import ws.nzen.format.eno.parse.Parser.Word;
 
@@ -185,10 +186,9 @@ public class Semantologist
 					throw new RuntimeException( problem.format( new Object[]{ currWord.line } ) );
 				}
 			}
-			if ( currElem != null ) // ASK do I need this ?
+			if ( currElem != null )
 			{
 				theDocument.addChild( currElem );
-				// ASK I'm assuming section handles dependence
 			}
 		}
 		return theDocument;
@@ -282,8 +282,8 @@ public class Semantologist
 			wordIndOfLine++;
 		}
 		Word fieldName = line.get( wordIndOfLine );
-		Word template = null, copyType = null;
 		Field emptySelf = new Field( fieldName.value, fieldName.modifier );
+		emptySelf.setLine( fieldName.line );
 		if ( ! preceedingComment.isEmpty() )
 		{
 			emptySelf.addComment( preceedingComment );
@@ -310,14 +310,15 @@ public class Semantologist
 			}
 			else if ( currElem.type == COPY )
 			{
-				copyType = currElem;
+				emptySelf.setShallowTemplate( currElem.modifier == 1 );
 				wordIndOfLine++;
 				if ( line.size() > wordIndOfLine )
 				{
 					currElem = line.get( wordIndOfLine );
 					if ( currElem.type == FIELD )
 					{
-						template = currElem;
+						emptySelf.setTemplateName( currElem.value );
+						emptySelf.setTemplateEscapes( currElem.modifier );
 					}
 					// else malformed line, complain about parser; expected field
 				}
@@ -355,11 +356,8 @@ public class Semantologist
 						{
 							lineSelf.addComment( currElem.value );
 						}
-						else if ( fieldType == FIELD_SET )
-						{
-							currChild.addComment( currElem.value );
-						}
-						else if ( fieldType == FIELD_LIST )
+						else if ( fieldType == FIELD_SET
+								|| fieldType == FIELD_LIST )
 						{
 							currChild.addComment( currElem.value );
 						}
@@ -410,6 +408,7 @@ public class Semantologist
 					currElem = line.get( wordIndOfLine );
 					if ( currElem.type == EMPTY )
 					{
+						emptyLines = currElem;
 						wordIndOfLine++;
 						currElem = line.get( wordIndOfLine );
 					}
@@ -423,16 +422,19 @@ public class Semantologist
 							currChild.addComment( docComment );
 							currChild.setFirstCommentPreceededName( true );
 						}
+						currChild.setPreceedingEmptyLines( emptyLines.modifier );
 						listSelf.addItem( (ListItem)currChild );
 					}
 					else if ( fieldType == FIELD_LIST )
 					{
 						currChild = new ListItem( currElem.value );
+						currChild.setName( listSelf.getName() ); // per spec
 						if ( ! docComment.isEmpty() )
 						{
 							currChild.addComment( docComment );
 							currChild.setFirstCommentPreceededName( true );
 						}
+						currChild.setPreceedingEmptyLines( emptyLines.modifier );
 						listSelf.addItem( (ListItem)currChild );
 					}
 					else if ( fieldType == FIELD_VALUE )
@@ -451,11 +453,70 @@ public class Semantologist
 											.LIST_ITEM_IN_FIELDSET ) );
 						throw new RuntimeException( problem.format( new Object[]{ currElem.line } ) );
 					}
-					
 					break;
 				}
 				case SET_ELEMENT :
 				{
+					docComment = getPreceedingComment();
+					wordIndOfLine = 0;
+					// Improve, maybe don't assume that this is well formed ?
+					line = parsedLines.get( lineChecked );
+					currElem = line.get( wordIndOfLine );
+					if ( currElem.type == EMPTY )
+					{
+						wordIndOfLine++;
+						currElem = line.get( wordIndOfLine );
+					}
+					if ( fieldType == FIELD_EMPTY )
+					{
+						fieldType = FIELD_SET;
+						pairedSelf = new FieldSet( emptySelf );
+						currChild = new SetEntry( currElem.value, currElem.modifier );
+						wordIndOfLine++;
+						currElem = line.get( wordIndOfLine );
+						// if ( currElem.type != VALUE )
+							// complain
+						currChild.setStringValue( currElem.value );
+						if ( ! docComment.isEmpty() )
+						{
+							currChild.addComment( docComment );
+							currChild.setFirstCommentPreceededName( true );
+						}
+						currChild.setPreceedingEmptyLines( emptyLines.modifier );
+						pairedSelf.addEntry( (SetEntry)currChild );
+					}
+					else if ( fieldType == FIELD_LIST )
+					{
+						MessageFormat problem = new MessageFormat(
+								ExceptionStore.getStore().getExceptionMessage(
+										ExceptionStore.ANALYSIS, EnoLocaleKey
+											.FIELDSET_ENTRY_IN_LIST ) );
+						throw new RuntimeException( problem.format( new Object[]{ currElem.line } ) );
+					}
+					else if ( fieldType == FIELD_VALUE )
+					{
+						MessageFormat problem = new MessageFormat(
+								ExceptionStore.getStore().getExceptionMessage(
+										ExceptionStore.ANALYSIS, EnoLocaleKey
+											.FIELDSET_ENTRY_IN_FIELD ) );
+						throw new RuntimeException( problem.format( new Object[]{ currElem.line } ) );
+					}
+					else if ( fieldType == FIELD_SET )
+					{
+						currChild = new SetEntry( currElem.value, currElem.modifier );
+						wordIndOfLine++;
+						currElem = line.get( wordIndOfLine );
+						// if ( currElem.type != VALUE )
+							// complain
+						currChild.setStringValue( currElem.value );
+						if ( ! docComment.isEmpty() )
+						{
+							currChild.addComment( docComment );
+							currChild.setFirstCommentPreceededName( true );
+						}
+						currChild.setPreceedingEmptyLines( emptyLines.modifier );
+						pairedSelf.addEntry( (SetEntry)currChild );
+					}
 					break;
 				}
 				default :
@@ -466,19 +527,25 @@ public class Semantologist
 			}
 			if ( nonChild )
 			{
-				// cleanup here or below
 				break;
 			}
-			/*
-			fill immediate values, decide initial type
-			find children, first non comment corroborates type, mix provokes complaint
-			um maybe let each get a preceeding comment, so list items have comment and so on, per spec
-			return currField;
-			*/
 		}
-		// cleanup here or above
-		// return the field that corresponds to this type
-		return null; // FIX todo
+		if ( fieldType == FIELD_LIST )
+		{
+			return listSelf;
+		}
+		else if ( fieldType == FIELD_VALUE )
+		{
+			return lineSelf;
+		}
+		else if ( fieldType == FIELD_SET )
+		{
+			return pairedSelf;
+		}
+		else
+		{
+			return emptySelf;
+		}
 	}
 
 
