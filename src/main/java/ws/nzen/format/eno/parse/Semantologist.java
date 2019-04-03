@@ -197,48 +197,55 @@ public class Semantologist
 
 	private Section section( String firstComment, int parentDepth )
 	{
+		List<Word> line = parsedLines.get( lineChecked );
+		Word emptyLines = null;
+		Word currElem = line.get( wordIndOfLine );
+		if ( currElem.type == EMPTY )
+		{
+			emptyLines = currElem;
+			wordIndOfLine++;
+			currElem = line.get( wordIndOfLine );
+		}
+		if ( currElem.type != Syntaxeme.SECTION )
+			throw new RuntimeException( "expected section" ); // assert paranoid
+		int ownDepth = currElem.modifier;
+		if ( ownDepth > parentDepth +1 )
+		{
+			MessageFormat problem = new MessageFormat(
+					ExceptionStore.getStore().getExceptionMessage(
+							ExceptionStore.ANALYSIS, EnoLocaleKey
+								.SECTION_HIERARCHY_LAYER_SKIP ) );
+			throw new RuntimeException( problem.format( new Object[]{ currElem.line } ) );
+		}
+		// else if same or less than parent, return null
+		wordIndOfLine++;
+		currElem = line.get( wordIndOfLine );
+		Section container = new Section( currElem.value, currElem.modifier );
+		if ( emptyLines.modifier > 0 )
+		{
+			container.setPreceedingEmptyLines( emptyLines.modifier );
+		}
+		if ( ! firstComment.isEmpty() )
+		{
+			container.setFirstCommentPreceededName( true );
+			container.addComment( firstComment );
+		}
+		wordIndOfLine++;
+		if ( wordIndOfLine < line.size() +1 )
+		{
+			currElem = line.get( wordIndOfLine );
+			if ( currElem.type != COPY )
+				throw new RuntimeException( "expected copy" ); // assert paranoid
+			container.setShallowTemplate( currElem.modifier < 2 );
+			wordIndOfLine++;
+			currElem = line.get( wordIndOfLine );
+			if ( currElem.type != FIELD )
+				throw new RuntimeException( "expected name" ); // assert paranoid
+			container.setTemplateName( currElem.value );
+			container.setTemplateEscapes( currElem.modifier );
+		}
 		
 		/*
-			-- from above
-					if ( currWord.modifier > sectionDepth +1 )
-					{
-						MessageFormat problem = new MessageFormat(
-							ExceptionStore.getStore().getExceptionMessage(
-									ExceptionStore.ANALYSIS, EnoLocaleKey.SECTION_HIERARCHY_LAYER_SKIP ) );
-						throw new RuntimeException( problem.format( new Object[]{ currWord.line } ) );
-					}
-					else
-					{
-						int currSecDepth = currWord.modifier;
-						wordIndOfLine++;
-						currWord = line.get( wordIndOfLine );
-						if ( currWord.type != FIELD )
-						{
-							MessageFormat problem = new MessageFormat(
-							ExceptionStore.getStore().getExceptionMessage(
-									ExceptionStore.ANALYSIS, EnoLocaleKey.MISSING_SECTION ) );
-							throw new RuntimeException( problem.format( new Object[]{ "name" } ) );
-							// NOTE likely a Parser implementation problem, not user error
-						}
-						currElem = new Section( currWord.value, currWord.modifier );
-						currElem.addComment( firstComment );
-						currElem.setFirstCommentPreceededName( true );
-					}
-
-				== pseudo
-
-		// if wordOfLine past empty is not section, return null
-		// no need to track prevailing depth, only get child if the depth is +1; hmm, who complains ?
-		Section currSection = new Section()
-		if ( ! preceedingComment.isEmpty() )
-			currSection.addComment( preceedingComment );
-			currSection.set first comment preceeds;
-		if ( advanceWordOfLine() and wordOfLine is copy op )
-			if find name in sections
-				// initially copy naively, independent of copy type, later, reach for the children
-			else complain
-		// NOTE get children
-		EnoElement currElem;
 		while( advanceLine() )
 		{
 			String firstComment = getPreceedingComment();
@@ -257,7 +264,7 @@ public class Semantologist
 				currElem = multiLine( firstComment )
 			else if wordOfLine is comment
 				currSection.addComment( word.trim );
-				continue;
+				continue; or currElem = null
 			else
 				throw new RuntimeException( use canon complaint about
 					orphan fieldset, list, unknown thing )
