@@ -103,6 +103,7 @@ public class Semantologist
 		EnoElement currElem = null;
 		lineChecked = -1;
 		int sectionDepth = 0;
+		// TODO vet these lines again with nextLineType()
 		while ( advanceLine() )
 		{
 			String firstComment = getPreceedingComment();
@@ -199,6 +200,7 @@ public class Semantologist
 	{
 		List<Word> line = parsedLines.get( lineChecked );
 		Word emptyLines = null;
+		wordIndOfLine = 0;
 		Word currElem = line.get( wordIndOfLine );
 		if ( currElem.type == EMPTY )
 		{
@@ -216,6 +218,11 @@ public class Semantologist
 							ExceptionStore.ANALYSIS, EnoLocaleKey
 								.SECTION_HIERARCHY_LAYER_SKIP ) );
 			throw new RuntimeException( problem.format( new Object[]{ currElem.line } ) );
+		}
+		else if ( ownDepth <= parentDepth )
+		{
+			wordIndOfLine = 0;
+			return null;
 		}
 		// else if same or less than parent, return null
 		wordIndOfLine++;
@@ -244,36 +251,98 @@ public class Semantologist
 			container.setTemplateName( currElem.value );
 			container.setTemplateEscapes( currElem.modifier );
 		}
-		
-		/*
-		while( advanceLine() )
+		lineChecked++;
+		Syntaxeme nextType;
+		EnoElement currChild = null;
+		boolean nonChild = false;
+		while ( nonChild )
 		{
-			String firstComment = getPreceedingComment();
-			if ( ! firstComment.isEmpty() )
-				advanceLine();
-			if ( wordOfLine is section
-				and section depth == currSection +1 )
-					currElem = section( firstComment )
-				else if sec depth > currSection +1
-					canon complaint about section depth advancement
-				else
-					break, sibling or uncle/aunt
-			else if wordOfLine is field
-				currElem = field( firstComment )
-			else if wordOfLine is multi boundary
-				currElem = multiLine( firstComment )
-			else if wordOfLine is comment
-				currSection.addComment( word.trim );
-				continue; or currElem = null
-			else
-				throw new RuntimeException( use canon complaint about
-					orphan fieldset, list, unknown thing )
+			nextType = nextLineType();
+			switch ( nextType )
+			{
+				case EMPTY :
+				{
+					nonChild = true;
+					currChild = null;
+					break;
+				}
+				case COMMENT :
+				{
+					advanceLine();
+					currElem = line.get( wordIndOfLine );
+					if ( currElem.type == EMPTY )
+					{
+						wordIndOfLine++;
+						currElem = line.get( wordIndOfLine );
+					}
+					if ( currElem.type == COMMENT )
+					{
+						container.addComment( currElem.value );
+					}
+					break;
+				}
+				case FIELD :
+				{
+					currChild = field( getPreceedingComment() );
+					break;
+				}
+				case MULTILINE_BOUNDARY :
+				{
+					currChild = multiline( getPreceedingComment() );
+					break;
+				}
+				case SECTION :
+				{
+					// FIX consider testing depth here, so I don't lose the preceeding comment
+					currChild = section( getPreceedingComment(), ownDepth );
+					break;
+				}
+				case VALUE :
+				{
+					MessageFormat problem = new MessageFormat(
+							ExceptionStore.getStore().getExceptionMessage(
+									ExceptionStore.ANALYSIS, EnoLocaleKey
+										.MISSING_ELEMENT_FOR_CONTINUATION ) );
+					throw new RuntimeException( problem.format( new Object[]{ currElem.line } ) );
+				}
+				case LIST_ELEMENT :
+				{
+					MessageFormat problem = new MessageFormat(
+							ExceptionStore.getStore().getExceptionMessage(
+									ExceptionStore.ANALYSIS, EnoLocaleKey
+										.MISSING_NAME_FOR_LIST_ITEM ) );
+					throw new RuntimeException( problem.format( new Object[]{ currElem.line } ) );
+				}
+				case SET_ELEMENT :
+				{
+					MessageFormat problem = new MessageFormat(
+							ExceptionStore.getStore().getExceptionMessage(
+									ExceptionStore.ANALYSIS, EnoLocaleKey
+										.MISSING_NAME_FOR_FIELDSET_ENTRY ) );
+					throw new RuntimeException( problem.format( new Object[]{ currElem.line } ) );
+				}
+				case MULTILINE_TEXT :
+				case COPY :
+				default :
+				{
+					MessageFormat problem = new MessageFormat(
+							ExceptionStore.getStore().getExceptionMessage(
+									ExceptionStore.TOKENIZATION,
+									EnoLocaleKey.INVALID_LINE ) );
+					// NOTE likely a Parser implementation problem, not user error
+					throw new RuntimeException( problem.format( new Object[]{ currElem.line } ) );
+				}
+			}
 			if ( currElem != null )
-				currSection.addElement( currElem )
+			{
+				container.addChild( currChild );
+			}
+			else
+			{
+				nonChild = true;
+			}
 		}
-		return currSection;
-		*/
-		return null; // FIX todo
+		return container;
 	}
 
 

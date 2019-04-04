@@ -48,7 +48,7 @@ class ShouldSemantics
 		assertTrue( field.optionalStringValue().equals( multiText ) );
 		comments = field.getComments();
 		assertTrue( field.firstCommentPreceededName() );
-		assertTrue( field.getAssociatedComment().equals( associatedComment ) );
+		assertTrue( field.optionalStringComment().equals( associatedComment ) );
 		fail( "Not yet implemented" );
 	}
 
