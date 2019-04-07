@@ -91,6 +91,7 @@ public class Semantologist
 	public Section analyze( List<String> fileLines )
 	{
 		parsedLines = new Parser().parse( fileLines );
+		// improve reset()
 		Section entireResult = buildDocument();
 		resolveForwardReferences();
 		return entireResult;

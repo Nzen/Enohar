@@ -1,4 +1,8 @@
 
+# 190403
+
+I read some opinions about method chaining as a builder pattern. I'm using it for an sql dsl at work, but I see some of the limitations there, as when I want to insert a different branch into that chain. This thought, though, is in service of building up an eno document. Semantologist is in a special situation, in terms of line numbers, in the sense that I trust it, as well as for forward references. Should I have a separate api for non parser buildup or make these eno elements more cautious ? But, again, Semantologist is going to defer putting in value x until it's convenient. To be fair, I largely regard the cursor api as optional, rather than required. But what about forward references ? Well, I thought I'd resolve them lazily, or when asked to validate that or as part of the Eno class, or something.
+
 # 190331
 
 Oh. The eno locale repository merged with enoLib and doesn't create a json file anymore. le sigh. I'll need to complain, not satisfy spec by trailing, donate a generator for listresourcebundle, or reimplement the locales generator project. For the moment, I'll trail the spec.
