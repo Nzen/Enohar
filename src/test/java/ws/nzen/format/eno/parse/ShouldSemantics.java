@@ -89,6 +89,8 @@ class ShouldSemantics
 		docStr.add( dict[ dFieldInd ] + Lexeme.FIELD_START_OP );
 		Semantologist knowy = new Semantologist();
 		Section doc = knowy.analyze( docStr );
+		assertTrue( doc.getComments().isEmpty() );
+		// Field baseField = doc.
 	}
 
 

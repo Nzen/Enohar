@@ -10,6 +10,7 @@ public enum EnoType
 	MULTILINE,
 	LIST_ITEM,
 	SET_ELEMENT,
+	MISSING,
 	UNKNOWN;
 }
 

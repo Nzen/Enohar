@@ -41,6 +41,10 @@ public class EnoElement
 	}
 
 
+	public String stringKey()
+	{
+		return getName();
+	}
 	public String getName()
 	{
 		return name;

@@ -1,4 +1,10 @@
 
+# 190408
+
+Oh man. I just noticed the canon 'missing element' functionality. Enolib offers the ability to get elements that aren't in the document. That bomb either sputters if we ask for an optional whatever, by returning null. The bomb goes off if we ask for a required value. But, it doesn't go off where we asked for the value. He links each missing element to its parent so it can call its parent's _missing_exception() method, which will go upward to the first concrete element, even if that's just the section that represents the document.
+
+I could imitate that pattern, but I think that I can get by with a single class that gets the first missing exception and either returns itself, when asking for children, or returns that first exception. Except, my geneology only allows for a single parent. So, I can't return a MissingElement when I should return a Section. So, I either need to make a child class for each one -as he has- or widen the returned type of Section.section( str ) to EnoElement, which is unacceptable.
+
 # 190403
 
 I read some opinions about method chaining as a builder pattern. I'm using it for an sql dsl at work, but I see some of the limitations there, as when I want to insert a different branch into that chain. This thought, though, is in service of building up an eno document. Semantologist is in a special situation, in terms of line numbers, in the sense that I trust it, as well as for forward references. Should I have a separate api for non parser buildup or make these eno elements more cautious ? But, again, Semantologist is going to defer putting in value x until it's convenient. To be fair, I largely regard the cursor api as optional, rather than required. But what about forward references ? Well, I thought I'd resolve them lazily, or when asked to validate that or as part of the Eno class, or something.
