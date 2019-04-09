@@ -51,43 +51,6 @@ public class Semantologist
 	}
 
 
-	@Deprecated
-	public void foolAround()
-	{
-		final String here = cl +"fa ";
-		List<String> file = new ArrayList<>();
-		file.add( "# banana" );
-		file.add( " ## faf anna " );
-		file.add( " #=-- \\//" );
-
-		parsedLines = new Parser().parse( file );
-		int sectionDepth = 0;
-		int inLineInd = 0;
-		List<Word> line = parsedLines.get( lineChecked );
-		if ( line.isEmpty() )
-		{
-			throw new RuntimeException( here +"every line should have something" );
-		}
-		Word first = line.get( inLineInd );
-		if ( first.type == Syntaxeme.SECTION )
-		{
-			inLineInd++;
-			Word name = line.get( inLineInd );
-			Section currElem = new Section( name.value, name.modifier );
-			if ( currElem.getDepth() > sectionDepth +1 )
-			{
-				// FIX use canon complaint
-				throw new RuntimeException( here +"section depth jumped too far at "+ lineChecked );
-			}
-			/*
-			get comments until we find a non comment (skip past empty, if need be
-			handle template
-			go deeper into something that returns the children ?
-			*/
-		}
-	}
-
-
 	public Section analyze( List<String> fileLines )
 	{
 		parsedLines = new Parser().parse( fileLines );
@@ -107,23 +70,45 @@ public class Semantologist
 		// TODO vet these lines again with nextLineType()
 		while ( advanceLine() )
 		{
-			String firstComment = getPreceedingComment();
-			// ASK already dissonant about line number here, perhaps subtract or have gPrecComm() use do while
-			if ( ! firstComment.isEmpty() )
-				advanceLine();
-			List<Word> line = parsedLines.get( lineChecked );
-			Word currWord = line.get( wordIndOfLine );
-			if ( currWord.type == EMPTY )
+			Syntaxeme focusType = peekAtNextLineType( true );
+			String firstComment;
+			Word currToken;
+			if ( focusType == EMPTY )
 			{
-				wordIndOfLine++;
-				if ( wordIndOfLine >= line.size() )
-				{
-					// complain about nonstandard parser
-					continue;
-				}
-				currWord = line.get( wordIndOfLine );
+				break; // end of input; parser tells me how much trailing space to include
 			}
-			switch ( currWord.type )
+			else if ( focusType == COMMENT )
+			{
+				currToken = popNextWordOfLine();
+				if ( currToken == null )
+					continue;
+				else if ( currToken.type == EMPTY )
+				{
+					currToken = popNextWordOfLine(); // NOTE assuming well formed parser lines
+					if ( currToken == null )
+						continue; // assert paranoid
+				}
+				if ( currElem == null )
+				{
+					theDocument.addComment( currToken.value.trim() );
+				}
+				else
+				{
+					currElem.addComment( currToken.value.trim() );
+				}
+				continue;
+			}
+			firstComment = getPreceedingComment();
+			currToken = popNextWordOfLine();
+			if ( currToken == null )
+				continue;
+			else if ( currToken.type == EMPTY )
+			{
+				currToken = popNextWordOfLine(); // NOTE assuming well formed parser lines
+				if ( currToken == null )
+					continue; // assert paranoid
+			}
+			switch ( currToken.type )
 			{
 				case SECTION :
 				{
@@ -140,25 +125,13 @@ public class Semantologist
 					currElem = multiline( firstComment );
 					break;
 				}
-				case COMMENT :
-				{
-					if ( currElem == null )
-					{
-						theDocument.addComment( currWord.value.trim() );
-					}
-					else
-					{
-						currElem.addComment( currWord.value.trim() );
-					}
-					continue;
-				}
 				case VALUE :
 				{
 					MessageFormat problem = new MessageFormat(
 							ExceptionStore.getStore().getExceptionMessage(
 									ExceptionStore.ANALYSIS, EnoLocaleKey
 										.MISSING_ELEMENT_FOR_CONTINUATION ) );
-					throw new RuntimeException( problem.format( new Object[]{ currWord.line } ) );
+					throw new RuntimeException( problem.format( new Object[]{ currToken.line } ) );
 				}
 				case LIST_ELEMENT :
 				{
@@ -166,7 +139,7 @@ public class Semantologist
 							ExceptionStore.getStore().getExceptionMessage(
 									ExceptionStore.ANALYSIS, EnoLocaleKey
 										.MISSING_NAME_FOR_LIST_ITEM ) );
-					throw new RuntimeException( problem.format( new Object[]{ currWord.line } ) );
+					throw new RuntimeException( problem.format( new Object[]{ currToken.line } ) );
 				}
 				case SET_ELEMENT :
 				{
@@ -174,7 +147,7 @@ public class Semantologist
 							ExceptionStore.getStore().getExceptionMessage(
 									ExceptionStore.ANALYSIS, EnoLocaleKey
 										.MISSING_NAME_FOR_FIELDSET_ENTRY ) );
-					throw new RuntimeException( problem.format( new Object[]{ currWord.line } ) );
+					throw new RuntimeException( problem.format( new Object[]{ currToken.line } ) );
 				}
 				case MULTILINE_TEXT :
 				case COPY :
@@ -185,7 +158,7 @@ public class Semantologist
 									ExceptionStore.TOKENIZATION,
 									EnoLocaleKey.INVALID_LINE ) );
 					// NOTE likely a Parser implementation problem, not user error
-					throw new RuntimeException( problem.format( new Object[]{ currWord.line } ) );
+					throw new RuntimeException( problem.format( new Object[]{ currToken.line } ) );
 				}
 			}
 			if ( currElem != null )
@@ -258,7 +231,7 @@ public class Semantologist
 		boolean nonChild = false;
 		while ( nonChild )
 		{
-			nextType = nextLineType();
+			nextType = peekAtNextLineType();
 			switch ( nextType )
 			{
 				case EMPTY :
@@ -408,7 +381,7 @@ public class Semantologist
 		boolean nonChild = false; // NOTE encountered sibling field or parent section
 		while ( true )
 		{
-			Syntaxeme nextType = nextLineType();
+			Syntaxeme nextType = peekAtNextLineType();
 			switch ( nextType )
 			{
 				case COMMENT :
@@ -758,17 +731,23 @@ public class Semantologist
 	}
 
 
-	private Syntaxeme nextLineType()
+	private Syntaxeme peekAtNextLineType()
+	{
+		return peekAtNextLineType( false );
+	}
+
+
+	private Syntaxeme peekAtNextLineType( boolean inclusive )
 	{
 		/*
-		if list is empty, continue, nonstandard parser
+		if list is empty, continue, nonstandard parser input
 		if the first of it is empty, check next word
 		if not comment, return that
 		if comment iterate until a line starts with empty or noncomment
 			if empty return comment, else return noncomment
 		*/
 		boolean vettingComment = false, firstTime = true;
-		int nextLineInd = lineChecked, wordInd = 0;
+		int nextLineInd = lineChecked + (( inclusive ) ? -1: 0), wordInd = 0;
 		Word currMeme = null;
 		List<Word> line = null;
 		while ( true )
@@ -839,6 +818,52 @@ public class Semantologist
 	}
 
 
+	/** next word or null if none left. Advances wordIndOfLine. */
+	private Word popNextWordOfLine()
+	{
+		if (  lineChecked < parsedLines.size() )
+		{
+			List<Word> line = parsedLines.get( lineChecked );
+			wordIndOfLine++;
+			if ( wordIndOfLine < line.size() )
+			{
+				return line.get( wordIndOfLine );
+			}
+			else
+			{
+				return null;
+			}
+		}
+		else
+		{
+			return null;
+		}
+	}
+
+
+	private Word peekAtNextWordOfLine()
+	{
+		if (  lineChecked < parsedLines.size() )
+		{
+			List<Word> line = parsedLines.get( lineChecked );
+			if ( wordIndOfLine +1 < line.size() )
+			{
+				return line.get( wordIndOfLine +1 );
+			}
+			else
+			{
+				return null;
+			}
+		}
+		else
+		{
+			return null;
+		}
+	}
+
+
+	/** Increment line checked; reset word ind of line,
+	 * report if this is out of bounds. */
 	private boolean advanceLine()
 	{
 		if ( lineChecked < parsedLines.size() )
