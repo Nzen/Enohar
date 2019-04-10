@@ -1,6 +1,8 @@
 /** see ../../../../../LICENSE for release details */
 package ws.nzen.format.eno;
 
+import static ws.nzen.format.eno.EnoType.MISSING;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.NoSuchElementException;
@@ -8,7 +10,7 @@ import java.util.NoSuchElementException;
 /**  */
 public class FieldList extends Field
 {
-	List<ListItem> values = new ArrayList<>();
+	private List<ListItem> values = new ArrayList<>();
 
 
 	public FieldList()
@@ -27,6 +29,16 @@ public class FieldList extends Field
 	{
 		this( new String( likelyEmpty.getName() ), likelyEmpty.getNameEscapes() );
 		cloneFrom( likelyEmpty );
+	}
+
+
+	protected FieldList( EnoType which )
+	{
+		super( which );
+		if ( which != MISSING )
+		{
+			// warn or die
+		}
 	}
 
 

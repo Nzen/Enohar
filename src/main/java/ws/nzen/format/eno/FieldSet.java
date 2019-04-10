@@ -1,6 +1,8 @@
 /** see ../../../../../LICENSE for release details */
 package ws.nzen.format.eno;
 
+import static ws.nzen.format.eno.EnoType.MISSING;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -29,6 +31,16 @@ public class FieldSet extends Field
 	}
 
 
+	protected FieldSet( EnoType which )
+	{
+		super( which );
+		if ( which != MISSING )
+		{
+			// warn or die
+		}
+	}
+
+
 	public void addEntry( SetEntry anotherChild )
 	{
 		if ( anotherChild != null )
@@ -54,6 +66,12 @@ public class FieldSet extends Field
 			}
 		}
 		return null;
+	}
+
+
+	public List<SetEntry> entries()
+	{
+		return entries; // ASK consider a defensive copy
 	}
 
 
