@@ -29,7 +29,7 @@ import ws.nzen.format.eno.parse.Parser.Word;
 public class Semantologist
 {
 	private static final String cl = "s.";
-	private List<List<Word>> parsedLines;
+	private List<List<Word>> parsedLines = new ArrayList<>();
 	private List<EnoElement> fields = new ArrayList<>();
 	private List<Section> sections = new ArrayList<>();
 	private List<Dependence> transitiveFields = new LinkedList<>();
@@ -53,6 +53,10 @@ public class Semantologist
 
 	public Section analyze( List<String> fileLines )
 	{
+		fields.clear();
+		transitiveFields.clear();
+		sections.clear();
+		transitiveSections.clear();
 		parsedLines = new Parser().parse( fileLines );
 		// improve reset()
 		Section entireResult = buildDocument();

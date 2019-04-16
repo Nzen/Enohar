@@ -2,6 +2,7 @@
 package ws.nzen.format.eno.parse;
 
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.assertEquals;
 import static org.junit.jupiter.api.Assertions.fail;
 
 import java.util.ArrayList;
@@ -10,17 +11,21 @@ import java.util.List;
 import org.junit.jupiter.api.Test;
 
 import ws.nzen.format.eno.EnoElement;
+import ws.nzen.format.eno.EnoType;
+import ws.nzen.format.eno.Field;
 import ws.nzen.format.eno.Multiline;
 import ws.nzen.format.eno.Section;
+import ws.nzen.format.eno.Value;
 import ws.nzen.format.eno.parse.Semantologist;
 
 /**  */
 class ShouldSemantics
 {
 	private List<String> docStr = new ArrayList<>();
-	private String[] dict = { "orphan", "assoc", "field", "\ttext" };
+	private String[] dict = { "orphan", "assoc", "field", "\ttext", "``" };
 	private static final int dOrphInd = 0, dAssocInd = dOrphInd +1,
-			dFieldInd = dAssocInd +1, dFormatInd = dFieldInd +1;
+			dFieldInd = dAssocInd +1, dFormatInd = dFieldInd +1,
+			dEscapeInd = dFormatInd +1;
 
 	/**
 	 * Test method for {@link ws.nzen.format.eno.parse.Semantologist#analyze(java.util.List)}.
@@ -54,8 +59,10 @@ class ShouldSemantics
 		assertTrue( field.firstCommentPreceededName() );
 		assertTrue( field.optionalStringComment().equals( associatedComment ) );
 		fail( "Not yet implemented" );
+		
 		shouldHandleEmptyDocument();
 		shouldCommentOnlyDocument();
+		shouldSingleElementBody();
 	}
 
 
@@ -82,6 +89,7 @@ class ShouldSemantics
 	}
 
 
+	// no template checks
 	private void shouldSingleElementBody()
 	{
 		docStr.clear();
@@ -90,7 +98,33 @@ class ShouldSemantics
 		Semantologist knowy = new Semantologist();
 		Section doc = knowy.analyze( docStr );
 		assertTrue( doc.getComments().isEmpty() );
-		// Field baseField = doc.
+		Field baseField = doc.field( dict[ dFieldInd ] );
+		assertTrue( "type is bare", baseField.getType() == EnoType.FIELD_EMPTY );
+		assertEquals( "same name",dict[ dFieldInd ], baseField.getName() );
+		List<Field> onlyChild = doc.fields( dict[ dFieldInd ] );
+		assertEquals( "only one child", 1, onlyChild.size() );
+		assertTrue( "exact object", baseField.equals( onlyChild.get( 0 ) ) );
+		// value field
+		docStr.clear();
+		docStr.add( dict[ dEscapeInd ] + dict[ dFieldInd ]
+				+ dict[ dEscapeInd ] + Lexeme.FIELD_START_OP );
+		docStr.add( Lexeme.CONTINUE_OP_EMPTY + dict[ dOrphInd ] );
+		doc = knowy.analyze( docStr );
+		baseField = doc.field( dict[ dFieldInd ] );
+		assertEquals( "same name",dict[ dFieldInd ], baseField.getName() );
+		assertEquals( "correct escapes", dict[ dEscapeInd ].length(), baseField.getNameEscapes() );
+		assertTrue( "type is value", baseField.getType() == EnoType.FIELD_VALUE );
+		Value wordField = (Value)baseField;
+		assertEquals( "value didn't match", dict[ dOrphInd ], wordField.optionalStringValue() );
+		assertEquals( "value didn't match", dict[ dOrphInd ], wordField.requiredStringValue() );
+		Field trash = doc.field( dict[ dEscapeInd ] );
+		assertTrue( "trash is a missing", trash.getType() == EnoType.MISSING );
+		trash = doc.optionalField( dict[ dEscapeInd ] );
+		assertTrue( "optional missing null", trash == null );
+		// multiline
+		// fieldset
+		// list
+		// empty section
 	}
 
 

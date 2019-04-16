@@ -7,8 +7,9 @@ import java.util.NoSuchElementException;
 /**  */
 public class Value extends Field
 {
-	private String value = null; // per spec, I'd prefer empty string
-
+	private String value = null; // per spec
+	// IMPROVE Map<int, boolean> continuations :: index, empty/space style continuation
+	// and then append() would add new records each time; setSV() would strip line separators 
 
 	public Value( String nameToHave, int escapes )
 	{
