@@ -3,10 +3,12 @@ package ws.nzen.format.eno.parse;
 
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.fail;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.NoSuchElementException;
 
 import org.junit.jupiter.api.Test;
 
@@ -22,10 +24,11 @@ import ws.nzen.format.eno.parse.Semantologist;
 class ShouldSemantics
 {
 	private List<String> docStr = new ArrayList<>();
-	private String[] dict = { "orphan", "assoc", "field", "\ttext", "``" };
+	private String[] dict = { "orphan", "assoc", "field", "\ttext",
+			"``", "--" };
 	private static final int dOrphInd = 0, dAssocInd = dOrphInd +1,
 			dFieldInd = dAssocInd +1, dFormatInd = dFieldInd +1,
-			dEscapeInd = dFormatInd +1;
+			dEscapeInd = dFormatInd +1, dMultiInd = dEscapeInd +1;
 
 	/**
 	 * Test method for {@link ws.nzen.format.eno.parse.Semantologist#analyze(java.util.List)}.
@@ -33,6 +36,7 @@ class ShouldSemantics
 	@Test
 	void testAnalyze()
 	{
+		/*
 		docStr.clear();
 		String orphanComment = "orphan", associatedComment = " preceeding",
 				multiName = "field", multiText = "\ttext";
@@ -59,7 +63,7 @@ class ShouldSemantics
 		assertTrue( field.firstCommentPreceededName() );
 		assertTrue( field.optionalStringComment().equals( associatedComment ) );
 		fail( "Not yet implemented" );
-		
+		*/
 		shouldHandleEmptyDocument();
 		shouldCommentOnlyDocument();
 		shouldSingleElementBody();
@@ -121,10 +125,30 @@ class ShouldSemantics
 		assertTrue( "trash is a missing", trash.getType() == EnoType.MISSING );
 		trash = doc.optionalField( dict[ dEscapeInd ] );
 		assertTrue( "optional missing null", trash == null );
+		// empty multiline
+		docStr.clear();
+		docStr.add( dict[ dMultiInd ] + dict[ dFieldInd ] );
+		docStr.add( dict[ dMultiInd ] + dict[ dFieldInd ] );
+		doc = knowy.analyze( docStr );
+		baseField = doc.field( dict[ dFieldInd ] );
+		assertTrue( "type is multiline", baseField.getType() == EnoType.MULTILINE );
+		Multiline emptyMultiline = (Multiline)baseField;
+		assertThrows( NoSuchElementException.class,
+				() -> { assertTrue( "dead code", emptyMultiline.requiredStringValue() == null ); } );
 		// multiline
+		docStr.add( dict[ dMultiInd ] + dict[ dFieldInd ] );
+		docStr.add( dict[ dFormatInd ] );
+		docStr.add( dict[ dMultiInd ] + dict[ dFieldInd ] );
+		doc = knowy.analyze( docStr );
+		Multiline formattedField = (Multiline)doc.field( dict[ dFieldInd ] );
+		assertEquals( "not trimmed value", dict[ dFormatInd ], formattedField.optionalStringValue() );
+		assertEquals( "boundary len", dict[ dMultiInd ].length(), formattedField.getBoundaryLength() );
 		// fieldset
+		docStr.clear();
 		// list
+		docStr.clear();
 		// empty section
+		docStr.clear();
 	}
 
 
