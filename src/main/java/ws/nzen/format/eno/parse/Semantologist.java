@@ -661,77 +661,125 @@ public class Semantologist
 	}
 
 
-	/** Copy contiguous, immediately-preceeding comments into a block
-	 * with the minimum common whitespace, blank otherwise.
-	 * Loses the preceeding empty line count. */
 	private String getPreceedingComment()
 	{
+		return getPreceedingComment( false );
+	}
+
+
+	/** Copy contiguous, immediately-preceding comments into a block
+	 * with the minimum common whitespace, blank otherwise.
+	 * Loses the preceeding empty line count. */
+	private String getPreceedingComment( boolean startAtCurrentLine )
+	{
 		List<String> comments = new ArrayList<>();
-		boolean firstTime = true;
-		while ( advanceLine() )
+		boolean firstTime = true, lineHasContent = false;
+		int initialGlobalLineCursor = lineChecked;
+		if ( startAtCurrentLine )
+			lineChecked -= 1;
+		Word currToken;
+		if ( advanceLine() )
 		{
-			advanceLine();
-			List<Word> line = parsedLines.get( lineChecked );
-			if ( line.get( wordIndOfLine ).type == EMPTY )
+			do
 			{
-				if ( firstTime )
+				currToken = popNextWordOfLine();
+				if ( currToken == null )
+					continue;
+				else if ( currToken.type == EMPTY )
 				{
-					// NOTE only allow empty to preceed this comment block, not separate it
-					wordIndOfLine++;
-					firstTime = false;
+					currToken = popNextWordOfLine();
+					if ( currToken == null )
+						continue;
+					// loop if paranoid, I'll assume we're well formed here
+					else if ( currToken.type != EMPTY )
+					{
+						lineHasContent = true;
+						break;
+					}
 				}
 				else
 				{
+					lineHasContent = true;
 					break;
 				}
 			}
-			if ( line.get( wordIndOfLine ).type == COMMENT )
+			while ( advanceLine() );
+			// NOTE either no document left or no comment
+			if ( ! lineHasContent || currToken.type != COMMENT )
 			{
-				comments.add( line.get( wordIndOfLine ).value );
+				lineChecked = initialGlobalLineCursor;
+				wordIndOfLine = 0; // ASK potentially save,restore ?
+				return "";
+			}
+			boolean amAssociated = false;
+			comments.add( currToken.value );
+			while ( advanceLine() )
+			{
+				currToken = popNextWordOfLine();
+				if ( currToken == null || currToken.type == EMPTY )
+				{
+					break;
+				}
+				else if ( currToken.type != COMMENT )
+				{
+					amAssociated = true;
+					break;
+				}
+				else
+				{
+					comments.add( currToken.value );
+				}
+			}
+			if ( ! lineHasContent )
+			{
+				lineChecked = initialGlobalLineCursor;
+				wordIndOfLine = 0; // ASK potentially save,restore ?
+				return "";
 			}
 			else
 			{
-				break;
+				wordIndOfLine = 0; // NOTE reset because we popped rather than peeked
+				Set<Character> whitespace = new TreeSet<>();
+				whitespace.add( Character.valueOf( ' ' ) );
+				whitespace.add( Character.valueOf( '\t' ) );
+				NaiveTrie sequenceAware = new NaiveTrie( whitespace );
+				Lexer reader = new Lexer();
+				String commonPrefix = null;
+				for ( String entire : comments )
+				{
+					reader.setLine( entire );
+					Lexer.Token first = reader.nextToken();
+					if ( first.type != Lexeme.WHITESPACE )
+					{
+						commonPrefix = "";
+						break;
+					}
+					else
+					{
+						sequenceAware.add( first.word );
+					}
+				}
+				if ( commonPrefix == null )
+				{
+					commonPrefix = sequenceAware.longestCommonPrefix();
+				}
+				StringBuilder wholeBlock = new StringBuilder( comments.size() * 10 );
+				for ( String entire : comments )
+				{
+					wholeBlock.append( commonPrefix );
+					wholeBlock.append( entire.trim() );
+					wholeBlock.append( System.lineSeparator() );
+				}
+				return wholeBlock.substring( 0, wholeBlock.length()
+						- System.lineSeparator().length() ); // NOTE remove trailing \n
 			}
 		}
-		if ( comments.isEmpty() || lineChecked == parsedLines.size() )
+		else
 		{
-			// NOTE didn't find any or separated or last comments of document
+			lineChecked = initialGlobalLineCursor;
+			wordIndOfLine = 0; // ASK potentially save,restore ?
 			return "";
 		}
-		Set<Character> whitespace = new TreeSet<>();
-		whitespace.add( Character.valueOf( ' ' ) );
-		whitespace.add( Character.valueOf( '\t' ) );
-		NaiveTrie sequenceAware = new NaiveTrie( whitespace );
-		Lexer reader = new Lexer();
-		String commonPrefix = null;
-		for ( String entire : comments )
-		{
-			reader.setLine( entire );
-			Lexer.Token first = reader.nextToken();
-			if ( first.type != Lexeme.WHITESPACE )
-			{
-				commonPrefix = "";
-				break;
-			}
-			else
-			{
-				sequenceAware.add( first.word );
-			}
-		}
-		if ( commonPrefix == null )
-		{
-			commonPrefix = sequenceAware.longestCommonPrefix();
-		}
-		StringBuilder wholeBlock = new StringBuilder( comments.size() * 10 );
-		for ( String entire : comments )
-		{
-			wholeBlock.append( commonPrefix );
-			wholeBlock.append( entire.trim() );
-			wholeBlock.append( System.lineSeparator() );
-		}
-		return wholeBlock.substring( 0, wholeBlock.length()
-				- System.lineSeparator().length() ); // NOTE remove trailing \n
 	}
 
 
