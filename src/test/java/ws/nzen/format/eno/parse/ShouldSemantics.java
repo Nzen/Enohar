@@ -12,12 +12,7 @@ import java.util.NoSuchElementException;
 
 import org.junit.jupiter.api.Test;
 
-import ws.nzen.format.eno.EnoElement;
-import ws.nzen.format.eno.EnoType;
-import ws.nzen.format.eno.Field;
-import ws.nzen.format.eno.Multiline;
-import ws.nzen.format.eno.Section;
-import ws.nzen.format.eno.Value;
+import ws.nzen.format.eno.*;
 import ws.nzen.format.eno.parse.Semantologist;
 
 /**  */
@@ -93,12 +88,12 @@ class ShouldSemantics
 	}
 
 
-	// no template checks
+	// no template checks, that's later
 	private void shouldSingleElementBody()
 	{
 		docStr.clear();
 		// empty field
-		docStr.add( dict[ dFieldInd ] + Lexeme.FIELD_START_OP );
+		docStr.add( dict[ dFieldInd ] + Lexeme.FIELD_START_OP.getChar() );
 		Semantologist knowy = new Semantologist();
 		Section doc = knowy.analyze( docStr );
 		assertTrue( doc.getComments().isEmpty() );
@@ -111,8 +106,8 @@ class ShouldSemantics
 		// value field
 		docStr.clear();
 		docStr.add( dict[ dEscapeInd ] + dict[ dFieldInd ]
-				+ dict[ dEscapeInd ] + Lexeme.FIELD_START_OP );
-		docStr.add( Lexeme.CONTINUE_OP_EMPTY + dict[ dOrphInd ] );
+				+ dict[ dEscapeInd ] + Lexeme.FIELD_START_OP.getChar() );
+		docStr.add( Lexeme.CONTINUE_OP_EMPTY.getChar() + dict[ dOrphInd ] );
 		doc = knowy.analyze( docStr );
 		baseField = doc.field( dict[ dFieldInd ] );
 		assertEquals( "same name",dict[ dFieldInd ], baseField.getName() );
@@ -145,6 +140,16 @@ class ShouldSemantics
 		assertEquals( "boundary len", dict[ dMultiInd ].length(), formattedField.getBoundaryLength() );
 		// fieldset
 		docStr.clear();
+		docStr.add( dict[ dFieldInd ] + Lexeme.FIELD_START_OP.getChar() );
+		docStr.add( dict[ dOrphInd ] + Lexeme.SET_OP.getChar() + dict[ dFieldInd ] );
+		doc = knowy.analyze( docStr );
+		FieldSet nonMap = doc.fieldset( dict[ dFieldInd ] );
+		assertTrue( "actually a fieldset", EnoType.FIELD_SET == nonMap.getType() );
+		assertEquals( "right name", dict[ dFieldInd ], nonMap.getName() );
+		SetEntry pairing = nonMap.entry( dict[ dOrphInd ] );
+		assertTrue( "right type", EnoType.SET_ELEMENT == pairing.getType() );
+		assertEquals( "one entry", nonMap.entries().size(), 1 );
+		assertEquals( "entry value", dict[ dFieldInd ], pairing.requiredStringValue() );
 		// list
 		docStr.clear();
 		// empty section

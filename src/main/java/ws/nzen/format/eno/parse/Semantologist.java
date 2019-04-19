@@ -730,7 +730,7 @@ public class Semantologist
 					comments.add( currToken.value );
 				}
 			}
-			if ( ! lineHasContent )
+			if ( ! amAssociated )
 			{
 				lineChecked = initialGlobalLineCursor;
 				wordIndOfLine = 0; // ASK potentially save,restore ?
