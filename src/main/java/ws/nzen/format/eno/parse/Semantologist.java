@@ -83,12 +83,12 @@ public class Semantologist
 			}
 			else if ( focusType == COMMENT )
 			{
-				currToken = popNextWordOfLine();
+				currToken = popCurrentWordOfLine();
 				if ( currToken == null )
 					continue;
 				else if ( currToken.type == EMPTY )
 				{
-					currToken = popNextWordOfLine(); // NOTE assuming well formed parser lines
+					currToken = popCurrentWordOfLine(); // NOTE assuming well formed parser lines
 					if ( currToken == null )
 						continue; // assert paranoid
 				}
@@ -103,12 +103,12 @@ public class Semantologist
 				continue;
 			}
 			firstComment = getPreceedingComment();
-			currToken = popNextWordOfLine();
+			currToken = popCurrentWordOfLine();
 			if ( currToken == null )
 				continue;
 			else if ( currToken.type == EMPTY )
 			{
-				currToken = popNextWordOfLine(); // NOTE assuming well formed parser lines
+				currToken = popCurrentWordOfLine(); // NOTE assuming well formed parser lines
 				if ( currToken == null )
 					continue; // assert paranoid
 			}
@@ -174,38 +174,50 @@ public class Semantologist
 	}
 
 
+	/** Save own info, save child elements, punt up
+	 * when encounters a sibling or parent section. */
 	private Section section( String firstComment, int parentDepth )
 	{
-		List<Word> line = parsedLines.get( lineChecked );
+		Word currWord = popCurrentWordOfLine();
 		Word emptyLines = null;
-		wordIndOfLine = 0;
-		Word currElem = line.get( wordIndOfLine );
-		if ( currElem.type == EMPTY )
-		{
-			emptyLines = currElem;
-			wordIndOfLine++;
-			currElem = line.get( wordIndOfLine );
-		}
-		if ( currElem.type != Syntaxeme.SECTION )
+		if ( currWord.type == null )
 			throw new RuntimeException( "expected section" ); // assert paranoid
-		int ownDepth = currElem.modifier;
+		else if ( currWord.type == EMPTY )
+		{
+			emptyLines = currWord;
+			currWord = popCurrentWordOfLine();
+		}
+		Word sectionOperator;
+		if ( currWord.type == null || currWord.type != Syntaxeme.SECTION )
+			throw new RuntimeException( "expected section operator" ); // assert paranoid
+		else
+		{
+			sectionOperator = currWord;
+			currWord = popCurrentWordOfLine();
+		}
+		int ownDepth = sectionOperator.modifier;
+		// NOTE checking if it's too deep
 		if ( ownDepth > parentDepth +1 )
 		{
 			MessageFormat problem = new MessageFormat(
 					ExceptionStore.getStore().getExceptionMessage(
 							ExceptionStore.ANALYSIS, EnoLocaleKey
 								.SECTION_HIERARCHY_LAYER_SKIP ) );
-			throw new RuntimeException( problem.format( new Object[]{ currElem.line } ) );
+			throw new RuntimeException( problem.format( new Object[]{ currWord.line } ) );
 		}
 		else if ( ownDepth <= parentDepth )
 		{
+			// NOTE if a sibling or parent, let another level construct this section
 			wordIndOfLine = 0;
 			return null;
 		}
-		// else if same or less than parent, return null
-		wordIndOfLine++;
-		currElem = line.get( wordIndOfLine );
-		Section container = new Section( currElem.value, currElem.modifier );
+		if ( currWord.type == null || currWord.type != FIELD )
+			throw new RuntimeException( "expected section name" ); // assert paranoid
+		else
+		{
+			currWord = popCurrentWordOfLine();
+		}
+		Section container = new Section( currWord.value, currWord.modifier );
 		if ( emptyLines.modifier > 0 )
 		{
 			container.setPreceedingEmptyLines( emptyLines.modifier );
@@ -215,48 +227,43 @@ public class Semantologist
 			container.setFirstCommentPreceededName( true );
 			container.addComment( firstComment );
 		}
-		wordIndOfLine++;
-		if ( wordIndOfLine < line.size() +1 )
+		if ( currWord != null && currWord.type == COPY )
 		{
-			currElem = line.get( wordIndOfLine );
-			if ( currElem.type != COPY )
-				throw new RuntimeException( "expected copy" ); // assert paranoid
-			container.setShallowTemplate( currElem.modifier < 2 );
-			wordIndOfLine++;
-			currElem = line.get( wordIndOfLine );
-			if ( currElem.type != FIELD )
-				throw new RuntimeException( "expected name" ); // assert paranoid
-			container.setTemplateName( currElem.value );
-			container.setTemplateEscapes( currElem.modifier );
+			container.setShallowTemplate( currWord.modifier < 2 );
+			currWord = popCurrentWordOfLine();
+			if ( currWord.type == null || currWord.type != FIELD )
+				throw new RuntimeException( "expected template name" ); // assert paranoid
+			container.setTemplateName( currWord.value );
+			container.setTemplateEscapes( currWord.modifier );
 		}
-		lineChecked++;
+		// advanceLine();
 		Syntaxeme nextType;
 		EnoElement currChild = null;
-		boolean nonChild = false;
-		while ( nonChild )
+		boolean addingChildren = true;
+		while ( addingChildren )
 		{
 			nextType = peekAtNextLineType();
 			switch ( nextType )
 			{
 				case EMPTY :
 				{
-					nonChild = true;
 					currChild = null;
 					break;
 				}
 				case COMMENT :
 				{
 					advanceLine();
-					currElem = line.get( wordIndOfLine );
-					if ( currElem.type == EMPTY )
+					currWord = popCurrentWordOfLine();
+					if ( currWord.type == EMPTY )
 					{
-						wordIndOfLine++;
-						currElem = line.get( wordIndOfLine );
+						// NOTE not keeping comments separated, else we'd need to save them as Value
+						currWord = popCurrentWordOfLine();
 					}
-					if ( currElem.type == COMMENT )
+					if ( currWord.type == COMMENT )
 					{
-						container.addComment( currElem.value );
+						container.addComment( currWord.value );
 					}
+					// else complain
 					break;
 				}
 				case FIELD :
@@ -271,8 +278,11 @@ public class Semantologist
 				}
 				case SECTION :
 				{
-					// FIX consider testing depth here, so I don't lose the preceeding comment
+					// NOTE ensuring we don't lose the preceeding comment
+					int currLine = lineChecked;
 					currChild = section( getPreceedingComment(), ownDepth );
+					if ( currChild == null )
+						lineChecked = currLine; // ASK vet that this is the right line to save
 					break;
 				}
 				case VALUE :
@@ -281,7 +291,7 @@ public class Semantologist
 							ExceptionStore.getStore().getExceptionMessage(
 									ExceptionStore.ANALYSIS, EnoLocaleKey
 										.MISSING_ELEMENT_FOR_CONTINUATION ) );
-					throw new RuntimeException( problem.format( new Object[]{ currElem.line } ) );
+					throw new RuntimeException( problem.format( new Object[]{ currWord.line } ) );
 				}
 				case LIST_ELEMENT :
 				{
@@ -289,7 +299,7 @@ public class Semantologist
 							ExceptionStore.getStore().getExceptionMessage(
 									ExceptionStore.ANALYSIS, EnoLocaleKey
 										.MISSING_NAME_FOR_LIST_ITEM ) );
-					throw new RuntimeException( problem.format( new Object[]{ currElem.line } ) );
+					throw new RuntimeException( problem.format( new Object[]{ currWord.line } ) );
 				}
 				case SET_ELEMENT :
 				{
@@ -297,7 +307,7 @@ public class Semantologist
 							ExceptionStore.getStore().getExceptionMessage(
 									ExceptionStore.ANALYSIS, EnoLocaleKey
 										.MISSING_NAME_FOR_FIELDSET_ENTRY ) );
-					throw new RuntimeException( problem.format( new Object[]{ currElem.line } ) );
+					throw new RuntimeException( problem.format( new Object[]{ currWord.line } ) );
 				}
 				case MULTILINE_TEXT :
 				case COPY :
@@ -308,34 +318,36 @@ public class Semantologist
 									ExceptionStore.TOKENIZATION,
 									EnoLocaleKey.INVALID_LINE ) );
 					// NOTE likely a Parser implementation problem, not user error
-					throw new RuntimeException( problem.format( new Object[]{ currElem.line } ) );
+					throw new RuntimeException( problem.format( new Object[]{ currWord.line } ) );
 				}
 			}
-			if ( currElem != null )
+			if ( currWord != null )
 			{
 				container.addChild( currChild );
 			}
 			else
 			{
-				nonChild = true;
+				addingChildren = false;
 			}
 		}
 		return container;
 	}
 
 
+	/** Save own information and relevant children. */
 	private Field field( String preceedingComment )
 	{
 		EnoType fieldType = FIELD_EMPTY;
-		List<Word> line = parsedLines.get( lineChecked );
 		Word emptyLines = null;
-		Word currElem = line.get( wordIndOfLine );
-		if ( currElem.type == EMPTY )
+		Word currWord = popCurrentWordOfLine();
+		if ( currWord.type == EMPTY )
 		{
-			emptyLines = currElem;
-			wordIndOfLine++;
+			emptyLines = currWord;
+			currWord = popCurrentWordOfLine();
 		}
-		Word fieldName = line.get( wordIndOfLine );
+		Word fieldName = null;
+		if ( currWord.type != FIELD )
+			throw new RuntimeException( "expected field name" ); // assert paranoid
 		Field emptySelf = new Field( fieldName.value, fieldName.modifier );
 		emptySelf.setLine( fieldName.line );
 		if ( ! preceedingComment.isEmpty() )
@@ -350,33 +362,23 @@ public class Semantologist
 		Value lineSelf = null;
 		FieldList listSelf = null;
 		FieldSet pairedSelf = null;
-		// list ; set
-		wordIndOfLine++;
-		if ( line.size() > wordIndOfLine )
+		currWord = popCurrentWordOfLine();
+		if ( currWord != null )
 		{
-			// do I have value here ?
-			currElem = line.get( wordIndOfLine );
-			if ( currElem.type == VALUE )
+			// NOTE expecting value or template
+			if ( currWord.type == VALUE )
 			{
 				lineSelf = new Value( emptySelf );
-				lineSelf.append( currElem.value );
+				lineSelf.append( currWord.value );
 				fieldType = FIELD_VALUE;
 			}
-			else if ( currElem.type == COPY )
+			else if ( currWord.type == COPY )
 			{
-				emptySelf.setShallowTemplate( currElem.modifier == 1 );
-				wordIndOfLine++;
-				if ( line.size() > wordIndOfLine )
-				{
-					currElem = line.get( wordIndOfLine );
-					if ( currElem.type == FIELD )
-					{
-						emptySelf.setTemplateName( currElem.value );
-						emptySelf.setTemplateEscapes( currElem.modifier );
-					}
-					// else malformed line, complain about parser; expected field
-				}
-				// else malformed line, complain about parser; expected field after copy
+				emptySelf.setShallowTemplate( currWord.modifier < 2 );
+				currWord = popCurrentWordOfLine();
+				if ( currWord.type == null || currWord.type != FIELD )
+					throw new RuntimeException( "expected template name" ); // assert paranoid
+				
 			}
 			// else malformed line, complain about parser; expected only value or copy
 		}
@@ -388,67 +390,80 @@ public class Semantologist
 			Syntaxeme nextType = peekAtNextLineType();
 			switch ( nextType )
 			{
+				case EMPTY :
+				{
+					nonChild = true;
+					break;
+				}
 				case COMMENT :
 				{
-					lineChecked++;
-					wordIndOfLine = 0;
-					// Improve, maybe don't assume that this is well formed ?
-					line = parsedLines.get( lineChecked );
-					currElem = line.get( wordIndOfLine );
-					if ( currElem.type == EMPTY )
+					advanceLine();
+					currWord = popCurrentWordOfLine();
+					if ( currWord.type == EMPTY )
 					{
-						wordIndOfLine++;
-						currElem = line.get( wordIndOfLine );
+						// NOTE not keeping comments separated, else we'd need to save them as Value
+						currWord = popCurrentWordOfLine();
 					}
-					if ( currElem.type == COMMENT )
+					if ( currWord.type == COMMENT )
 					{
 						if ( fieldType == FIELD_EMPTY )
 						{
-							emptySelf.addComment( currElem.value );
+							emptySelf.addComment( currWord.value );
 						}
 						else if ( fieldType == FIELD_VALUE )
 						{
-							lineSelf.addComment( currElem.value );
+							lineSelf.addComment( currWord.value );
 						}
 						else if ( fieldType == FIELD_SET
 								|| fieldType == FIELD_LIST )
 						{
-							currChild.addComment( currElem.value );
+							currChild.addComment( currWord.value );
 						}
 					}
-					// else complain about next line type, or check next line
+					// else complain
 					break;
 				}
+				// NP here?
+			}
+		}
+		// NP here
+		
+		List<Word> line = null;
+		while ( true )
+		{
+			Syntaxeme nextType = peekAtNextLineType();
+			switch ( nextType )
+			{
 				case VALUE :
 				{
 					lineChecked++;
 					wordIndOfLine = 0;
 					// Improve, maybe don't assume that this is well formed ?
 					line = parsedLines.get( lineChecked );
-					currElem = line.get( wordIndOfLine );
-					if ( currElem.type == EMPTY )
+					currWord = line.get( wordIndOfLine );
+					if ( currWord.type == EMPTY )
 					{
 						wordIndOfLine++;
-						currElem = line.get( wordIndOfLine );
+						currWord = line.get( wordIndOfLine );
 					}
-					if ( currElem.type == VALUE )
+					if ( currWord.type == VALUE )
 					{
-						String continuation = ( currElem.modifier == Parser
+						String continuation = ( currWord.modifier == Parser
 								.WORD_MOD_CONT_EMPTY ) ? "" : " ";
 						if ( fieldType == FIELD_EMPTY )
 						{
 							lineSelf = new Value( emptySelf );
-							lineSelf.append( currElem.value );
+							lineSelf.append( currWord.value );
 							fieldType = FIELD_VALUE;
 						}
 						else if ( fieldType == FIELD_VALUE )
 						{
-							lineSelf.append( continuation + currElem.value );
+							lineSelf.append( continuation + currWord.value );
 						}
 						else if ( fieldType == FIELD_LIST
 								|| fieldType == FIELD_SET )
 						{
-							currChild.append( continuation + currElem.value );
+							currChild.append( continuation + currWord.value );
 						}
 					}
 					break;
@@ -459,18 +474,18 @@ public class Semantologist
 					wordIndOfLine = 0;
 					// Improve, maybe don't assume that this is well formed ?
 					line = parsedLines.get( lineChecked );
-					currElem = line.get( wordIndOfLine );
-					if ( currElem.type == EMPTY )
+					currWord = line.get( wordIndOfLine );
+					if ( currWord.type == EMPTY )
 					{
-						emptyLines = currElem;
+						emptyLines = currWord;
 						wordIndOfLine++;
-						currElem = line.get( wordIndOfLine );
+						currWord = line.get( wordIndOfLine );
 					}
 					if ( fieldType == FIELD_EMPTY )
 					{
 						fieldType = FIELD_LIST;
 						listSelf = new FieldList( emptySelf );
-						currChild = new ListItem( currElem.value );
+						currChild = new ListItem( currWord.value );
 						if ( ! docComment.isEmpty() )
 						{
 							currChild.addComment( docComment );
@@ -481,7 +496,7 @@ public class Semantologist
 					}
 					else if ( fieldType == FIELD_LIST )
 					{
-						currChild = new ListItem( currElem.value );
+						currChild = new ListItem( currWord.value );
 						currChild.setName( listSelf.getName() ); // per spec
 						if ( ! docComment.isEmpty() )
 						{
@@ -497,7 +512,7 @@ public class Semantologist
 								ExceptionStore.getStore().getExceptionMessage(
 										ExceptionStore.ANALYSIS, EnoLocaleKey
 											.LIST_ITEM_IN_FIELD ) );
-						throw new RuntimeException( problem.format( new Object[]{ currElem.line } ) );
+						throw new RuntimeException( problem.format( new Object[]{ currWord.line } ) );
 					}
 					else if ( fieldType == FIELD_SET )
 					{
@@ -505,7 +520,7 @@ public class Semantologist
 								ExceptionStore.getStore().getExceptionMessage(
 										ExceptionStore.ANALYSIS, EnoLocaleKey
 											.LIST_ITEM_IN_FIELDSET ) );
-						throw new RuntimeException( problem.format( new Object[]{ currElem.line } ) );
+						throw new RuntimeException( problem.format( new Object[]{ currWord.line } ) );
 					}
 					break;
 				}
@@ -515,22 +530,22 @@ public class Semantologist
 					wordIndOfLine = 0;
 					// Improve, maybe don't assume that this is well formed ?
 					line = parsedLines.get( lineChecked );
-					currElem = line.get( wordIndOfLine );
-					if ( currElem.type == EMPTY )
+					currWord = line.get( wordIndOfLine );
+					if ( currWord.type == EMPTY )
 					{
 						wordIndOfLine++;
-						currElem = line.get( wordIndOfLine );
+						currWord = line.get( wordIndOfLine );
 					}
 					if ( fieldType == FIELD_EMPTY )
 					{
 						fieldType = FIELD_SET;
 						pairedSelf = new FieldSet( emptySelf );
-						currChild = new SetEntry( currElem.value, currElem.modifier );
+						currChild = new SetEntry( currWord.value, currWord.modifier );
 						wordIndOfLine++;
-						currElem = line.get( wordIndOfLine );
+						currWord = line.get( wordIndOfLine );
 						// if ( currElem.type != VALUE )
 							// complain
-						currChild.setStringValue( currElem.value );
+						currChild.setStringValue( currWord.value );
 						if ( ! docComment.isEmpty() )
 						{
 							currChild.addComment( docComment );
@@ -545,7 +560,7 @@ public class Semantologist
 								ExceptionStore.getStore().getExceptionMessage(
 										ExceptionStore.ANALYSIS, EnoLocaleKey
 											.FIELDSET_ENTRY_IN_LIST ) );
-						throw new RuntimeException( problem.format( new Object[]{ currElem.line } ) );
+						throw new RuntimeException( problem.format( new Object[]{ currWord.line } ) );
 					}
 					else if ( fieldType == FIELD_VALUE )
 					{
@@ -553,16 +568,16 @@ public class Semantologist
 								ExceptionStore.getStore().getExceptionMessage(
 										ExceptionStore.ANALYSIS, EnoLocaleKey
 											.FIELDSET_ENTRY_IN_FIELD ) );
-						throw new RuntimeException( problem.format( new Object[]{ currElem.line } ) );
+						throw new RuntimeException( problem.format( new Object[]{ currWord.line } ) );
 					}
 					else if ( fieldType == FIELD_SET )
 					{
-						currChild = new SetEntry( currElem.value, currElem.modifier );
+						currChild = new SetEntry( currWord.value, currWord.modifier );
 						wordIndOfLine++;
-						currElem = line.get( wordIndOfLine );
+						currWord = line.get( wordIndOfLine );
 						// if ( currElem.type != VALUE )
 							// complain
-						currChild.setStringValue( currElem.value );
+						currChild.setStringValue( currWord.value );
 						if ( ! docComment.isEmpty() )
 						{
 							currChild.addComment( docComment );
@@ -682,12 +697,12 @@ public class Semantologist
 		{
 			do
 			{
-				currToken = popNextWordOfLine();
+				currToken = popCurrentWordOfLine();
 				if ( currToken == null )
 					continue;
 				else if ( currToken.type == EMPTY )
 				{
-					currToken = popNextWordOfLine();
+					currToken = popCurrentWordOfLine();
 					if ( currToken == null )
 						continue;
 					// loop if paranoid, I'll assume we're well formed here
@@ -715,7 +730,7 @@ public class Semantologist
 			comments.add( currToken.value );
 			while ( advanceLine() )
 			{
-				currToken = popNextWordOfLine();
+				currToken = popCurrentWordOfLine();
 				if ( currToken == null || currToken.type == EMPTY )
 				{
 					break;
@@ -871,12 +886,57 @@ public class Semantologist
 
 
 	/** next word or null if none left. Advances wordIndOfLine. */
+	private Word popCurrentWordOfLine()
+	{
+		if (  lineChecked < parsedLines.size() )
+		{
+			List<Word> line = parsedLines.get( lineChecked );
+			if ( wordIndOfLine < line.size() )
+			{
+				Word result = line.get( wordIndOfLine );
+				wordIndOfLine++;
+				return result;
+			}
+			else
+			{
+				return null;
+			}
+		}
+		else
+		{
+			return null;
+		}
+	}
+
+
+	/** next word or null if none left. Advances wordIndOfLine. */
 	private Word popNextWordOfLine()
 	{
 		if (  lineChecked < parsedLines.size() )
 		{
 			List<Word> line = parsedLines.get( lineChecked );
 			wordIndOfLine++;
+			if ( wordIndOfLine < line.size() )
+			{
+				return line.get( wordIndOfLine );
+			}
+			else
+			{
+				return null;
+			}
+		}
+		else
+		{
+			return null;
+		}
+	}
+
+
+	private Word peekAtCurrentWordOfLine()
+	{
+		if (  lineChecked < parsedLines.size() )
+		{
+			List<Word> line = parsedLines.get( lineChecked );
 			if ( wordIndOfLine < line.size() )
 			{
 				return line.get( wordIndOfLine );
