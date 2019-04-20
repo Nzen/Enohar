@@ -152,8 +152,30 @@ class ShouldSemantics
 		assertEquals( "entry value", dict[ dFieldInd ], pairing.requiredStringValue() );
 		// list
 		docStr.clear();
+		docStr.add( dict[ dFieldInd ] + Lexeme.FIELD_START_OP.getChar() );
+		docStr.add( Lexeme.LIST_OP.getChar() +" "+ dict[ dFormatInd ] );
+		docStr.add( Lexeme.LIST_OP.getChar() +" "+ dict[ dOrphInd ] );
+		docStr.add( Lexeme.LIST_OP.getChar() +" " );
+		doc = knowy.analyze( docStr );
+		FieldList anArray = doc.list( dict[ dFieldInd ] );
+		assertTrue( "list type", EnoType.FIELD_LIST == anArray.getType() );
+		List<ListItem> strPointer = anArray.items();
+		assertEquals( "list size", docStr.size() -1, strPointer.size() );
+		ListItem listWord = strPointer.get( 0 );
+		assertTrue( "l item type", EnoType.LIST_ITEM == listWord.getType() );
+		assertEquals( "items have the parent name", anArray.getName(), listWord.getName() );
+		assertEquals( "list value 0", dict[ dFormatInd ], listWord.requiredStringValue() );
+		listWord = strPointer.get( 1 );
+		assertEquals( "list value 1", dict[ dOrphInd ], listWord.requiredStringValue() );
+		listWord = strPointer.get( 2 );
+		assertTrue( "blank value null 2", listWord.optionalStringValue() == null );
 		// empty section
 		docStr.clear();
+		docStr.add( Lexeme.SECTION_OP.getChar(), dict[ dMultiInd ] );
+		doc = knowy.analyze( docStr );
+		Section subsection = doc.section( dict[ dMultiInd ] );
+		assertTrue( "section type", EnoType.SECTION == subsection.getType() );
+		 assertEquals( "section depth", 1, subsection.getDepth() );
 	}
 
 
