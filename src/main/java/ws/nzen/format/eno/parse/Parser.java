@@ -522,7 +522,7 @@ public class Parser
 			nextToken();
 			if ( currToken.type != END )
 			{
-				// NOTE distinguishing field from set, as not all will have a value
+				// NOTE distinguishing field from set
 				line.get( line.size() -1 ).type = SET_ELEMENT;
 				Word value = new Word();
 				value.type = VALUE;

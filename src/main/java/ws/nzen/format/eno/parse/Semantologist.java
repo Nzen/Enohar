@@ -103,14 +103,17 @@ public class Semantologist
 				continue;
 			}
 			firstComment = getPreceedingComment();
-			currToken = popCurrentWordOfLine();
+			currToken = peekAtCurrentWordOfLine();
 			if ( currToken == null )
 				continue;
 			else if ( currToken.type == EMPTY )
 			{
-				currToken = popCurrentWordOfLine(); // NOTE assuming well formed parser lines
+				wordIndOfLine += 1;
+				currToken = peekAtCurrentWordOfLine(); // NOTE assuming well formed parser lines
 				if ( currToken == null )
 					continue; // assert paranoid
+				else
+					wordIndOfLine -= 1; // NOTE reset word cursor
 			}
 			switch ( currToken.type )
 			{
@@ -236,7 +239,8 @@ public class Semantologist
 			container.setTemplateName( currWord.value );
 			container.setTemplateEscapes( currWord.modifier );
 		}
-		// advanceLine();
+		sections.add( container );
+		// ASK advanceLine();
 		Syntaxeme nextType;
 		EnoElement currChild = null;
 		boolean addingChildren = true;
@@ -345,9 +349,9 @@ public class Semantologist
 			emptyLines = currWord;
 			currWord = popCurrentWordOfLine();
 		}
-		Word fieldName = null;
 		if ( currWord.type != FIELD )
 			throw new RuntimeException( "expected field name" ); // assert paranoid
+		Word fieldName = currWord;
 		Field emptySelf = new Field( fieldName.value, fieldName.modifier );
 		emptySelf.setLine( fieldName.line );
 		if ( ! preceedingComment.isEmpty() )
@@ -378,9 +382,14 @@ public class Semantologist
 				currWord = popCurrentWordOfLine();
 				if ( currWord.type == null || currWord.type != FIELD )
 					throw new RuntimeException( "expected template name" ); // assert paranoid
-				
+				else
+				{
+					emptySelf.setTemplateName( currWord.value );
+					emptySelf.setTemplateEscapes( currWord.modifier );
+				}
 			}
-			// else malformed line, complain about parser; expected only value or copy
+			else
+				throw new RuntimeException( "expected nothing, not "+ currWord.type ); // assert paranoid
 		}
 		Value currChild = null;
 		String docComment = "";
@@ -423,79 +432,60 @@ public class Semantologist
 					// else complain
 					break;
 				}
-				// NP here?
-			}
-		}
-		// NP here
-		
-		List<Word> line = null;
-		while ( true )
-		{
-			Syntaxeme nextType = peekAtNextLineType();
-			switch ( nextType )
-			{
 				case VALUE :
 				{
-					lineChecked++;
-					wordIndOfLine = 0;
-					// Improve, maybe don't assume that this is well formed ?
-					line = parsedLines.get( lineChecked );
-					currWord = line.get( wordIndOfLine );
+					advanceLine();
+					currWord = popCurrentWordOfLine();
 					if ( currWord.type == EMPTY )
 					{
-						wordIndOfLine++;
-						currWord = line.get( wordIndOfLine );
+						// NOTE not keeping value substringss separated
+						currWord = popCurrentWordOfLine();
 					}
-					if ( currWord.type == VALUE )
+					if ( currWord.type != VALUE )
 					{
-						String continuation = ( currWord.modifier == Parser
-								.WORD_MOD_CONT_EMPTY ) ? "" : " ";
-						if ( fieldType == FIELD_EMPTY )
-						{
-							lineSelf = new Value( emptySelf );
-							lineSelf.append( currWord.value );
-							fieldType = FIELD_VALUE;
-						}
-						else if ( fieldType == FIELD_VALUE )
-						{
-							lineSelf.append( continuation + currWord.value );
-						}
-						else if ( fieldType == FIELD_LIST
-								|| fieldType == FIELD_SET )
-						{
-							currChild.append( continuation + currWord.value );
-						}
+						throw new RuntimeException( "expected value" ); // assert paranoid
+					}
+					String continuation = ( currWord.modifier == Parser
+							.WORD_MOD_CONT_EMPTY ) ? "" : " ";
+					if ( fieldType == FIELD_EMPTY )
+					{
+						lineSelf = new Value( emptySelf );
+						lineSelf.append( currWord.value );
+						fieldType = FIELD_VALUE;
+					}
+					else if ( fieldType == FIELD_VALUE )
+					{
+						lineSelf.append( continuation + currWord.value );
+					}
+					else if ( fieldType == FIELD_LIST
+							|| fieldType == FIELD_SET )
+					{
+						currChild.append( continuation + currWord.value );
 					}
 					break;
 				}
 				case LIST_ELEMENT :
 				{
 					docComment = getPreceedingComment();
-					wordIndOfLine = 0;
-					// Improve, maybe don't assume that this is well formed ?
-					line = parsedLines.get( lineChecked );
-					currWord = line.get( wordIndOfLine );
+					if ( docComment.isEmpty() )
+						advanceLine();
+					currWord = popCurrentWordOfLine();
 					if ( currWord.type == EMPTY )
 					{
 						emptyLines = currWord;
-						wordIndOfLine++;
-						currWord = line.get( wordIndOfLine );
+						currWord = popCurrentWordOfLine();
 					}
-					if ( fieldType == FIELD_EMPTY )
+					if ( currWord.type != LIST_ELEMENT )
 					{
-						fieldType = FIELD_LIST;
-						listSelf = new FieldList( emptySelf );
-						currChild = new ListItem( currWord.value );
-						if ( ! docComment.isEmpty() )
+						throw new RuntimeException( "expected list element" ); // assert paranoid
+					}
+					else if ( fieldType == FIELD_LIST || fieldType == FIELD_EMPTY )
+					{
+						if ( fieldType == FIELD_EMPTY )
 						{
-							currChild.addComment( docComment );
-							currChild.setFirstCommentPreceededName( true );
+							fieldType = FIELD_LIST;
+							listSelf = new FieldList( emptySelf );
 						}
-						currChild.setPreceedingEmptyLines( emptyLines.modifier );
-						listSelf.addItem( (ListItem)currChild );
-					}
-					else if ( fieldType == FIELD_LIST )
-					{
 						currChild = new ListItem( currWord.value );
 						currChild.setName( listSelf.getName() ); // per spec
 						if ( ! docComment.isEmpty() )
@@ -503,7 +493,11 @@ public class Semantologist
 							currChild.addComment( docComment );
 							currChild.setFirstCommentPreceededName( true );
 						}
-						currChild.setPreceedingEmptyLines( emptyLines.modifier );
+						if ( emptyLines != null && emptyLines.modifier != 0 )
+						{
+							currChild.setPreceedingEmptyLines( emptyLines.modifier );
+							emptyLines.modifier = 0;
+						}
 						listSelf.addItem( (ListItem)currChild );
 					}
 					else if ( fieldType == FIELD_VALUE )
@@ -527,31 +521,36 @@ public class Semantologist
 				case SET_ELEMENT :
 				{
 					docComment = getPreceedingComment();
-					wordIndOfLine = 0;
-					// Improve, maybe don't assume that this is well formed ?
-					line = parsedLines.get( lineChecked );
-					currWord = line.get( wordIndOfLine );
+					if ( docComment.isEmpty() )
+						advanceLine();
+					currWord = popCurrentWordOfLine();
 					if ( currWord.type == EMPTY )
 					{
-						wordIndOfLine++;
-						currWord = line.get( wordIndOfLine );
+						emptyLines = currWord;
+						currWord = popCurrentWordOfLine();
 					}
-					if ( fieldType == FIELD_EMPTY )
+					else if ( fieldType == FIELD_SET || fieldType == FIELD_EMPTY )
 					{
-						fieldType = FIELD_SET;
-						pairedSelf = new FieldSet( emptySelf );
+						if ( fieldType == FIELD_EMPTY )
+						{
+							fieldType = FIELD_SET;
+							pairedSelf = new FieldSet( emptySelf );
+						}
 						currChild = new SetEntry( currWord.value, currWord.modifier );
-						wordIndOfLine++;
-						currWord = line.get( wordIndOfLine );
-						// if ( currElem.type != VALUE )
-							// complain
+						currWord = popCurrentWordOfLine();
+						if ( currWord.type != VALUE )
+							throw new RuntimeException( "expected set entry value token" ); // assert paranoid
 						currChild.setStringValue( currWord.value );
 						if ( ! docComment.isEmpty() )
 						{
 							currChild.addComment( docComment );
 							currChild.setFirstCommentPreceededName( true );
 						}
-						currChild.setPreceedingEmptyLines( emptyLines.modifier );
+						if ( emptyLines != null && emptyLines.modifier != 0 )
+						{
+							currChild.setPreceedingEmptyLines( emptyLines.modifier );
+							emptyLines.modifier = 0;
+						}
 						pairedSelf.addEntry( (SetEntry)currChild );
 					}
 					else if ( fieldType == FIELD_LIST )
@@ -570,22 +569,6 @@ public class Semantologist
 											.FIELDSET_ENTRY_IN_FIELD ) );
 						throw new RuntimeException( problem.format( new Object[]{ currWord.line } ) );
 					}
-					else if ( fieldType == FIELD_SET )
-					{
-						currChild = new SetEntry( currWord.value, currWord.modifier );
-						wordIndOfLine++;
-						currWord = line.get( wordIndOfLine );
-						// if ( currElem.type != VALUE )
-							// complain
-						currChild.setStringValue( currWord.value );
-						if ( ! docComment.isEmpty() )
-						{
-							currChild.addComment( docComment );
-							currChild.setFirstCommentPreceededName( true );
-						}
-						currChild.setPreceedingEmptyLines( emptyLines.modifier );
-						pairedSelf.addEntry( (SetEntry)currChild );
-					}
 					break;
 				}
 				default :
@@ -601,18 +584,22 @@ public class Semantologist
 		}
 		if ( fieldType == FIELD_LIST )
 		{
+			fields.add( listSelf );
 			return listSelf;
 		}
 		else if ( fieldType == FIELD_VALUE )
 		{
+			fields.add( lineSelf );
 			return lineSelf;
 		}
 		else if ( fieldType == FIELD_SET )
 		{
+			fields.add( pairedSelf );
 			return pairedSelf;
 		}
 		else
 		{
+			fields.add( emptySelf );
 			return emptySelf;
 		}
 	}
@@ -620,15 +607,12 @@ public class Semantologist
 
 	private EnoElement multiline( String preceedingComment )
 	{
-		wordIndOfLine = 0;
-		List<Word> line = parsedLines.get( lineChecked );
-		Word currWord = line.get( wordIndOfLine );
-		int emptyLines = 0;
+		Word emptyLines = null;
+		Word currWord = popCurrentWordOfLine();
 		if ( currWord.type == EMPTY )
 		{
-			emptyLines = currWord.modifier;
-			wordIndOfLine++;
-			currWord = line.get( wordIndOfLine );
+			emptyLines = currWord;
+			currWord = popCurrentWordOfLine();
 		}
 		if ( currWord.type != MULTILINE_BOUNDARY )
 		{
@@ -640,8 +624,7 @@ public class Semantologist
 			throw new RuntimeException( problem.format( new Object[]{ currWord.line } ) );
 		}
 		int boundaryHyphens = currWord.modifier;
-		wordIndOfLine++;
-		currWord = line.get( wordIndOfLine );
+		currWord = popCurrentWordOfLine();
 		if ( currWord.type != FIELD )
 		{
 			MessageFormat problem = new MessageFormat(
@@ -652,10 +635,12 @@ public class Semantologist
 			throw new RuntimeException( problem.format( new Object[]{ currWord.line } ) );
 		}
 		Multiline currElem = new Multiline( currWord.value, currWord.modifier );
-		currElem.setPreceedingEmptyLines( emptyLines );
 		currElem.setBoundaryLength( boundaryHyphens );
-		wordIndOfLine++;
-		currWord = line.get( wordIndOfLine );
+		if ( emptyLines != null )
+		{
+			currElem.setPreceedingEmptyLines( emptyLines.modifier );
+		}
+		currWord = popCurrentWordOfLine();
 		if ( currWord.type != MULTILINE_TEXT )
 		{
 			MessageFormat problem = new MessageFormat(
@@ -667,12 +652,21 @@ public class Semantologist
 		}
 		currElem.setValue( currWord.value );
 		// NOTE look for succeeding comments
-		
-		/*
-		get child comments up to a preceeding comment or different element
-		*/
+		while ( peekAtNextLineType() == COMMENT )
+		{
+			advanceLine();
+			currWord = popCurrentWordOfLine();
+			if ( currWord.type == EMPTY )
+			{
+				currWord = popCurrentWordOfLine();
+			}
+			if ( currWord.type != COMMENT )
+				throw new RuntimeException( "expected comment" ); // assert paranoid
+			else
+				currElem.addComment( currWord.value );
+		}
 		fields.add( currElem );
-		return null; // FIX todo
+		return currElem;
 	}
 
 
