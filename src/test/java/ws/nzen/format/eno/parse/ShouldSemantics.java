@@ -179,6 +179,30 @@ class ShouldSemantics
 	}
 
 
+	private void compareAsElement( EnoElement expected, EnoElement result )
+	{
+		if ( expected.equals( result ) )
+			return; // relevant things will match or it will be the literal same
+		// if ( expected == null ) assert paranoid
+		assertEquals( "ae line", expected.getLine(), result.getLine() );
+		assertEquals( "ae name", expected.getName(), result.getName() );
+		assertEquals( "ae name esc", expected.getNameEscapes(), result.getNameEscapes() );
+		assertEquals( "ae type", expected.getType(), result.getType() );
+		assertEquals( "ae pel", expected.getPreceedingEmptyLines(), result.getPreceedingEmptyLines() );
+		assertEquals( "ae te", expected.getTemplateEscapes(), result.getTemplateEscapes() );
+		assertEquals( "ae tn", expected.getTemplateName(), result.getTemplateName() );
+		List<String> expectedComments = expected.getComments();
+		List<String> resultComments = result.getComments();
+		if ( ! expectedComments.isEmpty() )
+		{
+			for ( int ind = 0; ind < expectedComments.size(); ind++ )
+			{
+				assertEquals( "ae comment "+ ind, expectedComments.get( ind ),
+						resultComments.get( ind ));
+			}
+		}
+	}
+
 	
 
 }
