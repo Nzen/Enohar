@@ -1,0 +1,32 @@
+
+<document> : ( <endl>* <full eno element>* <endl>* )+
+<endl> : "\n" | "\r\n"
+<full eno element> : ( <comment> <endl> )* <standalone eno element>
+<standalone eno element> : <entire section> | <entire field> | <entire multiline>
+
+<entire section> : <section declaration> <endl>* <internal comment>* <full eno element>
+<section declaration> : "#" <space>* <either section name> <template declaration>?
+<either section name> : <escaped name> | <section name>
+<escaped name> : "`"+ <space>* <name> <space>* "`"+
+<section name> : [^<\n]+
+<template declaration> : "<"{1,2} ( <either section name> | <either field name> )
+<internal comment> : ( <endl>* <comment> <endl>* )* <endl>
+
+<entire field> : <list field> | <set field> | <value field> | <empty field>
+<list field> : <common field declaration> <endl>+ <internal comment>* <entire list item>+
+<common field declaration> : <either field name> <space>* ":" <space>* <template declaration>
+<either field name> : <escaped name> | <field name>
+<> : [^<:=\n]+
+<entire list item> : ( <comment> <endl> )* <list item> <endl>+ <internal comment>* <value continued>* <internal comment>*
+<list item> : "-" <space>* [^\n]*
+<value continued> : [|\] <space>* [^\]*
+<set field> : <common field declaration> <endl>+ <internal comment>* <entire set item>+
+<entire set item> : ( <comment> <endl> )* <either field name> "=" [^\n]* <endl> <internal comment>* <value continued>* <internal comment>*
+<value field> : <value on first line> | <value only via continuations>
+<value on first line> : <either field name> <space>* ":" <space>* [^\]+ <endl>+ <internal comment>* <value continued>* <internal comment>*
+<value only via continuations> : <common field declaration> <endl>+ <internal comment>* <value continued>+ ( <internal comment>* <value continued> )*
+<empty field> : <common field declaration> <internal comment>*
+
+<entire multiline> : <multiline boundary> ( <any text> )* <multiline boundary> ( <endl>* <comment>* <endl>* )*
+<multiline boundary> : "-" "-"+ <space>* <either multiline name>
+<either multiline name> : <escaped name> | [^\n]+
