@@ -3,6 +3,8 @@ package ws.nzen.format.eno;
 
 import static ws.nzen.format.eno.EnoType.*;
 
+import ws.nzen.format.eno.parse.Lexeme;
+
 /**  */
 public class Field extends EnoElement
 {
@@ -77,6 +79,31 @@ public class Field extends EnoElement
 	public boolean isEmpty()
 	{
 		return type == FIELD_EMPTY;
+	}
+
+
+	public StringBuilder toString( StringBuilder aggregator )
+	{
+		StringBuilder declaration = new StringBuilder();
+		if ( nameEscapes > 0 )
+		{
+			declaration.append( nameEscapes );
+			declaration.append( "`" );
+		}
+		declaration.append( name );
+		declaration.append( " " );
+		declaration.append( Lexeme.FIELD_START_OP.getChar() );
+		// if ( ! templateName )
+		// declaration.append(  );
+		return toString( aggregator, declaration.toString() );
+	}
+
+
+	@Override
+	// for subclasses
+	protected StringBuilder toString( StringBuilder aggregator, String declaration )
+	{
+		return super.toString( aggregator, declaration );
 	}
 
 }

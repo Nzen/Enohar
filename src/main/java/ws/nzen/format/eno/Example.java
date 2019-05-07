@@ -22,8 +22,9 @@ public class Example
 	/** @param args */
 	public static void main( String[] args )
 	{
-		checkHardcodedDocument();
-		checkCanonFiles();
+		// checkHardcodedDocument();
+		// checkCanonFiles();
+		checkEmitting();
 	}
 
 
@@ -100,6 +101,22 @@ public class Example
 			System.err.println( here + ie );
 		}
 	}
+
+
+	static void checkEmitting()
+	{
+		String name = "cameroon";
+		FieldList notList = new FieldList( name, 0 );
+		notList.setPreceedingEmptyLines( 2 );
+		notList.addComment( "comment before" );
+		notList.addComment( "comment after" );
+		notList.setFirstCommentPreceededName( true );
+		ListItem bullet = new ListItem( name.toUpperCase() );
+		notList.addItem( bullet );
+		StringBuilder sink = new StringBuilder( 40 );
+		System.out.println( notList.toString( sink ).toString() );
+	}
+
 
 }
 

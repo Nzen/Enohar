@@ -4,10 +4,12 @@ package ws.nzen.format.eno;
 import java.text.MessageFormat;
 import java.util.NoSuchElementException;
 
+import ws.nzen.format.eno.parse.Lexeme;
+
 /**  */
 public class Value extends Field
 {
-	private String value = null; // per spec
+	protected String value = null; // per spec
 	// IMPROVE Map<int, boolean> continuations :: index, empty/space style continuation
 	// and then append() would add new records each time; setSV() would strip line separators 
 
@@ -79,7 +81,64 @@ public class Value extends Field
 	}
 
 
+	public StringBuilder toString( StringBuilder aggregator )
+	{
+		aggregator = super.toString( aggregator );
+		aggregator.append( System.lineSeparator() );
+		aggregator.append( Lexeme.CONTINUE_OP_EMPTY );
+		aggregator.append( " " );
+		aggregator.append( value );
+		return aggregator;
+	}
+
+
+	@Override
+	// for subclasses
+	protected StringBuilder toString( StringBuilder aggregator, String declaration )
+	{
+		return super.toString( aggregator, declaration );
+	}
+
+
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

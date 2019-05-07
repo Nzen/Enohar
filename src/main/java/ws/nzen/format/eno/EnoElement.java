@@ -2,9 +2,12 @@
 package ws.nzen.format.eno;
 
 import java.text.MessageFormat;
+import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.NoSuchElementException;
+
+import ws.nzen.format.eno.parse.Lexeme;
 
 /** Using a composite rather than insisting on casting */
 public class EnoElement
@@ -176,7 +179,69 @@ public class EnoElement
 		this.line = line;
 	}
 
+
+	// ide version
+	public String toString()
+	{
+		return type.name() +" "+ name;
+	}
+
+
+	protected StringBuilder toString( StringBuilder aggregator, String declaration )
+	{
+		if ( aggregator == null )
+			aggregator = new StringBuilder();
+		for ( int ind = preceedingEmptyLines; ind > 0; ind-- )
+		{
+			aggregator.append( System.lineSeparator() );
+		}
+		if ( ! comments.isEmpty() && firstCommentPreceededName )
+		{
+			aggregator.append( comments.get( 0 ) );
+			aggregator.append( System.lineSeparator() );
+		}
+		// checking on behalf of list element
+		if ( ! declaration.isEmpty() )
+		{
+			aggregator.append( declaration );
+			aggregator.append( System.lineSeparator() );
+		}
+		if ( comments.size() > 1 && firstCommentPreceededName )
+		{
+			Iterator<String> forSkippingFirst = comments.iterator();
+			forSkippingFirst.next();
+			while( forSkippingFirst.hasNext() )
+			{
+				aggregator.append( forSkippingFirst.next() );
+				aggregator.append( System.lineSeparator() );
+			}
+		}
+		else if ( ! comments.isEmpty() && ! firstCommentPreceededName )
+		{
+			for ( String aComment : comments )
+			{
+				aggregator.append( aComment );
+				aggregator.append( System.lineSeparator() );
+			}
+		}
+		return aggregator;
+	}
+
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
