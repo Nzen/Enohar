@@ -7,7 +7,8 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.NoSuchElementException;
 
-import ws.nzen.format.eno.parse.Lexeme;
+import ws.nzen.format.eno.EnoType;
+import ws.nzen.format.eno.parse.Syntaxeme;
 
 /** Using a composite rather than insisting on casting */
 public class EnoElement
@@ -18,8 +19,7 @@ public class EnoElement
 	protected int preceedingEmptyLines = 0;
 	protected List<String> comments = new LinkedList<>();
 	protected boolean firstCommentPreceededName = false;
-	protected String templateName = "";
-	protected int templateEscapes = 0;
+	protected EnoElement template = null;
 	protected boolean shallowTemplate = false;
 	protected int line = 0;
 
@@ -145,20 +145,24 @@ public class EnoElement
 
 	public String getTemplateName()
 	{
-		return templateName;
+		if ( template != null )
+		{
+			return template.getName();
+		}
+		else
+		{
+			return ""; // ASK or null
+		}
 	}
-	public void setTemplateName( String templateElementName )
+	public EnoElement getTemplate()
 	{
-		this.templateName = templateElementName;
+		return template;
 	}
 
-	public int getTemplateEscapes()
+	public void setTemplate( EnoElement baseInstance )
 	{
-		return templateEscapes;
-	}
-	public void setTemplateEscapes( int templateEscapes )
-	{
-		this.templateEscapes = templateEscapes;
+		// NOTE subclasses should check, to keep the combination here small
+		throw new RuntimeException( "missed a more specific template opportunity to complain" ); // IMPROVE use canon complaint
 	}
 
 	public boolean isShallowTemplate()

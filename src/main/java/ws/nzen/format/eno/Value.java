@@ -81,6 +81,63 @@ public class Value extends Field
 	}
 
 
+	public void setTemplate( Value baseInstance )
+	{
+		if ( baseInstance.getType() == EnoType.FIELD_VALUE )
+			template = baseInstance;
+		else
+			setTemplate( (EnoElement)baseInstance );
+			// NOTE this is a set entry or list item
+	}
+
+	@Override
+	public void setTemplate( EnoElement baseInstance )
+	{
+		// FIX use real keys
+		String localeComplaint = "";
+		switch ( baseInstance.getType() )
+		{
+			case SECTION :
+			{
+				setTemplate( (Section)baseInstance );
+				return;
+			}
+			case FIELD_EMPTY :
+			{
+				localeComplaint = EnoLocaleKey.EXPECTED_SECTION_GOT_EMPTY;
+				break;
+			}
+			case FIELD_VALUE :
+			case MULTILINE :
+			{
+				localeComplaint = EnoLocaleKey.EXPECTED_SECTION_GOT_FIELD;
+				break;
+			}
+			case FIELD_LIST :
+			case LIST_ITEM :
+			{
+				localeComplaint = EnoLocaleKey.EXPECTED_SECTION_GOT_LIST;
+				break;
+			}
+			case FIELD_SET :
+			case SET_ELEMENT :
+			{
+				localeComplaint = EnoLocaleKey.EXPECTED_SECTION_GOT_FIELDSET;
+				break;
+			}
+			default :
+			{
+				localeComplaint = EnoLocaleKey.MISSING_ELEMENT;
+				break;
+			}
+		}
+		MessageFormat problem = new MessageFormat(
+				ExceptionStore.getStore().getExceptionMessage(
+						ExceptionStore.VALIDATION, localeComplaint ) );
+		throw new RuntimeException( problem.format( new Object[]{ baseInstance.getName() } ) );
+	}
+
+
 	public StringBuilder toString( StringBuilder aggregator )
 	{
 		aggregator = super.toString( aggregator );

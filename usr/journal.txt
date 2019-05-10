@@ -1,4 +1,8 @@
 
+# 190509
+
+I've confirmed that peekAtNextLineType() indeed has consumers which have different expectations about what next means. Rather than a bool called inclusive, I think that I'll send an int called offset so the different callers can supply their own opinion.
+
 # 190408
 
 Oh man. I just noticed the canon 'missing element' functionality. Enolib offers the ability to get elements that aren't in the document. That bomb either sputters if we ask for an optional whatever, by returning null. The bomb goes off if we ask for a required value. But, it doesn't go off where we asked for the value. He links each missing element to its parent so it can call its parent's _missing_exception() method, which will go upward to the first concrete element, even if that's just the section that represents the document.
@@ -11,7 +15,7 @@ I read some opinions about method chaining as a builder pattern. I'm using it fo
 
 # 190331
 
-Oh. The eno locale repository merged with enoLib and doesn't create a json file anymore. le sigh. I'll need to complain, not satisfy spec by trailing, donate a generator for listresourcebundle, or reimplement the locales generator project. For the moment, I'll trail the spec.
+Oh. The eno locale repository merged with enoLib and doesn't create a json file anymore. le sigh. I'll need to choose whether to complain, not satisfy the spec by trailing, donate a generator for listresourcebundle, or reimplement the locales generator project. For the moment, I'll trail the spec.
 
 Next is section() and prepare tests for when I have this draft ready.
 

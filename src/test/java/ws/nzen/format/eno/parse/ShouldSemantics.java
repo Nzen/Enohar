@@ -3,6 +3,7 @@ package ws.nzen.format.eno.parse;
 
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.fail;
 
@@ -189,8 +190,6 @@ class ShouldSemantics
 		assertEquals( "ae name esc", expected.getNameEscapes(), result.getNameEscapes() );
 		assertEquals( "ae type", expected.getType(), result.getType() );
 		assertEquals( "ae pel", expected.getPreceedingEmptyLines(), result.getPreceedingEmptyLines() );
-		assertEquals( "ae te", expected.getTemplateEscapes(), result.getTemplateEscapes() );
-		assertEquals( "ae tn", expected.getTemplateName(), result.getTemplateName() );
 		List<String> expectedComments = expected.getComments();
 		List<String> resultComments = result.getComments();
 		if ( ! expectedComments.isEmpty() )
@@ -200,6 +199,14 @@ class ShouldSemantics
 				assertEquals( "ae comment "+ ind, expectedComments.get( ind ),
 						resultComments.get( ind ));
 			}
+		}
+		if ( expected.getTemplate() == null )
+		{
+			assertNull( result.getTemplate(), "ae t nul" );
+		}
+		else
+		{
+			compareAsElement( expected.getTemplate(), result.getTemplate() );
 		}
 	}
 

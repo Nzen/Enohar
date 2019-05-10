@@ -8,6 +8,7 @@ import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.NoSuchElementException;
 import java.util.Set;
 import java.util.TreeSet;
 
@@ -41,8 +42,9 @@ public class Semantologist
 	{
 		EnoElement hasReference = null;
 		EnoElement isReferredTo = null;
-		// minimum needed in case this is a forward reference
+		// minimum needed, in case this is a forward reference
 		String nameOfReferredTo = "";
+		int escapesOfReferredTo = 0;
 	}
 
 
@@ -74,7 +76,7 @@ public class Semantologist
 		// TODO vet these lines again with nextLineType()
 		while ( advanceLine() )
 		{
-			Syntaxeme focusType = peekAtNextLineType( true );
+			Syntaxeme focusType = peekAtNextLineType( 0 );
 			String firstComment;
 			Word currToken;
 			if ( focusType == EMPTY )
@@ -236,8 +238,10 @@ public class Semantologist
 			currWord = popCurrentWordOfLine();
 			if ( currWord.type == null || currWord.type != FIELD )
 				throw new RuntimeException( "expected template name" ); // assert paranoid
-			container.setTemplateName( currWord.value );
-			container.setTemplateEscapes( currWord.modifier );
+			Dependence reference = new Dependence();
+			reference.hasReference = container;
+			reference.nameOfReferredTo = currWord.value;
+			reference.escapesOfReferredTo = currWord.modifier;
 		}
 		sections.add( container );
 		// ASK advanceLine();
@@ -246,7 +250,7 @@ public class Semantologist
 		boolean addingChildren = true;
 		while ( addingChildren )
 		{
-			nextType = peekAtNextLineType();
+			nextType = peekAtNextLineType( 1 );
 			switch ( nextType )
 			{
 				case EMPTY :
@@ -366,6 +370,7 @@ public class Semantologist
 		Value lineSelf = null;
 		FieldList listSelf = null;
 		FieldSet pairedSelf = null;
+		Dependence reference = null;
 		currWord = popCurrentWordOfLine();
 		if ( currWord != null )
 		{
@@ -382,11 +387,10 @@ public class Semantologist
 				currWord = popCurrentWordOfLine();
 				if ( currWord.type == null || currWord.type != FIELD )
 					throw new RuntimeException( "expected template name" ); // assert paranoid
-				else
-				{
-					emptySelf.setTemplateName( currWord.value );
-					emptySelf.setTemplateEscapes( currWord.modifier );
-				}
+				reference = new Dependence();
+				reference.hasReference = emptySelf;
+				reference.nameOfReferredTo = currWord.value;
+				reference.escapesOfReferredTo = currWord.modifier;
 			}
 			else
 				throw new RuntimeException( "expected nothing, not "+ currWord.type ); // assert paranoid
@@ -396,7 +400,7 @@ public class Semantologist
 		boolean nonChild = false; // NOTE encountered sibling field or parent section
 		while ( true )
 		{
-			Syntaxeme nextType = peekAtNextLineType();
+			Syntaxeme nextType = peekAtNextLineType( 1 );
 			switch ( nextType )
 			{
 				case EMPTY :
@@ -452,6 +456,10 @@ public class Semantologist
 						lineSelf = new Value( emptySelf );
 						lineSelf.append( currWord.value );
 						fieldType = FIELD_VALUE;
+						if ( reference != null )
+						{
+							reference.hasReference = lineSelf;
+						}
 					}
 					else if ( fieldType == FIELD_VALUE )
 					{
@@ -485,6 +493,10 @@ public class Semantologist
 						{
 							fieldType = FIELD_LIST;
 							listSelf = new FieldList( emptySelf );
+							if ( reference != null )
+							{
+								reference.hasReference = listSelf;
+							}
 						}
 						currChild = new ListItem( currWord.value );
 						currChild.setName( listSelf.getName() ); // per spec
@@ -535,6 +547,10 @@ public class Semantologist
 						{
 							fieldType = FIELD_SET;
 							pairedSelf = new FieldSet( emptySelf );
+							if ( reference != null )
+							{
+								reference.hasReference = pairedSelf;
+							}
 						}
 						currChild = new SetEntry( currWord.value, currWord.modifier );
 						currWord = popCurrentWordOfLine();
@@ -652,7 +668,7 @@ public class Semantologist
 		}
 		currElem.setValue( currWord.value );
 		// NOTE look for succeeding comments
-		while ( peekAtNextLineType() == COMMENT )
+		while ( peekAtNextLineType( 1 ) == COMMENT )
 		{
 			advanceLine();
 			currWord = popCurrentWordOfLine();
@@ -792,13 +808,13 @@ public class Semantologist
 	}
 
 
-	private Syntaxeme peekAtNextLineType()
+	private Syntaxeme peekAtNextLineTypef()
 	{
-		return peekAtNextLineType( false );
+		return peekAtNextLineType( 0 );
 	}
 
 
-	private Syntaxeme peekAtNextLineType( boolean inclusive )
+	private Syntaxeme peekAtNextLineType( int offsetToNext )
 	{
 		/*
 		if list is empty, continue, nonstandard parser input
@@ -808,7 +824,7 @@ public class Semantologist
 			if empty return comment, else return noncomment
 		*/
 		boolean vettingComment = false, firstTime = true;
-		int nextLineInd = lineChecked + (( inclusive ) ? -1: 0), wordInd = 0;
+		int nextLineInd = lineChecked + offsetToNext, wordInd = 0;
 		Word currMeme = null;
 		List<Word> line = null;
 		while ( true )
@@ -876,6 +892,49 @@ public class Semantologist
 	private void resolveForwardReferences()
 	{
 		// FIX todo
+		for ( Dependence ref : transitiveSections )
+		{
+			if ( ref.hasReference.getName().equals( ref.nameOfReferredTo )
+					&& ref.hasReference.getNameEscapes() == ref.escapesOfReferredTo )
+			{
+				MessageFormat problem = new MessageFormat(
+						ExceptionStore.getStore().getExceptionMessage(
+								ExceptionStore.VALIDATION,
+								EnoLocaleKey.CYCLIC_DEPENDENCY ) );
+				throw new NoSuchElementException( problem.format( new Object[]{ ref.nameOfReferredTo } ) ); // Improve may need to add escapes to distinguish
+			}
+			int indOfCandidate = -1;
+			for ( int ind = 0; ind < sections.size(); ind++ )
+			{
+				Section candidate = sections.get( ind );
+				if ( ref.nameOfReferredTo.equals( candidate.getName() )
+						&& ref.escapesOfReferredTo == candidate.getNameEscapes() )
+				{
+					if ( indOfCandidate >= 0 )
+					{
+						// FIX canon complaint about multiple templates
+					}
+					else
+					{
+						indOfCandidate = ind;
+					}
+				}
+			}
+			if ( indOfCandidate < 0 )
+			{
+				MessageFormat problem = new MessageFormat(
+						ExceptionStore.getStore().getExceptionMessage(
+								null  ,//ExceptionStore., resolution FIX es doesn't know about r file, ensure it has all of them
+								EnoLocaleKey.MISSING_FIELD_VALUE ) );
+				throw new NoSuchElementException( problem.format( new Object[]{ ref.nameOfReferredTo } ) );
+			}
+			else
+			{
+				ref.isReferredTo = sections.get( indOfCandidate );
+				ref.hasReference.setTemplate( ref.isReferredTo );
+				// Improve check if there's a deeper cyclic dependency
+			}
+		}
 	}
 
 
