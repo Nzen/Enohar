@@ -9,8 +9,8 @@
 	<!--
 	<mavenVersion>
 		3.6.0
-	</mavenVersion>
-	-->
+		</mavenVersion>
+		-->
 	<groupId>
 		ws.nzen.format.eno
 		</groupId>
@@ -53,49 +53,50 @@
 		<dependency>
 			<groupId>
 				org.junit.jupiter
-			</groupId>
+				</groupId>
 			<artifactId>
 				junit-jupiter-api
-			</artifactId>
+				</artifactId>
 			<version>
 				5.3.1
-			</version>
+				</version>
 			<scope>
 				test
-			</scope>
-		</dependency>
+				</scope>
+			</dependency>
 		<dependency>
 			<groupId>
 				org.junit.jupiter
-			</groupId>
+				</groupId>
 			<artifactId>
 				junit-jupiter-engine
-			</artifactId>
+				</artifactId>
 			<version>
 				5.3.1
-			</version>
+				</version>
 			<scope>
 				test
-			</scope>
-		</dependency>
+				</scope>
+			</dependency>
 		<dependency>
 			<groupId>
 				org.junit.platform
-			</groupId>
+				</groupId>
 			<artifactId>
 				junit-platform-runner
-			</artifactId>
+				</artifactId>
 			<version>
 				1.3.1
-			</version>
+				</version>
 			<scope>
 				test
-			</scope>
-		</dependency>
-	</dependencies>
+				</scope>
+			</dependency>
+		</dependencies>
 	<build>
 	    <plugins>
 			<plugin>
+	    		<!-- tell maven we're using utf8 files -->
 				<groupId>
 					org.apache.maven.plugins
 					</groupId>
@@ -111,32 +112,8 @@
 						</encoding>
 					</configuration>
 				</plugin>
-		    <plugin>
-	    		<!-- make source jar -->
-				<groupId>
-					org.apache.maven.plugins
-					</groupId>
-				<artifactId>
-					maven-source-plugin
-					</artifactId>
-				<version>
-					3.0.1
-					</version>
-				<executions>
-					<execution>
-						<id>
-							attach-sources
-							</id>
-						<goals>
-						<goal>
-							jar-no-fork
-							</goal>
-							</goals>
-						</execution>
-					</executions>
-				</plugin>
 			<plugin>
-				<!-- config for jar -->
+				<!-- config for project jar -->
 				<groupId>
 					org.apache.maven.plugins
 					</groupId>
@@ -161,19 +138,20 @@
 								development
 								</mode>
 							<Automatic-Module-Name>
-								ws.nzen.format.eno.note_enojes
+								<!-- perhaps move this to only java v8 profiles -->
+								ws.nzen.format.eno
 								</Automatic-Module-Name>
 							</manifestEntries>
 						</archive>
 					</configuration>
 				</plugin>
-			<plugin>
-				<!-- javadoc jar -->
+		    <plugin>
+				<!-- config for source jar -->
 				<groupId>
 					org.apache.maven.plugins
 					</groupId>
 				<artifactId>
-					maven-javadoc-plugin
+					maven-source-plugin
 					</artifactId>
 				<version>
 					3.0.1
@@ -181,17 +159,18 @@
 				<executions>
 					<execution>
 						<id>
-							attach-javadocs
+							attach-sources
 							</id>
 						<goals>
-							<goal>
-								jar
-								</goal>
+						<goal>
+							jar-no-fork
+							</goal>
 							</goals>
 						</execution>
 					</executions>
 				</plugin>
 			<plugin>
+				<!-- enable or disable tests -->
 				<groupId>
 					org.apache.maven.plugins
 				</groupId>
@@ -202,16 +181,18 @@
 					2.12.4
 				</version>
 				<configuration>
+					<!--
 					<skipTests>
 						true
 					</skipTests>
+					 -->
 				</configuration>
 			</plugin>
 		</plugins>
 	</build>
 	<profiles>
 		<profile>
-			<!-- compile as java 8 -->
+			<!-- profile to compile as java 8 for local repo -->
 			<id>
 				j8
 				</id>
@@ -223,7 +204,7 @@
 			<build>
 				<plugins>
 					<plugin>
-						<!-- path to java jdk -->
+						<!-- path to our java jdk -->
 						<groupId>
 							org.apache.maven.plugins
 							</groupId>
@@ -237,7 +218,7 @@
 							<toolchains>
 								<jdk>
 									<version>
-										[1.8,)
+										[1.8]
 										</version>
 									</jdk>
 								</toolchains>
@@ -253,7 +234,7 @@
 							</executions>
 						</plugin>
 					<plugin>
-						<!-- compile with desired java -->
+						<!-- compile with java 8 compliance -->
 						<groupId>
 							org.apache.maven.plugins
 							</groupId>
@@ -284,14 +265,14 @@
 				</build>
 			</profile>
 		<profile>
-			<!-- compile as java 11 -->
+			<!-- profile to compile as java 11 for local repo -->
 			<id>
 				j11
 				</id>
 			<build>
 				<plugins>
 					<plugin>
-						<!-- path to java jdk -->
+						<!-- path to our java jdk -->
 						<groupId>
 							org.apache.maven.plugins
 							</groupId>
@@ -321,7 +302,7 @@
 							</executions>
 						</plugin>
 					<plugin>
-						<!-- compile with desired java -->
+						<!-- compile with java 11 compliance -->
 						<groupId>
 							org.apache.maven.plugins
 							</groupId>
@@ -347,6 +328,7 @@
 							</configuration>
 						</plugin>
 					<plugin>
+						<!-- show the jdk modules used -->
 						<groupId>
 							org.apache.maven.plugins
 							</groupId>
@@ -379,7 +361,7 @@
 			<build>
 				<plugins>
 					<plugin>
-						<!-- path to java jdk -->
+						<!-- path to our java jdk -->
 						<groupId>
 							org.apache.maven.plugins
 							</groupId>
@@ -409,7 +391,7 @@
 							</executions>
 						</plugin>
 					<plugin>
-						<!-- compile with desired java -->
+						<!-- compile with java 8 compliance -->
 						<groupId>
 							org.apache.maven.plugins
 							</groupId>
@@ -435,6 +417,42 @@
 									</exclude>
 								</excludes>
 							</configuration>
+						</plugin>
+					<plugin>
+						<!-- config for javadoc jar -->
+						<groupId>
+							org.apache.maven.plugins
+							</groupId>
+						<artifactId>
+							maven-javadoc-plugin
+							</artifactId>
+						<version>
+							3.0.1
+							</version>
+						<configuration>
+							<sourceFileExcludes>
+								**/module-info.java
+								</sourceFileExcludes>
+							<doclint>
+								<!-- suppress javadoc linter -->
+								all,-missing
+								</doclint>
+							<encoding>
+								UTF-8
+								</encoding>
+							</configuration>
+						<executions>
+							<execution>
+								<id>
+									attach-javadocs
+									</id>
+								<goals>
+									<goal>
+										jar
+										</goal>
+									</goals>
+								</execution>
+							</executions>
 						</plugin>
 					<plugin>
 						<!-- sign the jars -->
@@ -500,7 +518,7 @@
 			<build>
 				<plugins>
 					<plugin>
-						<!-- path to java jdk -->
+						<!-- path to our java jdk -->
 						<groupId>
 							org.apache.maven.plugins
 							</groupId>
@@ -530,7 +548,7 @@
 							</executions>
 						</plugin>
 					<plugin>
-						<!-- compile with desired java -->
+						<!-- compile with java 11 compliance -->
 						<groupId>
 							org.apache.maven.plugins
 							</groupId>
@@ -556,26 +574,42 @@
 							</configuration>
 						</plugin>
 					<plugin>
+						<!-- config for javadoc jar -->
 						<groupId>
 							org.apache.maven.plugins
 							</groupId>
 						<artifactId>
-							maven-jdeps-plugin
+							maven-javadoc-plugin
 							</artifactId>
 						<version>
-							3.1.1
+							3.0.1
 							</version>
+						<configuration>
+							<!--
+							<sourceFileExcludes>
+								**/module-info.java
+								</sourceFileExcludes>
+								-->
+							<doclint>
+								<!-- suppress javadoc linter -->
+								all,-missing
+								</doclint>
+							<encoding>
+								UTF-8
+								</encoding>
+							</configuration>
 						<executions>
 							<execution>
+								<id>
+									attach-javadocs
+									</id>
 								<goals>
 									<goal>
-										jdkinternals
+										jar
 										</goal>
 									</goals>
 								</execution>
 							</executions>
-						<!-- <configuration>
-							</configuration> -->
 						</plugin>
 					<plugin>
 						<!-- sign the jars -->
