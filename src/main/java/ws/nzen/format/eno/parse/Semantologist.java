@@ -79,7 +79,7 @@ public class Semantologist
 		int ind = 0;
 		for (List<Word> line : parsedLines)
 		{
-			System.out.print( here +" L-"+ ind +", " );
+			System.out.print( here +"doc L-"+ ind +", " );
 			for (Word cw : line)
 				System.out.print( " "+ cw.type );
 			ind++;
@@ -87,10 +87,12 @@ public class Semantologist
 		}
 		while ( advanceLine() )
 		{
-			if (lineChecked >= 0 && ! parsedLines.isEmpty())
+			if (lineChecked >= 0 && lineChecked < parsedLines.size() && wordIndOfLine < parsedLines.get(lineChecked).size() )
 			System.out.println( here +"1 post al lc:"+ lineChecked +" wol:"+ wordIndOfLine
 					+" type-"+ parsedLines.get(lineChecked).get(wordIndOfLine).type );
-			Syntaxeme focusType = peekAtNextLineType( 0 );
+			else System.out.println( here +"1"
+					+ " cursor overflow" );
+			Syntaxeme focusType = peekAtNextLineType( -1 );
 			System.out.println( here +"2 peeked type-"+ focusType );
 			String firstComment;
 			Word currToken;
@@ -101,9 +103,12 @@ public class Semantologist
 			else if ( focusType == COMMENT )
 			{
 				currToken = popCurrentWordOfLine();
+				if (lineChecked >= 0 && lineChecked < parsedLines.size() && wordIndOfLine < parsedLines.get(lineChecked).size() )
 				System.out.println( here +"3 comment lc:"+ lineChecked +" wol:"+ wordIndOfLine
 						+" type-"+ parsedLines.get(lineChecked).get(wordIndOfLine).type );
-				System.out.println( here +"4 popped commment type-"+ currToken );
+				else System.out.println( here +"3"
+						+ " cursor overflow" );
+				System.out.println( here +"4 popped commment type-"+ currToken.type );
 				if ( currToken == null )
 					continue;
 				else if ( currToken.type == EMPTY )
@@ -124,6 +129,8 @@ public class Semantologist
 				continue;
 			}
 			firstComment = getPreceedingComment();
+			if (lineChecked >= 0 && lineChecked < parsedLines.size()
+					&& wordIndOfLine < parsedLines.get(lineChecked).size() )
 			System.out.println( here +"5 after gpc lc:"+ lineChecked +" wol:"+ wordIndOfLine
 					+" type-"+ parsedLines.get(lineChecked).get(wordIndOfLine).type );
 			currToken = peekAtCurrentWordOfLine();
@@ -131,46 +138,82 @@ public class Semantologist
 				continue;
 			else if ( currToken.type == EMPTY )
 			{
+				if (lineChecked >= 0 && lineChecked < parsedLines.size()
+						&& wordIndOfLine < parsedLines.get(lineChecked).size() )
 				System.out.println( here +"6 empty lc:"+ lineChecked +" wol:"+ wordIndOfLine
 						+" type-"+ parsedLines.get(lineChecked).get(wordIndOfLine).type );
+				else System.out.println( here +"6"
+						+ " cursor overflow" );
 				wordIndOfLine += 1;
 				currToken = peekAtCurrentWordOfLine(); // NOTE assuming well formed parser lines
+				if (lineChecked >= 0 && lineChecked < parsedLines.size()
+						&& wordIndOfLine < parsedLines.get(lineChecked).size() )
 				System.out.println( here +"7 peeked lc:"+ lineChecked +" wol:"+ wordIndOfLine
 						+" type-"+ parsedLines.get(lineChecked).get(wordIndOfLine).type );
+				else System.out.println( here +"7"
+						+ " cursor overflow" );
 				if ( currToken == null )
 					continue; // assert paranoid
 				else
 					wordIndOfLine -= 1; // NOTE reset word cursor
+				if (lineChecked >= 0 && lineChecked < parsedLines.size()
+						&& wordIndOfLine < parsedLines.get(lineChecked).size() )
 				System.out.println( here +"8 after reset lc:"+ lineChecked +" wol:"+ wordIndOfLine
 						+" type-"+ parsedLines.get(lineChecked).get(wordIndOfLine).type );
+				else System.out.println( here +"8"
+						+ " cursor overflow" );
 			}
 			switch ( currToken.type )
 			{
 				case SECTION :
 				{
+					if (lineChecked >= 0 && lineChecked < parsedLines.size()
+							&& wordIndOfLine < parsedLines.get(lineChecked).size() )
 					System.out.println( here +"9 pre s lc:"+ lineChecked +" wol:"+ wordIndOfLine
 							+" type-"+ parsedLines.get(lineChecked).get(wordIndOfLine).type );
+					else System.out.println( here +"9"
+							+ " cursor overflow" );
 					currElem = section( firstComment, sectionDepth );
+					if (lineChecked >= 0 && lineChecked < parsedLines.size()
+							&& wordIndOfLine < parsedLines.get(lineChecked).size() )
 					System.out.println( here +"10 post s lc:"+ lineChecked +" wol:"+ wordIndOfLine
 							+" type-"+ parsedLines.get(lineChecked).get(wordIndOfLine).type );
+					else System.out.println( here +"10"
+							+ " cursor overflow" );
 					break;
 				}
 				case FIELD :
 				{
+					if (lineChecked >= 0 && lineChecked < parsedLines.size()
+							&& wordIndOfLine < parsedLines.get(lineChecked).size() )
 					System.out.println( here +"11  pre f lc:"+ lineChecked +" wol:"+ wordIndOfLine
 							+" type-"+ parsedLines.get(lineChecked).get(wordIndOfLine).type );
+					else System.out.println( here +"11"
+							+ " cursor overflow" );
 					currElem = field( firstComment );
+					if (lineChecked >= 0 && lineChecked < parsedLines.size()
+							&& wordIndOfLine < parsedLines.get(lineChecked).size() )
 					System.out.println( here +"12 post f lc:"+ lineChecked +" wol:"+ wordIndOfLine
 							+" type-"+ parsedLines.get(lineChecked).get(wordIndOfLine).type );
+					else System.out.println( here +"12"
+							+ " cursor overflow" );
 					break;
 				}
 				case MULTILINE_BOUNDARY :
 				{
+					if (lineChecked >= 0 && lineChecked < parsedLines.size()
+							&& wordIndOfLine < parsedLines.get(lineChecked).size() )
 					System.out.println( here +"13 pre ml lc:"+ lineChecked +" wol:"+ wordIndOfLine
 							+" type-"+ parsedLines.get(lineChecked).get(wordIndOfLine).type );
+					else System.out.println( here +"13"
+							+ " cursor overflow" );
 					currElem = multiline( firstComment );
+					if (lineChecked >= 0 && lineChecked < parsedLines.size()
+							&& wordIndOfLine < parsedLines.get(lineChecked).size() )
 					System.out.println( here +"14 post ml lc:"+ lineChecked +" wol:"+ wordIndOfLine
 							+" type-"+ parsedLines.get(lineChecked).get(wordIndOfLine).type );
+					else System.out.println( here +"14"
+							+ " cursor overflow" );
 					break;
 				}
 				case VALUE :
@@ -226,8 +269,12 @@ public class Semantologist
 		Word currWord = popCurrentWordOfLine();
 		System.out.println( here +"15 popped lc:"+ lineChecked +" wol:"+ wordIndOfLine
 				+" type-"+ currWord.type );
+		if (lineChecked >= 0 && lineChecked < parsedLines.size()
+				&& wordIndOfLine < parsedLines.get(lineChecked).size() )
 		System.out.println( here +"16 after pop lc:"+ lineChecked +" wol:"+ wordIndOfLine
 				+" type-"+ parsedLines.get(lineChecked).get(wordIndOfLine).type );
+		else System.out.println( here +"16"
+				+ " cursor overflow" );
 		Word emptyLines = null;
 		if ( currWord.type == null )
 			throw new RuntimeException( "expected section" ); // assert paranoid
@@ -247,8 +294,12 @@ public class Semantologist
 			currWord = popCurrentWordOfLine();
 			System.out.println( here +"18 popped lc:"+ lineChecked +" wol:"+ wordIndOfLine
 					+" type-"+ currWord.type );
+			if (lineChecked >= 0 && lineChecked < parsedLines.size()
+					&& wordIndOfLine < parsedLines.get(lineChecked).size() )
 			System.out.println( here +"19 cursor lc:"+ lineChecked +" wol:"+ wordIndOfLine
 					+" type-"+ parsedLines.get(lineChecked).get(wordIndOfLine).type );
+			else System.out.println( here +"19"
+					+ " cursor overflow" );
 		}
 		int ownDepth = sectionOperator.modifier;
 		// NOTE checking if it's too deep
@@ -273,8 +324,12 @@ public class Semantologist
 			currWord = popCurrentWordOfLine();
 			System.out.println( here +"20 popped lc:"+ lineChecked +" wol:"+ wordIndOfLine
 					+" type-"+ currWord.type );
+			if (lineChecked >= 0 && lineChecked < parsedLines.size()
+					&& wordIndOfLine < parsedLines.get(lineChecked).size() )
 			System.out.println( here +"21 cursor lc:"+ lineChecked +" wol:"+ wordIndOfLine
 					+" type-"+ parsedLines.get(lineChecked).get(wordIndOfLine).type );
+			else System.out.println( here +"21"
+					+ " cursor overflow" );
 		}
 		Section container = new Section( currWord.value, currWord.modifier );
 		if ( emptyLines.modifier > 0 )
@@ -292,8 +347,12 @@ public class Semantologist
 			currWord = popCurrentWordOfLine();
 			System.out.println( here +"22 cw lc:"+ lineChecked +" wol:"+ wordIndOfLine
 					+" type-"+ currWord.type );
+			if (lineChecked >= 0 && lineChecked < parsedLines.size()
+					&& wordIndOfLine < parsedLines.get(lineChecked).size() )
 			System.out.println( here +"23 cursor lc:"+ lineChecked +" wol:"+ wordIndOfLine
 					+" type-"+ parsedLines.get(lineChecked).get(wordIndOfLine).type );
+			else System.out.println( here +"23"
+					+ " cursor overflow" );
 			if ( currWord.type == null || currWord.type != FIELD )
 				throw new RuntimeException( "expected template name" ); // assert paranoid
 			Dependence reference = new Dependence();
@@ -311,8 +370,12 @@ public class Semantologist
 			nextType = peekAtNextLineType( 1 );
 			System.out.println( here +"24 next peeked lc:"+ lineChecked +" wol:"+ wordIndOfLine
 					+" type-"+ nextType );
+			if (lineChecked >= 0 && lineChecked < parsedLines.size()
+					&& wordIndOfLine < parsedLines.get(lineChecked).size() )
 			System.out.println( here +"25 cursor lc:"+ lineChecked +" wol:"+ wordIndOfLine
 					+" type-"+ parsedLines.get(lineChecked).get(wordIndOfLine).type );
+			else System.out.println( here +"25"
+					+ " cursor overflow" );
 			switch ( nextType )
 			{
 				case EMPTY :
@@ -326,16 +389,24 @@ public class Semantologist
 					currWord = popCurrentWordOfLine();
 					System.out.println( here +"26 cw lc:"+ lineChecked +" wol:"+ wordIndOfLine
 							+" type-"+ currWord.type );
+					if (lineChecked >= 0 && lineChecked < parsedLines.size()
+							&& wordIndOfLine < parsedLines.get(lineChecked).size() )
 					System.out.println( here +"27 cursor lc:"+ lineChecked +" wol:"+ wordIndOfLine
 							+" type-"+ parsedLines.get(lineChecked).get(wordIndOfLine).type );
+					else System.out.println( here +"27"
+							+ " cursor overflow" );
 					if ( currWord.type == EMPTY )
 					{
 						// NOTE not keeping comments separated, else we'd need to save them as Value
 						currWord = popCurrentWordOfLine();
 						System.out.println( here +"28 removed empty lc:"+ lineChecked +" wol:"+ wordIndOfLine
 								+" type-"+ currWord.type );
+						if (lineChecked >= 0 && lineChecked < parsedLines.size()
+								&& wordIndOfLine < parsedLines.get(lineChecked).size() )
 						System.out.println( here +"29 cursor lc:"+ lineChecked +" wol:"+ wordIndOfLine
 								+" type-"+ parsedLines.get(lineChecked).get(wordIndOfLine).type );
+						else System.out.println( here +"29"
+								+ " cursor overflow" );
 					}
 					if ( currWord.type == COMMENT )
 					{
@@ -346,31 +417,55 @@ public class Semantologist
 				}
 				case FIELD :
 				{
+					if (lineChecked >= 0 && lineChecked < parsedLines.size()
+							&& wordIndOfLine < parsedLines.get(lineChecked).size() )
 					System.out.println( here +"30 c pre f lc:"+ lineChecked +" wol:"+ wordIndOfLine
 							+" type-"+ parsedLines.get(lineChecked).get(wordIndOfLine).type );
+					else System.out.println( here +"30"
+							+ " cursor overflow" );
 					currChild = field( getPreceedingComment() );
+					if (lineChecked >= 0 && lineChecked < parsedLines.size()
+							&& wordIndOfLine < parsedLines.get(lineChecked).size() )
 					System.out.println( here +"31 c post f lc:"+ lineChecked +" wol:"+ wordIndOfLine
 							+" type-"+ parsedLines.get(lineChecked).get(wordIndOfLine).type );
+					else System.out.println( here +"31"
+							+ " cursor overflow" );
 					break;
 				}
 				case MULTILINE_BOUNDARY :
 				{
+					if (lineChecked >= 0 && lineChecked < parsedLines.size()
+							&& wordIndOfLine < parsedLines.get(lineChecked).size() )
 					System.out.println( here +"32 c pre ml lc:"+ lineChecked +" wol:"+ wordIndOfLine
 							+" type-"+ parsedLines.get(lineChecked).get(wordIndOfLine).type );
+					else System.out.println( here +"32"
+							+ " cursor overflow" );
 					currChild = multiline( getPreceedingComment() );
+					if (lineChecked >= 0 && lineChecked < parsedLines.size()
+							&& wordIndOfLine < parsedLines.get(lineChecked).size() )
 					System.out.println( here +"33 c post ml lc:"+ lineChecked +" wol:"+ wordIndOfLine
 							+" type-"+ parsedLines.get(lineChecked).get(wordIndOfLine).type );
+					else System.out.println( here +"33"
+							+ " cursor overflow" );
 					break;
 				}
 				case SECTION :
 				{
 					// NOTE ensuring we don't lose the preceeding comment
 					int currLine = lineChecked;
+					if (lineChecked >= 0 && lineChecked < parsedLines.size()
+							&& wordIndOfLine < parsedLines.get(lineChecked).size() )
 					System.out.println( here +"34 c pre s lc:"+ lineChecked +" wol:"+ wordIndOfLine
 							+" type-"+ parsedLines.get(lineChecked).get(wordIndOfLine).type );
+					else System.out.println( here +"34"
+							+ " cursor overflow" );
 					currChild = section( getPreceedingComment(), ownDepth );
+					if (lineChecked >= 0 && lineChecked < parsedLines.size()
+							&& wordIndOfLine < parsedLines.get(lineChecked).size() )
 					System.out.println( here +"35 c post s lc:"+ lineChecked +" wol:"+ wordIndOfLine
 							+" type-"+ parsedLines.get(lineChecked).get(wordIndOfLine).type );
+					else System.out.println( here +"35"
+							+ " cursor overflow" );
 					if ( currChild == null )
 						lineChecked = currLine; // ASK vet that this is the right line to save
 					break;
@@ -430,21 +525,33 @@ public class Semantologist
 		String here = cl +"f ";
 		EnoType fieldType = FIELD_EMPTY;
 		Word emptyLines = null;
+		if (lineChecked >= 0 && lineChecked < parsedLines.size()
+				&& wordIndOfLine < parsedLines.get(lineChecked).size() )
 		System.out.println( here +"36 c pre pop lc:"+ lineChecked +" wol:"+ wordIndOfLine
 				+" type-"+ parsedLines.get(lineChecked).get(wordIndOfLine).type );
+		else System.out.println( here +"36"
+				+ " cursor overflow" );
 		Word currWord = popCurrentWordOfLine();
 		System.out.println( here +"37 cw lc:"+ lineChecked +" wol:"+ wordIndOfLine
 				+" type-"+ currWord.type );
+		if (lineChecked >= 0 && lineChecked < parsedLines.size()
+				&& wordIndOfLine < parsedLines.get(lineChecked).size() )
 		System.out.println( here +"38 cursor lc:"+ lineChecked +" wol:"+ wordIndOfLine
 				+" type-"+ parsedLines.get(lineChecked).get(wordIndOfLine).type );
+		else System.out.println( here +"38"
+				+ " cursor overflow" );
 		if ( currWord.type == EMPTY )
 		{
 			emptyLines = currWord;
 			currWord = popCurrentWordOfLine();
 			System.out.println( here +"39 not empty lc:"+ lineChecked +" wol:"+ wordIndOfLine
 					+" type-"+ currWord.type );
+			if (lineChecked >= 0 && lineChecked < parsedLines.size()
+					&& wordIndOfLine < parsedLines.get(lineChecked).size() )
 			System.out.println( here +"40 cursor lc:"+ lineChecked +" wol:"+ wordIndOfLine
 					+" type-"+ parsedLines.get(lineChecked).get(wordIndOfLine).type );
+			else System.out.println( here +"40"
+					+ " cursor overflow" );
 		}
 		if ( currWord.type != FIELD )
 			throw new RuntimeException( "expected field name" ); // assert paranoid
@@ -465,10 +572,17 @@ public class Semantologist
 		FieldSet pairedSelf = null;
 		Dependence reference = null;
 		currWord = popCurrentWordOfLine();
+		if (currWord != null)
 		System.out.println( here +"41 cw lc:"+ lineChecked +" wol:"+ wordIndOfLine
 				+" type-"+ currWord.type );
+		else System.out.println( here +"41"
+				+ " null word from pcol" );
+		if (lineChecked >= 0 && lineChecked < parsedLines.size()
+				&& wordIndOfLine < parsedLines.get(lineChecked).size() )
 		System.out.println( here +"42 cursor lc:"+ lineChecked +" wol:"+ wordIndOfLine
 				+" type-"+ parsedLines.get(lineChecked).get(wordIndOfLine).type );
+		else System.out.println( here +"42"
+				+ " cursor overflow" );
 		if ( currWord != null )
 		{
 			// NOTE expecting value or template
@@ -484,8 +598,12 @@ public class Semantologist
 				currWord = popCurrentWordOfLine();
 				System.out.println( here +"43 cw lc:"+ lineChecked +" wol:"+ wordIndOfLine
 						+" type-"+ currWord.type );
+				if (lineChecked >= 0 && lineChecked < parsedLines.size()
+						&& wordIndOfLine < parsedLines.get(lineChecked).size() )
 				System.out.println( here +"44 cursor lc:"+ lineChecked +" wol:"+ wordIndOfLine
 						+" type-"+ parsedLines.get(lineChecked).get(wordIndOfLine).type );
+				else System.out.println( here +"44"
+						+ " cursor overflow" );
 				if ( currWord.type == null || currWord.type != FIELD )
 					throw new RuntimeException( "expected template name" ); // assert paranoid
 				reference = new Dependence();
@@ -514,21 +632,33 @@ public class Semantologist
 				case COMMENT :
 				{
 					advanceLine();
+					if (lineChecked >= 0 && lineChecked < parsedLines.size()
+							&& wordIndOfLine < parsedLines.get(lineChecked).size() )
 					System.out.println( here +"46 adv cursor lc:"+ lineChecked +" wol:"+ wordIndOfLine
 							+" type-"+ parsedLines.get(lineChecked).get(wordIndOfLine).type );
+					else System.out.println( here +"46"
+							+ " cursor overflow" );
 					currWord = popCurrentWordOfLine();
 					System.out.println( here +"47 cw lc:"+ lineChecked +" wol:"+ wordIndOfLine
 							+" type-"+ currWord.type );
+					if (lineChecked >= 0 && lineChecked < parsedLines.size()
+							&& wordIndOfLine < parsedLines.get(lineChecked).size() )
 					System.out.println( here +"48 cursor lc:"+ lineChecked +" wol:"+ wordIndOfLine
 							+" type-"+ parsedLines.get(lineChecked).get(wordIndOfLine).type );
+					else System.out.println( here +"48"
+							+ " cursor overflow" );
 					if ( currWord.type == EMPTY )
 					{
 						// NOTE not keeping comments separated, else we'd need to save them as Value
 						currWord = popCurrentWordOfLine();
 						System.out.println( here +"49 cw lc:"+ lineChecked +" wol:"+ wordIndOfLine
 								+" type-"+ currWord.type );
+						if (lineChecked >= 0 && lineChecked < parsedLines.size()
+								&& wordIndOfLine < parsedLines.get(lineChecked).size() )
 						System.out.println( here +"50 cursor lc:"+ lineChecked +" wol:"+ wordIndOfLine
 								+" type-"+ parsedLines.get(lineChecked).get(wordIndOfLine).type );
+						else System.out.println( here +"50"
+								+ " cursor overflow" );
 					}
 					if ( currWord.type == COMMENT )
 					{
@@ -552,21 +682,33 @@ public class Semantologist
 				case VALUE :
 				{
 					advanceLine();
+					if (lineChecked >= 0 && lineChecked < parsedLines.size()
+							&& wordIndOfLine < parsedLines.get(lineChecked).size() )
 					System.out.println( here +"51 al cursor lc:"+ lineChecked +" wol:"+ wordIndOfLine
 							+" type-"+ parsedLines.get(lineChecked).get(wordIndOfLine).type );
+					else System.out.println( here +"51"
+							+ " cursor overflow" );
 					currWord = popCurrentWordOfLine();
 					System.out.println( here +"52 cw lc:"+ lineChecked +" wol:"+ wordIndOfLine
 							+" type-"+ currWord.type );
+					if (lineChecked >= 0 && lineChecked < parsedLines.size()
+							&& wordIndOfLine < parsedLines.get(lineChecked).size() )
 					System.out.println( here +"53 cursor lc:"+ lineChecked +" wol:"+ wordIndOfLine
 							+" type-"+ parsedLines.get(lineChecked).get(wordIndOfLine).type );
+					else System.out.println( here +"53"
+							+ " cursor overflow" );
 					if ( currWord.type == EMPTY )
 					{
 						// NOTE not keeping value substringss separated
 						currWord = popCurrentWordOfLine();
 						System.out.println( here +"54 cw lc:"+ lineChecked +" wol:"+ wordIndOfLine
 								+" type-"+ currWord.type );
+						if (lineChecked >= 0 && lineChecked < parsedLines.size()
+								&& wordIndOfLine < parsedLines.get(lineChecked).size() )
 						System.out.println( here +"55 cursor lc:"+ lineChecked +" wol:"+ wordIndOfLine
 								+" type-"+ parsedLines.get(lineChecked).get(wordIndOfLine).type );
+						else System.out.println( here +"55"
+								+ " cursor overflow" );
 					}
 					if ( currWord.type != VALUE )
 					{
@@ -598,27 +740,43 @@ public class Semantologist
 				case LIST_ELEMENT :
 				{
 					docComment = getPreceedingComment();
+					if (lineChecked >= 0 && lineChecked < parsedLines.size()
+							&& wordIndOfLine < parsedLines.get(lineChecked).size() )
 					System.out.println( here +"56 cursor lc:"+ lineChecked +" wol:"+ wordIndOfLine
 							+" type-"+ parsedLines.get(lineChecked).get(wordIndOfLine).type );
+					else System.out.println( here +"56"
+							+ " cursor overflow" );
 					if ( docComment.isEmpty() )
 						advanceLine();
 					System.out.println( here +"57 cw lc:"+ lineChecked +" wol:"+ wordIndOfLine
 							+" type-"+ currWord.type );
+					if (lineChecked >= 0 && lineChecked < parsedLines.size()
+							&& wordIndOfLine < parsedLines.get(lineChecked).size() )
 					System.out.println( here +"58 cursor lc:"+ lineChecked +" wol:"+ wordIndOfLine
 							+" type-"+ parsedLines.get(lineChecked).get(wordIndOfLine).type );
+					else System.out.println( here +"58"
+							+ " cursor overflow" );
 					currWord = popCurrentWordOfLine();
 					System.out.println( here +"59 cw lc:"+ lineChecked +" wol:"+ wordIndOfLine
 							+" type-"+ currWord.type );
+					if (lineChecked >= 0 && lineChecked < parsedLines.size()
+							&& wordIndOfLine < parsedLines.get(lineChecked).size() )
 					System.out.println( here +"60 cursor lc:"+ lineChecked +" wol:"+ wordIndOfLine
 							+" type-"+ parsedLines.get(lineChecked).get(wordIndOfLine).type );
+					else System.out.println( here +"60"
+							+ " cursor overflow" );
 					if ( currWord.type == EMPTY )
 					{
 						emptyLines = currWord;
 						currWord = popCurrentWordOfLine();
 						System.out.println( here +"61 cw lc:"+ lineChecked +" wol:"+ wordIndOfLine
 								+" type-"+ currWord.type );
+						if (lineChecked >= 0 && lineChecked < parsedLines.size()
+								&& wordIndOfLine < parsedLines.get(lineChecked).size() )
 						System.out.println( here +"62 cursor lc:"+ lineChecked +" wol:"+ wordIndOfLine
 								+" type-"+ parsedLines.get(lineChecked).get(wordIndOfLine).type );
+						else System.out.println( here +"62"
+								+ " cursor overflow" );
 					}
 					if ( currWord.type != LIST_ELEMENT )
 					{
@@ -672,27 +830,43 @@ public class Semantologist
 					docComment = getPreceedingComment();
 					System.out.println( here +"63 cw lc:"+ lineChecked +" wol:"+ wordIndOfLine
 							+" type-"+ currWord.type );
+					if (lineChecked >= 0 && lineChecked < parsedLines.size()
+							&& wordIndOfLine < parsedLines.get(lineChecked).size() )
 					System.out.println( here +"64 cursor lc:"+ lineChecked +" wol:"+ wordIndOfLine
 							+" type-"+ parsedLines.get(lineChecked).get(wordIndOfLine).type );
+					else System.out.println( here +"64"
+							+ " cursor overflow" );
 					if ( docComment.isEmpty() )
 						advanceLine();
 					System.out.println( here +"65 cw lc:"+ lineChecked +" wol:"+ wordIndOfLine
 							+" type-"+ currWord.type );
+					if (lineChecked >= 0 && lineChecked < parsedLines.size()
+							&& wordIndOfLine < parsedLines.get(lineChecked).size() )
 					System.out.println( here +"66 cursor lc:"+ lineChecked +" wol:"+ wordIndOfLine
 							+" type-"+ parsedLines.get(lineChecked).get(wordIndOfLine).type );
+					else System.out.println( here +"66"
+							+ " cursor overflow" );
 					currWord = popCurrentWordOfLine();
 					System.out.println( here +"67 cw lc:"+ lineChecked +" wol:"+ wordIndOfLine
 							+" type-"+ currWord.type );
+					if (lineChecked >= 0 && lineChecked < parsedLines.size()
+							&& wordIndOfLine < parsedLines.get(lineChecked).size() )
 					System.out.println( here +"68 cursor lc:"+ lineChecked +" wol:"+ wordIndOfLine
 							+" type-"+ parsedLines.get(lineChecked).get(wordIndOfLine).type );
+					else System.out.println( here +"68"
+							+ " cursor overflow" );
 					if ( currWord.type == EMPTY )
 					{
 						emptyLines = currWord;
 						currWord = popCurrentWordOfLine();
 						System.out.println( here +"69 cw lc:"+ lineChecked +" wol:"+ wordIndOfLine
 								+" type-"+ currWord.type );
+						if (lineChecked >= 0 && lineChecked < parsedLines.size()
+								&& wordIndOfLine < parsedLines.get(lineChecked).size() )
 						System.out.println( here +"70 cursor lc:"+ lineChecked +" wol:"+ wordIndOfLine
 								+" type-"+ parsedLines.get(lineChecked).get(wordIndOfLine).type );
+						else System.out.println( here +"70"
+								+ " cursor overflow" );
 					}
 					else if ( fieldType == FIELD_SET || fieldType == FIELD_EMPTY )
 					{
@@ -709,8 +883,12 @@ public class Semantologist
 						currWord = popCurrentWordOfLine();
 						System.out.println( here +"71 cw lc:"+ lineChecked +" wol:"+ wordIndOfLine
 								+" type-"+ currWord.type );
+						if (lineChecked >= 0 && lineChecked < parsedLines.size()
+								&& wordIndOfLine < parsedLines.get(lineChecked).size() )
 						System.out.println( here +"72 cursor lc:"+ lineChecked +" wol:"+ wordIndOfLine
 								+" type-"+ parsedLines.get(lineChecked).get(wordIndOfLine).type );
+						else System.out.println( here +"72"
+								+ " cursor overflow" );
 						if ( currWord.type != VALUE )
 							throw new RuntimeException( "expected set entry value token" ); // assert paranoid
 						currChild.setStringValue( currWord.value );
@@ -785,16 +963,24 @@ public class Semantologist
 		Word currWord = popCurrentWordOfLine();
 		System.out.println( here +"73 cw lc:"+ lineChecked +" wol:"+ wordIndOfLine
 				+" type-"+ currWord.type );
+		if (lineChecked >= 0 && lineChecked < parsedLines.size()
+				&& wordIndOfLine < parsedLines.get(lineChecked).size() )
 		System.out.println( here +"74 cursor lc:"+ lineChecked +" wol:"+ wordIndOfLine
 				+" type-"+ parsedLines.get(lineChecked).get(wordIndOfLine).type );
+		else System.out.println( here +"74"
+				+ " cursor overflow" );
 		if ( currWord.type == EMPTY )
 		{
 			emptyLines = currWord;
 			currWord = popCurrentWordOfLine();
 			System.out.println( here +"75 cw lc:"+ lineChecked +" wol:"+ wordIndOfLine
 					+" type-"+ currWord.type );
+			if (lineChecked >= 0 && lineChecked < parsedLines.size()
+					&& wordIndOfLine < parsedLines.get(lineChecked).size() )
 			System.out.println( here +"76 cursor lc:"+ lineChecked +" wol:"+ wordIndOfLine
 					+" type-"+ parsedLines.get(lineChecked).get(wordIndOfLine).type );
+			else System.out.println( here +"76"
+					+ " cursor overflow" );
 		}
 		if ( currWord.type != MULTILINE_BOUNDARY )
 		{
@@ -809,8 +995,12 @@ public class Semantologist
 		currWord = popCurrentWordOfLine();
 		System.out.println( here +"77 cw lc:"+ lineChecked +" wol:"+ wordIndOfLine
 				+" type-"+ currWord.type );
+		if (lineChecked >= 0 && lineChecked < parsedLines.size()
+				&& wordIndOfLine < parsedLines.get(lineChecked).size() )
 		System.out.println( here +"78 cursor lc:"+ lineChecked +" wol:"+ wordIndOfLine
 				+" type-"+ parsedLines.get(lineChecked).get(wordIndOfLine).type );
+		else System.out.println( here +"78"
+				+ " cursor overflow" );
 		if ( currWord.type != FIELD )
 		{
 			MessageFormat problem = new MessageFormat(
@@ -829,8 +1019,12 @@ public class Semantologist
 		currWord = popCurrentWordOfLine();
 		System.out.println( here +"79 cw lc:"+ lineChecked +" wol:"+ wordIndOfLine
 				+" type-"+ currWord.type );
+		if (lineChecked >= 0 && lineChecked < parsedLines.size()
+				&& wordIndOfLine < parsedLines.get(lineChecked).size() )
 		System.out.println( here +"80 cursor lc:"+ lineChecked +" wol:"+ wordIndOfLine
 				+" type-"+ parsedLines.get(lineChecked).get(wordIndOfLine).type );
+		else System.out.println( here +"80"
+				+ " cursor overflow" );
 		if ( currWord.type != MULTILINE_TEXT )
 		{
 			MessageFormat problem = new MessageFormat(
@@ -848,8 +1042,12 @@ public class Semantologist
 			currWord = popCurrentWordOfLine();
 			System.out.println( here +"81 cw lc:"+ lineChecked +" wol:"+ wordIndOfLine
 					+" type-"+ currWord.type );
+			if (lineChecked >= 0 && lineChecked < parsedLines.size()
+					&& wordIndOfLine < parsedLines.get(lineChecked).size() )
 			System.out.println( here +"82 cursor lc:"+ lineChecked +" wol:"+ wordIndOfLine
 					+" type-"+ parsedLines.get(lineChecked).get(wordIndOfLine).type );
+			else System.out.println( here +"82"
+					+ " cursor overflow" );
 			if ( currWord.type == EMPTY )
 			{
 				currWord = popCurrentWordOfLine();
@@ -884,15 +1082,23 @@ public class Semantologist
 		Word currToken;
 		if ( advanceLine() )
 		{
+			if (lineChecked >= 0 && lineChecked < parsedLines.size() && wordIndOfLine < parsedLines.get(lineChecked).size() )
 			System.out.println( here +"83 cursor lc:"+ lineChecked +" wol:"+ wordIndOfLine
 					+" type-"+ parsedLines.get(lineChecked).get(wordIndOfLine).type );
 			do
 			{
 				currToken = popCurrentWordOfLine();
+				if (currToken != null)
 				System.out.println( here +"84 cw lc:"+ lineChecked +" wol:"+ wordIndOfLine
 						+" type-"+ currToken.type );
+				else System.out.println( here +"84"
+						+ " null word from pcol" );
+				if (lineChecked >= 0 && lineChecked < parsedLines.size()
+						&& wordIndOfLine < parsedLines.get(lineChecked).size() )
 				System.out.println( here +"85 cursor lc:"+ lineChecked +" wol:"+ wordIndOfLine
 						+" type-"+ parsedLines.get(lineChecked).get(wordIndOfLine).type );
+				else System.out.println( here +"85"
+						+ " cursor overflow" );
 				if ( currToken == null )
 					continue;
 				else if ( currToken.type == EMPTY )
@@ -900,8 +1106,12 @@ public class Semantologist
 					currToken = popCurrentWordOfLine();
 					System.out.println( here +"86 cw lc:"+ lineChecked +" wol:"+ wordIndOfLine
 							+" type-"+ currToken.type );
+					if (lineChecked >= 0 && lineChecked < parsedLines.size()
+							&& wordIndOfLine < parsedLines.get(lineChecked).size() )
 					System.out.println( here +"87 cursor lc:"+ lineChecked +" wol:"+ wordIndOfLine
 							+" type-"+ parsedLines.get(lineChecked).get(wordIndOfLine).type );
+					else System.out.println( here +"87"
+							+ " cursor overflow" );
 					if ( currToken == null )
 						continue;
 					// loop if paranoid, I'll assume we're well formed here
@@ -923,27 +1133,42 @@ public class Semantologist
 			{
 				lineChecked = initialGlobalLineCursor;
 				wordIndOfLine = 0; // ASK potentially save,restore ?
+				if (lineChecked >= 0 && lineChecked < parsedLines.size()
+						&& wordIndOfLine < parsedLines.get(lineChecked).size() )
 				System.out.println( here +"88 reset cursor lc:"+ lineChecked +" wol:"+ wordIndOfLine
 						+" type-"+ parsedLines.get(lineChecked).get(wordIndOfLine).type );
+				else System.out.println( here +"88"
+						+ " cursor overflow" );
 				return "";
 			}
 			System.out.println( here +"89 cw lc:"+ lineChecked +" wol:"+ wordIndOfLine
 					+" type-"+ currToken.type );
+			if (lineChecked >= 0 && lineChecked < parsedLines.size()
+					&& wordIndOfLine < parsedLines.get(lineChecked).size() )
 			System.out.println( here +"90 cursor lc:"+ lineChecked +" wol:"+ wordIndOfLine
 					+" type-"+ parsedLines.get(lineChecked).get(wordIndOfLine).type );
+			else System.out.println( here +"90"
+					+ " cursor overflow" );
 			boolean amAssociated = false;
 			comments.add( currToken.value );
 			while ( advanceLine() )
 			{
 				System.out.println( here +"91 cw lc:"+ lineChecked +" wol:"+ wordIndOfLine
 						+" type-"+ currToken.type );
+				if (lineChecked >= 0 && lineChecked < parsedLines.size()
+						&& wordIndOfLine < parsedLines.get(lineChecked).size() )
 				System.out.println( here +"92 cursor lc:"+ lineChecked +" wol:"+ wordIndOfLine
 						+" type-"+ parsedLines.get(lineChecked).get(wordIndOfLine).type );
+				else System.out.println( here +"92"
+						+ " cursor overflow" );
 				currToken = popCurrentWordOfLine();
 				System.out.println( here +"93 cw lc:"+ lineChecked +" wol:"+ wordIndOfLine
 						+" type-"+ currToken.type );
+				if (lineChecked >= 0 && lineChecked < parsedLines.size()
+						&& wordIndOfLine < parsedLines.get(lineChecked).size() )
 				System.out.println( here +"94 cursor lc:"+ lineChecked +" wol:"+ wordIndOfLine
 						+" type-"+ parsedLines.get(lineChecked).get(wordIndOfLine).type );
+				else System.out.println( here +"94 cursor overflow" );
 				if ( currToken == null || currToken.type == EMPTY )
 				{
 					break;
@@ -962,8 +1187,11 @@ public class Semantologist
 			{
 				lineChecked = initialGlobalLineCursor;
 				wordIndOfLine = 0; // ASK potentially save,restore ?
+				if (lineChecked >= 0 && lineChecked < parsedLines.size()
+						&& wordIndOfLine < parsedLines.get(lineChecked).size() )
 				System.out.println( here +"95 cursor lc:"+ lineChecked +" wol:"+ wordIndOfLine
 						+" type-"+ parsedLines.get(lineChecked).get(wordIndOfLine).type );
+				else System.out.println( here +"95 cursor overflow" );
 				return "";
 			}
 			else
@@ -1002,8 +1230,11 @@ public class Semantologist
 				}
 				System.out.println( here +"96 cw lc:"+ lineChecked +" wol:"+ wordIndOfLine
 						+" type-"+ currToken.type );
+				if (lineChecked >= 0 && lineChecked < parsedLines.size()
+						&& wordIndOfLine < parsedLines.get(lineChecked).size() )
 				System.out.println( here +"97 cursor lc:"+ lineChecked +" wol:"+ wordIndOfLine
 						+" type-"+ parsedLines.get(lineChecked).get(wordIndOfLine).type );
+				else System.out.println( here +"97 cursor overflow" );
 				return wholeBlock.substring( 0, wholeBlock.length()
 						- System.lineSeparator().length() ); // NOTE remove trailing \n
 			}
@@ -1012,6 +1243,8 @@ public class Semantologist
 		{
 			lineChecked = initialGlobalLineCursor;
 			wordIndOfLine = 0; // ASK potentially save,restore ?
+			if (lineChecked >= 0 && lineChecked < parsedLines.size()
+					&& wordIndOfLine < parsedLines.get(lineChecked).size() )
 			System.out.println( here +"98 cursor lc:"+ lineChecked +" wol:"+ wordIndOfLine
 					+" type-"+ parsedLines.get(lineChecked).get(wordIndOfLine).type );
 			return "";
@@ -1019,7 +1252,7 @@ public class Semantologist
 	}
 
 
-	private Syntaxeme peekAtNextLineTypef()
+	private Syntaxeme peekAtNextLineType()
 	{
 		return peekAtNextLineType( 0 );
 	}
@@ -1044,7 +1277,8 @@ public class Semantologist
 			if (currMeme!=null)
 			System.out.println( here +"99 cw lc:"+ lineChecked +" wol:"+ wordIndOfLine
 					+" type-"+ currMeme.type );
-			if ( ! parsedLines.isEmpty() && lineChecked < parsedLines.size() )
+			if (lineChecked >= 0 && lineChecked < parsedLines.size()
+					&& wordIndOfLine < parsedLines.get(lineChecked).size() )
 			System.out.println( here +"A0 cursor lc:"+ lineChecked +" wol:"+ wordIndOfLine
 					+" type-"+ parsedLines.get(lineChecked).get(wordIndOfLine).type );
 			nextLineInd += 1;
@@ -1071,8 +1305,11 @@ public class Semantologist
 				currMeme = line.get( wordInd );
 				System.out.println( here +"A1 cw lc:"+ lineChecked +" wol:"+ wordIndOfLine
 						+" type-"+ currMeme.type );
+				if (lineChecked >= 0 && lineChecked < parsedLines.size()
+						&& wordIndOfLine < parsedLines.get(lineChecked).size() )
 				System.out.println( here +"A2 cursor lc:"+ lineChecked +" wol:"+ wordIndOfLine
 						+" type-"+ parsedLines.get(lineChecked).get(wordIndOfLine).type );
+				else System.out.println( here +"A2 cursor overflow" );
 				if ( currMeme.type == Syntaxeme.EMPTY
 						&& ! vettingComment )
 				{
@@ -1165,8 +1402,11 @@ public class Semantologist
 	{
 		if (  lineChecked < parsedLines.size() )
 		{
-			System.out.println( cl +"pcwof\tcursor lc:"+ lineChecked +" wol:"+ wordIndOfLine
+			if (lineChecked >= 0 && lineChecked < parsedLines.size()
+					&& wordIndOfLine < parsedLines.get(lineChecked).size() )
+			System.out.println( cl +"pcwof\tA3 cursor lc:"+ lineChecked +" wol:"+ wordIndOfLine
 					+" type-"+ parsedLines.get(lineChecked).get(wordIndOfLine).type );
+			else System.out.println( cl +"pcwof\tA3 cursor overflow" );
 			List<Word> line = parsedLines.get( lineChecked );
 			if ( wordIndOfLine < line.size() )
 			{
