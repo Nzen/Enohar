@@ -85,6 +85,12 @@ public class Field extends EnoElement
 
 	public void setTemplate( Field baseInstance )
 	{
+		if ( baseInstance == null )
+		{
+			template = null;
+			return;
+		}
+		// else
 		if ( baseInstance.getType() == EnoType.FIELD_VALUE
 				|| baseInstance.getType() == EnoType.FIELD_EMPTY ) // fix actually, just deny multi and children
 			template = baseInstance;
@@ -96,18 +102,26 @@ public class Field extends EnoElement
 	@Override
 	public void setTemplate( EnoElement baseInstance )
 	{
+		if ( baseInstance == null )
+		{
+			template = null;
+			return;
+		}
+		// else
 		// FIX use real keys
+		if ( baseInstance.type != EnoType.UNKNOWN )
+		throw new RuntimeException( "FIX 4test NP change to match context" );
 		String localeComplaint = "";
 		switch ( baseInstance.getType() )
 		{
 			case SECTION :
 			{
-				setTemplate( (Section)baseInstance );
+				localeComplaint = EnoLocaleKey.EXPECTED_FIELD_GOT_SECTION;
 				return;
 			}
 			case FIELD_EMPTY :
 			{
-				localeComplaint = EnoLocaleKey.EXPECTED_SECTION_GOT_EMPTY;
+				setTemplate( (Field)baseInstance );
 				break;
 			}
 			case FIELD_VALUE :

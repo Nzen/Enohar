@@ -57,7 +57,7 @@ public class Semantologist
 	{
 		fields.clear();
 		transitiveFields.clear();
-		sections.clear();
+		sections.clear();	
 		transitiveSections.clear();
 		parsedLines = new Parser().parse( fileLines );
 		// improve reset()
@@ -75,7 +75,7 @@ public class Semantologist
 		lineChecked = -1;
 		int sectionDepth = 0;
 		// TODO vet these lines again with nextLineType()
-		System.out.println( here +"starting at -1 ----" );
+		System.out.println( "\n"+ here +"starting at -1 ----" );
 		int ind = 0;
 		for (List<Word> line : parsedLines)
 		{
@@ -91,7 +91,7 @@ public class Semantologist
 			Syntaxeme focusType = peekAtNextLineType( -1 );
 			stdoutHistoryDebugger( here, "2", focusType );
 			String firstComment;
-			Word currToken;
+			Word currWord;
 			if ( focusType == EMPTY )
 			{
 				break; // end of input; parser tells me how much trailing space to include
@@ -99,65 +99,65 @@ public class Semantologist
 			else if ( focusType == COMMENT )
 			{
 				stdoutHistoryDebugger( here, "3", null, false );
-				currToken = popCurrentWordOfLine();
-				stdoutHistoryDebugger( here, "4", currToken, true );
-				if ( currToken == null )
+				currWord = popCurrentWordOfLine();
+				stdoutHistoryDebugger( here, "4", currWord, true );
+				if ( currWord == null )
 					continue;
-				else if ( currToken.type == EMPTY )
+				else if ( currWord.type == EMPTY )
 				{
-					currToken = popCurrentWordOfLine(); // NOTE assuming well formed parser lines
-					stdoutHistoryDebugger( here, "5", currToken, true );
-					if ( currToken == null )
+					currWord = popCurrentWordOfLine(); // NOTE assuming well formed parser lines
+					stdoutHistoryDebugger( here, "5", currWord, true );
+					if ( currWord == null )
 						continue; // assert paranoid
 				}
 				if ( currElem == null )
 				{
-					theDocument.addComment( currToken.value.trim() );
+					theDocument.addComment( currWord.value.trim() );
 				}
 				else
 				{
-					currElem.addComment( currToken.value.trim() );
+					currElem.addComment( currWord.value.trim() );
 				}
 				continue;
 			}
 			firstComment = getPreceedingComment();
 			stdoutHistoryDebugger( here, "5 post-gpc", null, false );
-			currToken = peekAtCurrentWordOfLine();
-			if ( currToken == null )
+			currWord = peekAtCurrentWordOfLine();
+			if ( currWord == null )
 				continue;
-			else if ( currToken.type == EMPTY )
+			else if ( currWord.type == EMPTY )
 			{
-				stdoutHistoryDebugger( here, "6", currToken, true );
+				stdoutHistoryDebugger( here, "6", currWord, true );
 				wordIndOfLine += 1;
-				currToken = peekAtCurrentWordOfLine(); // NOTE assuming well formed parser lines
-				stdoutHistoryDebugger( here, "7", currToken, true );
-				if ( currToken == null )
+				currWord = peekAtCurrentWordOfLine(); // NOTE assuming well formed parser lines
+				stdoutHistoryDebugger( here, "7", currWord, true );
+				if ( currWord == null )
 					continue; // assert paranoid
 				else
 					wordIndOfLine -= 1; // NOTE reset word cursor
-				stdoutHistoryDebugger( here, "8", currToken, true );
+				stdoutHistoryDebugger( here, "8", currWord, true );
 			}
-			switch ( currToken.type )
+			switch ( currWord.type )
 			{
 				case SECTION :
 				{
-					stdoutHistoryDebugger( here, "9", currToken, false );
+					stdoutHistoryDebugger( here, "9", currWord, false );
 					currElem = section( firstComment, sectionDepth );
-					stdoutHistoryDebugger( here, "10", currToken, false );
+					stdoutHistoryDebugger( here, "10", currWord, false );
 					break;
 				}
 				case FIELD :
 				{
-					stdoutHistoryDebugger( here, "11", currToken, true );
+					stdoutHistoryDebugger( here, "11", currWord, true );
 					currElem = field( firstComment );
-					stdoutHistoryDebugger( here, "12", currToken, true );
+					stdoutHistoryDebugger( here, "12", currWord, true );
 					break;
 				}
 				case MULTILINE_BOUNDARY :
 				{
-					stdoutHistoryDebugger( here, "13", currToken, true );
+					stdoutHistoryDebugger( here, "13", currWord, true );
 					currElem = multiline( firstComment );
-					stdoutHistoryDebugger( here, "14", currToken, true );
+					stdoutHistoryDebugger( here, "14", currWord, true );
 					break;
 				}
 				case VALUE :
@@ -166,7 +166,7 @@ public class Semantologist
 							ExceptionStore.getStore().getExceptionMessage(
 									ExceptionStore.ANALYSIS, EnoLocaleKey
 										.MISSING_ELEMENT_FOR_CONTINUATION ) );
-					throw new RuntimeException( problem.format( new Object[]{ currToken.line } ) );
+					throw new RuntimeException( problem.format( new Object[]{ currWord.line } ) );
 				}
 				case LIST_ELEMENT :
 				{
@@ -174,7 +174,7 @@ public class Semantologist
 							ExceptionStore.getStore().getExceptionMessage(
 									ExceptionStore.ANALYSIS, EnoLocaleKey
 										.MISSING_NAME_FOR_LIST_ITEM ) );
-					throw new RuntimeException( problem.format( new Object[]{ currToken.line } ) );
+					throw new RuntimeException( problem.format( new Object[]{ currWord.line } ) );
 				}
 				case SET_ELEMENT :
 				{
@@ -182,7 +182,7 @@ public class Semantologist
 							ExceptionStore.getStore().getExceptionMessage(
 									ExceptionStore.ANALYSIS, EnoLocaleKey
 										.MISSING_NAME_FOR_FIELDSET_ENTRY ) );
-					throw new RuntimeException( problem.format( new Object[]{ currToken.line } ) );
+					throw new RuntimeException( problem.format( new Object[]{ currWord.line } ) );
 				}
 				case MULTILINE_TEXT :
 				case COPY :
@@ -193,7 +193,7 @@ public class Semantologist
 									ExceptionStore.TOKENIZATION,
 									EnoLocaleKey.INVALID_LINE ) );
 					// NOTE likely a Parser implementation problem, not user error
-					throw new RuntimeException( problem.format( new Object[]{ currToken.line } ) );
+					throw new RuntimeException( problem.format( new Object[]{ currWord.line } ) );
 				}
 			}
 			if ( currElem != null )
@@ -454,7 +454,7 @@ public class Semantologist
 		boolean nonChild = false; // NOTE encountered sibling field or parent section
 		while ( true )
 		{
-			Syntaxeme nextType = peekAtNextLineType( 1 );
+			Syntaxeme nextType = peekAtNextLineType( 0 ); // NP here this was 1; differs now
 			stdoutHistoryDebugger( here, "37", nextType );
 			switch ( nextType )
 			{
@@ -951,7 +951,7 @@ public class Semantologist
 		*/
 		boolean vettingComment = false, firstTime = true;
 		int nextLineInd = lineChecked + offsetToNext, wordInd = 0;
-		Word currMeme = null;
+		Word currWord = null;
 		List<Word> line = null;
 		while ( true )
 		{
@@ -967,17 +967,17 @@ public class Semantologist
 					return EMPTY;
 				}
 			}
-			wordInd = 0;
-			line = parsedLines.get( wordInd );
+			line = parsedLines.get( nextLineInd );
 			if ( line.isEmpty() )
 			{
 				// warn about nonstandard parser line
 				continue;
 			}
+			wordInd = 0;
 			while ( wordInd < line.size() )
 			{
-				currMeme = line.get( wordInd );
-				if ( currMeme.type == Syntaxeme.EMPTY
+				currWord = line.get( wordInd );
+				if ( currWord.type == Syntaxeme.EMPTY
 						&& ! vettingComment )
 				{
 					wordInd++;
@@ -995,21 +995,21 @@ public class Semantologist
 			{
 				continue;
 			}
-			if ( currMeme.type == COMMENT 
+			if ( currWord.type == COMMENT 
 					&& firstTime )
 			{
 				vettingComment = true;
 				firstTime = false;
 				continue;
 			}
-			else if ( currMeme.type == COMMENT 
+			else if ( currWord.type == COMMENT 
 					&& vettingComment )
 			{
 				continue;
 			}
 			else
 			{
-				return currMeme.type;
+				return currWord.type;
 			}
 		}
 	}

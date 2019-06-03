@@ -65,6 +65,21 @@ public class Multiline extends Field
 	}
 
 
+	@Override
+	public void setTemplate( EnoElement baseInstance )
+	{
+		if ( baseInstance == null )
+		{
+			template = null;
+			return;
+		}
+		// else
+		// FIX use real keys
+		if ( baseInstance.type != EnoType.UNKNOWN )
+		throw new RuntimeException( "FIX 4test NP change to match context" );
+		// disallow template for multiline
+	}
+
 }
 
 

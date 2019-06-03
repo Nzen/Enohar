@@ -150,7 +150,8 @@ public class Section extends EnoElement
 		{
 			if ( expectedType == actual.getType()
 					|| ( expectedType == FIELD_GENERIC
-						&& fieldSpecific.contains( actual.getType() ) ) )
+						&& fieldSpecific.contains( actual.getType() )
+						&& actual.getName().equals( nameOfExpected ) ) )
 			{
 				candidate = actual;
 				break;
@@ -296,6 +297,12 @@ public class Section extends EnoElement
 	@Override
 	public void setTemplate( EnoElement baseInstance )
 	{
+		if ( baseInstance == null )
+		{
+			template = null;
+			return;
+		}
+		// else
 		String localeComplaint = "";
 		switch ( baseInstance.getType() )
 		{
