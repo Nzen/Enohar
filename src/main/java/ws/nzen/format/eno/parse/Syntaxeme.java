@@ -1,4 +1,4 @@
-package ws.nzen.format.eno;
+package ws.nzen.format.eno.parse;
 
 public enum Syntaxeme
 {

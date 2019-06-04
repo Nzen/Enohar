@@ -1,94 +1,52 @@
 /** see ../../../../../LICENSE for release details */
 package ws.nzen.format.eno;
 
+import java.text.MessageFormat;
+import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Map;
-import java.util.TreeMap;
+import java.util.NoSuchElementException;
+
+import ws.nzen.format.eno.EnoType;
+import ws.nzen.format.eno.parse.Syntaxeme;
 
 /** Using a composite rather than insisting on casting */
 public class EnoElement
 {
-	private EnoType contains;
-	private String name;
-	private List<EnoElement> sequential;
-	private Map<String, EnoElement> unique;
-	private List<String> values;
-	private String parsedValue;
-	private String originalValue;
-	private List<String> comments; // or Map<int,str> where int is relative offset from name
-	private int trailingLines = 0;
+	protected final EnoType type;
+	protected String name = "";
+	protected int nameEscapes = 0;
+	protected int preceedingEmptyLines = 0;
+	protected List<String> comments = new LinkedList<>();
+	protected boolean firstCommentPreceededName = false;
+	protected EnoElement template = null;
+	protected boolean shallowTemplate = false;
+	protected int line = 0;
 
 
-	public void addToSection( EnoElement node )
+	protected EnoElement( EnoType typeToBe )
 	{
-		if ( contains == EnoType.UNKNOWN )
-		{
-			contains = EnoType.SECTION;
-			sequential = new LinkedList<>();
-		}
-		if ( contains != EnoType.SECTION )
-		{
-			throw new RuntimeException( ExceptionStore.onlyInstance
-					.getExceptionMessage( "non sections don't seem to contain other elements" ) );
-		}
-		if ( node != null )
-		{
-			sequential.add( node );
-		}
+		type = typeToBe;
 	}
-	public void addToMap( EnoElement field )
+
+	public EnoElement( EnoType typeToBe,
+			String nameToHave, int escapes )
 	{
-		if ( field.getContains() != EnoType.FIELD_PLAIN )
-		{
-			throw new RuntimeException( ExceptionStore.onlyInstance
-					.getExceptionMessage( "field sets don't seem to contain other elements" ) );
-		}
-		if ( contains == EnoType.UNKNOWN )
-		{
-			contains = EnoType.FIELD_SET;
-			unique = new TreeMap<>();
-		}
-		if ( contains != EnoType.FIELD_SET )
-		{
-			throw new RuntimeException( ExceptionStore.onlyInstance
-					.getExceptionMessage( "cant add fieldset to non map element" ) );
-		}
-		else if ( unique.containsKey( field.getName() ) )
-		{
-			// IMPROVE if context is 'copy or deep copy' replace rather than die
-			throw new RuntimeException( ExceptionStore.onlyInstance
-					.getExceptionMessage( "cant add duplicate fieldset" ) );
-		}
-		else
-		{
-			unique.put( field.getName(), field );
-		}
+		type = typeToBe;
+		name = nameToHave;
+		nameEscapes = escapes;
 	}
 
 
-	public void addComment( String another )
+	public EnoType getType()
 	{
-		if ( another != null )
-		{
-			comments.add( another );
-		}
+		return type;
 	}
 
 
-	public void addTrailingLine()
+	public String stringKey()
 	{
-		trailingLines += 1;
-	}
-
-
-	public EnoType getContains()
-	{
-		return contains;
-	}
-	public void setContains( EnoType contains )
-	{
-		this.contains = contains;
+		return getName();
 	}
 	public String getName()
 	{
@@ -98,46 +56,53 @@ public class EnoElement
 	{
 		this.name = name;
 	}
-	public List<EnoElement> getSequential()
+
+
+	public int getNameEscapes()
 	{
-		return sequential;
+		return nameEscapes;
 	}
-	public void setSequential( List<EnoElement> sequential )
+	public void setNameEscapes( int nameEscapes )
 	{
-		this.sequential = sequential;
+		if ( nameEscapes >= 0 )
+		{
+			this.nameEscapes = nameEscapes;
+		}
 	}
-	public Map<String, EnoElement> getUnique()
+
+
+	public void addComment( String another )
 	{
-		return unique;
+		comments.add( another );
 	}
-	public void setUnique( Map<String, EnoElement> unique )
+	public String requiredStringComment()
 	{
-		this.unique = unique;
+		return getFirstComment( true );
 	}
-	public List<String> getValues()
+	public String optionalStringComment()
 	{
-		return values;
+		return getFirstComment( false );
 	}
-	public void setValues( List<String> values )
+	protected String getFirstComment( boolean complain )
 	{
-		this.values = values;
+		if ( ! comments.isEmpty() && firstCommentPreceededName )
+		{
+			return comments.get( 0 );
+		}
+		else if ( complain )
+		{
+			MessageFormat problem = new MessageFormat(
+					ExceptionStore.getStore().getExceptionMessage(
+							ExceptionStore.VALIDATION,
+							EnoLocaleKey.MISSING_FIELD_VALUE ) ); // FIX use required comment missing
+			throw new NoSuchElementException( problem.format( new Object[]{ name } ) );
+		}
+		else
+		{
+			return null; // per spec
+		}
 	}
-	public String getParsedValue()
-	{
-		return parsedValue;
-	}
-	public void setParsedValue( String parsedValue )
-	{
-		this.parsedValue = parsedValue;
-	}
-	public String getOriginalValue()
-	{
-		return originalValue;
-	}
-	public void setOriginalValue( String originalValue )
-	{
-		this.originalValue = originalValue;
-	}
+
 	public List<String> getComments()
 	{
 		return comments;
@@ -146,17 +111,141 @@ public class EnoElement
 	{
 		this.comments = comments;
 	}
-	public int getTrailingLines()
+	public void cloneComments( List<String> comments )
 	{
-		return trailingLines;
-	}
-	public void setTrailingLines( int trailingLines )
-	{
-		this.trailingLines = trailingLines;
+		this.comments.clear();
+		for ( String one : comments )
+		{
+			comments.add( new String( one ) );
+		}
 	}
 
+
+	public boolean firstCommentPreceededName()
+	{
+		return firstCommentPreceededName;
+	}
+	public void setFirstCommentPreceededName( boolean firstCommentPreceededName )
+	{
+		this.firstCommentPreceededName = firstCommentPreceededName;
+	}
+
+
+	public int getPreceedingEmptyLines()
+	{
+		return preceedingEmptyLines;
+	}
+	public void setPreceedingEmptyLines( int preceedingEmptyLines )
+	{
+		if ( preceedingEmptyLines >= 0 )
+		{
+			this.preceedingEmptyLines = preceedingEmptyLines;
+		}
+	}
+
+	public String getTemplateName()
+	{
+		if ( template != null )
+		{
+			return template.getName();
+		}
+		else
+		{
+			return ""; // ASK or null
+		}
+	}
+	public EnoElement getTemplate()
+	{
+		return template;
+	}
+
+	public void setTemplate( EnoElement baseInstance )
+	{
+		// NOTE subclasses should check, to keep the combination here small
+		throw new RuntimeException( "missed a more specific template opportunity to complain" ); // IMPROVE use canon complaint
+	}
+
+	public boolean isShallowTemplate()
+	{
+		return shallowTemplate;
+	}
+	public void setShallowTemplate( boolean shallowTemplate )
+	{
+		this.shallowTemplate = shallowTemplate;
+	}
+
+	public int getLine()
+	{
+		return line;
+	}
+	public void setLine( int line )
+	{
+		this.line = line;
+	}
+
+
+	// ide version
+	public String toString()
+	{
+		return type.name() +" "+ name;
+	}
+
+
+	protected StringBuilder toString( StringBuilder aggregator, String declaration )
+	{
+		if ( aggregator == null )
+			aggregator = new StringBuilder();
+		for ( int ind = preceedingEmptyLines; ind > 0; ind-- )
+		{
+			aggregator.append( System.lineSeparator() );
+		}
+		if ( ! comments.isEmpty() && firstCommentPreceededName )
+		{
+			aggregator.append( comments.get( 0 ) );
+			aggregator.append( System.lineSeparator() );
+		}
+		// checking on behalf of list element
+		if ( ! declaration.isEmpty() )
+		{
+			aggregator.append( declaration );
+			aggregator.append( System.lineSeparator() );
+		}
+		if ( comments.size() > 1 && firstCommentPreceededName )
+		{
+			Iterator<String> forSkippingFirst = comments.iterator();
+			forSkippingFirst.next();
+			while( forSkippingFirst.hasNext() )
+			{
+				aggregator.append( forSkippingFirst.next() );
+				aggregator.append( System.lineSeparator() );
+			}
+		}
+		else if ( ! comments.isEmpty() && ! firstCommentPreceededName )
+		{
+			for ( String aComment : comments )
+			{
+				aggregator.append( aComment );
+				aggregator.append( System.lineSeparator() );
+			}
+		}
+		return aggregator;
+	}
 
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

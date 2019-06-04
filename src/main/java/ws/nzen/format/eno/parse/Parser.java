@@ -1,21 +1,21 @@
 /** see ../../../../../LICENSE for release details */
-package ws.nzen.format.eno;
+package ws.nzen.format.eno.parse;
 
-import static ws.nzen.format.eno.Lexeme.*;
-import static ws.nzen.format.eno.Syntaxeme.*;
+import static ws.nzen.format.eno.parse.Lexeme.*;
+import static ws.nzen.format.eno.parse.Syntaxeme.*;
 
 import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Queue;
-import java.util.ResourceBundle;
 import java.util.Set;
 import java.util.TreeSet;
 
-import org.eno_lang.locale.EnoAlias;
+import ws.nzen.format.eno.EnoLocaleKey;
+import ws.nzen.format.eno.ExceptionStore;
 
-/**  */
+/** Convert list of String to List List of Parser.Word */
 public class Parser
 {
 	private static final String cl = "p.";
@@ -27,10 +27,6 @@ public class Parser
 	protected Lexer alphabet = new Lexer();
 	protected Lexer.Token currToken;
 	protected int currLine = 0;
-	// eventually handle exception store localization, output formatter
-	protected ResourceBundle rbToken;
-	protected ResourceBundle rbAnalysis;
-	protected ResourceBundle rbValidation;
 	/** Word.modifier value for empty continuation, ie | */
 	public static final int WORD_MOD_CONT_EMPTY = 1;
 	/** Word.modifier value for space continuation, ie \ */
@@ -41,6 +37,7 @@ public class Parser
 		public Syntaxeme type;
 		public String value = "";
 		public int modifier = 0;
+		public int line = 0;
 		@Override
 		public String toString()
 		{
@@ -52,7 +49,6 @@ public class Parser
 	public Parser()
 	{
 		prepFieldDelimiters();
-		prepExceptionMessages();
 	}
 
 
@@ -69,17 +65,6 @@ public class Parser
 		DELIM_FIELD_COPY.add( COPY_OP_DEEP );
 		DELIM_FIELD_COPY.add( COPY_OP_THIN );
 		DELIM_END.add( END );
-	}
-
-
-	protected void prepExceptionMessages()
-	{
-		String filePrefixTokenize = "Tokenization";
-		rbToken = ResourceBundle.getBundle( filePrefixTokenize );
-		String filePrefixAnalysis = "Analysis";
-		rbAnalysis = ResourceBundle.getBundle( filePrefixAnalysis );
-		String filePrefixValidation = "Validation";
-		rbValidation = ResourceBundle.getBundle( filePrefixValidation );
 	}
 
 
@@ -117,20 +102,24 @@ public class Parser
 				{
 					// NOTE line looks like < nn ;; It needs a name
 					MessageFormat problem = new MessageFormat(
-							rbToken.getString( EnoAlias.INVALID_LINE ) );
+							ExceptionStore.getStore().getExceptionMessage(
+									ExceptionStore.TOKENIZATION, EnoLocaleKey.INVALID_LINE ) );
 					throw new RuntimeException( problem.format( new Object[]{ currLine } ) );
 				}
 				case FIELD_START_OP :
 				{
 					// NOTE names can't start with :
 					MessageFormat problem = new MessageFormat(
-							rbToken.getString( EnoAlias.INVALID_LINE ) );
+							ExceptionStore.getStore().getExceptionMessage(
+									ExceptionStore.TOKENIZATION, EnoLocaleKey.INVALID_LINE ) );
 					throw new RuntimeException( problem.format( new Object[]{ currLine } ) );
 				}
 				case SET_OP :
 				{
 					MessageFormat problem = new MessageFormat(
-							rbAnalysis.getString( EnoAlias.MISSING_NAME_FOR_FIELDSET_ENTRY ) );
+							ExceptionStore.getStore().getExceptionMessage(
+									ExceptionStore.ANALYSIS, EnoLocaleKey
+										.MISSING_NAME_FOR_FIELDSET_ENTRY ) );
 					throw new RuntimeException( problem.format( new Object[]{ currLine } ) );
 				}
 				case CONTINUE_OP_EMPTY :
@@ -147,6 +136,7 @@ public class Parser
 							? WORD_MOD_CONT_SPACE
 							: WORD_MOD_CONT_EMPTY;
 					currWord.value = alphabet.restOfLine().trim();
+					currWord.line = currLine;
 					wordsOfLine.add( currWord );
 					parsed.add( wordsOfLine );
 					break;
@@ -161,6 +151,7 @@ public class Parser
 					currWord = new Word();
 					currWord.type = Syntaxeme.LIST_ELEMENT;
 					currWord.value = alphabet.restOfLine().trim();
+					currWord.line = currLine;
 					wordsOfLine.add( currWord );
 					parsed.add( wordsOfLine );
 					break;
@@ -174,7 +165,8 @@ public class Parser
 					}
 					currWord = new Word();
 					currWord.type = Syntaxeme.COMMENT;
-					currWord.value = alphabet.restOfLine().trim();
+					currWord.value = alphabet.restOfLine();
+					currWord.line = currLine;
 					wordsOfLine.add( currWord );
 					parsed.add( wordsOfLine );
 					break;
@@ -236,6 +228,7 @@ public class Parser
 			Word sectionOperator = new Word();
 			sectionOperator.type = SECTION;
 			sectionOperator.modifier = currToken.word.length();
+			sectionOperator.line = currLine;
 			line.add( sectionOperator );
 			nextToken();
 		}
@@ -252,7 +245,8 @@ public class Parser
 		{
 			// NOTE line looks like # < nn OR # /n;; It needs a name
 			MessageFormat problem = new MessageFormat(
-					rbToken.getString( EnoAlias.INVALID_LINE ) );
+					ExceptionStore.getStore().getExceptionMessage(
+							ExceptionStore.TOKENIZATION, EnoLocaleKey.INVALID_LINE ) );
 			throw new RuntimeException( problem.format( new Object[]{ currLine } ) );
 		}
 		skipWhitespace();
@@ -282,6 +276,7 @@ public class Parser
 		Word name = new Word();
 		name.type = Syntaxeme.FIELD;
 		name.modifier = currToken.word.length();
+		name.line = currLine;
 		nextToken();
 		skipWhitespace();
 		StringBuilder namePieces = new StringBuilder();
@@ -292,7 +287,9 @@ public class Parser
 			if ( currToken.type == END )
 			{
 				MessageFormat problem = new MessageFormat(
-						rbToken.getString( EnoAlias.UNTERMINATED_ESCAPED_NAME ) );
+						ExceptionStore.getStore().getExceptionMessage(
+								ExceptionStore.TOKENIZATION, EnoLocaleKey
+									.UNTERMINATED_ESCAPED_NAME ) );
 				throw new RuntimeException( problem.format( new Object[]{ currLine } ) );
 			}
 			else if ( currToken.type == ESCAPE_OP
@@ -331,6 +328,7 @@ public class Parser
 		skipWhitespace();
 		Word name = new Word();
 		name.type = FIELD;
+		name.line = currLine;
 		String lastPiece = currToken.word;
 		Lexeme lastType = currToken.type;
 		StringBuilder pieces = new StringBuilder();
@@ -350,7 +348,8 @@ public class Parser
 			{
 				// NOTE end isn't a delimiter right now, but we've exhausted input
 				MessageFormat problem = new MessageFormat(
-						rbValidation.getString( EnoAlias.EXCESS_NAME ) );
+						ExceptionStore.getStore().getExceptionMessage(
+								ExceptionStore.VALIDATION, EnoLocaleKey.EXCESS_NAME ) );
 				String complaint = problem.format( new Object[]{ pieces.toString() } );
 				throw new RuntimeException( complaint );
 			}
@@ -369,7 +368,7 @@ public class Parser
 
 
 	/** consume lines until one matches the first line */
-	private List<Word> multiline( List<Word>entireBlock )
+	private List<Word> multiline( List<Word> entireBlock )
 	{
 		String here = cl +"multiline ";
 		if ( entireBlock == null )
@@ -379,6 +378,7 @@ public class Parser
 		Word boundary = new Word();
 		boundary.type = Syntaxeme.MULTILINE_BOUNDARY;
 		boundary.modifier = currToken.word.length();
+		boundary.line = currLine;
 		entireBlock.add( boundary );
 		// NOTE get the name
 		nextToken();
@@ -398,7 +398,9 @@ public class Parser
 		List<Word> lineProxy = new ArrayList<>( 2 );
 		StringBuilder multilineText = new StringBuilder();
 		MessageFormat problem = new MessageFormat(
-				rbToken.getString( EnoAlias.UNTERMINATED_BLOCK ) );
+				ExceptionStore.getStore().getExceptionMessage(
+						ExceptionStore.TOKENIZATION, EnoLocaleKey
+							.UNTERMINATED_BLOCK ) );
 		String complaint = problem.format( new Object[]{ multilineIdentifier.value, blockStartedAt } );
 		nextLine( true, complaint );
 		do
@@ -481,6 +483,7 @@ public class Parser
 		Word copyOperator = new Word();
 		copyOperator.type = COPY;
 		copyOperator.modifier = currToken.word.length();
+		copyOperator.line = currLine;
 		line.add( copyOperator );
 		nextToken();
 		skipWhitespace();
@@ -504,7 +507,7 @@ public class Parser
 		{
 			line = new LinkedList<>();
 		}
-		if ( currToken.type == Lexeme.ESCAPE_OP )
+		if ( currToken.type == ESCAPE_OP )
 		{
 			line = escapedName( line );
 			nextToken();
@@ -514,14 +517,17 @@ public class Parser
 			line = unescapedName( line, DELIM_SET_FIELD_COPY );
 		}
 		skipWhitespace();
-		if ( currToken.type == Lexeme.SET_OP )
+		if ( currToken.type == SET_OP )
 		{
 			nextToken();
 			if ( currToken.type != END )
 			{
+				// NOTE distinguishing field from set
+				line.get( line.size() -1 ).type = SET_ELEMENT;
 				Word value = new Word();
-				value.type = Syntaxeme.SET_ELEMENT;
+				value.type = VALUE;
 				value.value = currToken.word.trim() + alphabet.restOfLine().trim();
+				value.line = currLine;
 				line.add( value );
 			}
 		}
@@ -536,8 +542,9 @@ public class Parser
 			else if ( currToken.type != END )
 			{
 				Word value = new Word();
-				value.type = Syntaxeme.VALUE;
+				value.type = VALUE;
 				value.value = currToken.word.trim() + alphabet.restOfLine().trim();
+				value.line = currLine;
 				line.add( value );
 			}
 		}
@@ -558,6 +565,7 @@ public class Parser
 		Word combined = new Word();
 		combined.type = Syntaxeme.EMPTY;
 		combined.modifier = preceedingEmptyLines;
+		combined.line = currLine - preceedingEmptyLines;
 		return combined;
 	}
 
