@@ -9,7 +9,7 @@ public class SetEntry extends Value
 
 	public SetEntry( String nameToHave, int escapes )
 	{
-		super( EnoType.FIELD_VALUE, nameToHave, escapes );
+		super( EnoType.SET_ELEMENT, nameToHave, escapes );
 	}
 
 

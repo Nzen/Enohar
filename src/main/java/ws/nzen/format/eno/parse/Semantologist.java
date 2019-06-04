@@ -69,7 +69,7 @@ public class Semantologist
 
 	private Section buildDocument()
 	{
-		String here = cl +"bd ";
+			String here = cl +"bd ";
 		Section theDocument = new Section();
 		EnoElement currElem = null;
 		lineChecked = -1;
@@ -250,13 +250,8 @@ public class Semantologist
 		}
 		if ( currWord.type == null || currWord.type != FIELD )
 			throw new RuntimeException( "expected section name" ); // assert paranoid
-		else
-		{
-			currWord = popCurrentWordOfLine();
-			stdoutHistoryDebugger( here, "20", currWord, true );
-		}
 		Section container = new Section( currWord.value, currWord.modifier );
-		if ( emptyLines.modifier > 0 )
+		if ( emptyLines != null && emptyLines.modifier > 0 )
 		{
 			container.setPreceedingEmptyLines( emptyLines.modifier );
 		}
@@ -265,6 +260,8 @@ public class Semantologist
 			container.setFirstCommentPreceededName( true );
 			container.addComment( firstComment );
 		}
+		container.setDepth( ownDepth );
+		currWord = popCurrentWordOfLine();
 		if ( currWord != null && currWord.type == COPY )
 		{
 			container.setShallowTemplate( currWord.modifier < 2 );

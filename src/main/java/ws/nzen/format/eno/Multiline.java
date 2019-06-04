@@ -37,7 +37,7 @@ public class Multiline extends Field
 	/** @throws NoSuchElementException if has no value */
 	public String requiredStringValue()
 	{
-		if ( formattedValue == null )
+		if ( formattedValue == null || formattedValue.isEmpty() ) // ASK is empty null for canon ?
 		{
 			MessageFormat problem = new MessageFormat(
 					ExceptionStore.getStore().getExceptionMessage(

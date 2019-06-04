@@ -368,7 +368,7 @@ public class Parser
 
 
 	/** consume lines until one matches the first line */
-	private List<Word> multiline( List<Word>entireBlock )
+	private List<Word> multiline( List<Word> entireBlock )
 	{
 		String here = cl +"multiline ";
 		if ( entireBlock == null )

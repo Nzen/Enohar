@@ -1,15 +1,21 @@
 /** see ../../../../../LICENSE for release details */
 package ws.nzen.format.eno;
 
-import static ws.nzen.format.eno.EnoType.*;
+import static ws.nzen.format.eno.EnoType.FIELD_GENERIC;
+import static ws.nzen.format.eno.EnoType.FIELD_LIST;
+import static ws.nzen.format.eno.EnoType.FIELD_SET;
+import static ws.nzen.format.eno.EnoType.MISSING;
+import static ws.nzen.format.eno.EnoType.SECTION;
 
 import java.text.MessageFormat;
-import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
 
+import ws.nzen.format.eno.missing.FakeField;
+import ws.nzen.format.eno.missing.FakeList;
 import ws.nzen.format.eno.missing.FakeSection;
+import ws.nzen.format.eno.missing.FakeSet;
 
 /**  */
 public class Section extends EnoElement
@@ -163,10 +169,50 @@ public class Section extends EnoElement
 					|| punishment == MissingChildConsequence.EXCEPTION )
 			{
 				String localeKey;
-				if ( expectedType == SECTION )
-					localeKey =  EnoLocaleKey.MISSING_SECTION;
-				else // TODO
-					localeKey = "one for each type"; // choose the corresponding missing locale key
+				switch ( expectedType )
+				{
+					case SECTION :
+					{
+						localeKey = EnoLocaleKey.MISSING_SECTION;
+						break;
+					}
+					case FIELD_EMPTY :
+					case MULTILINE :
+					{
+						localeKey = EnoLocaleKey.MISSING_FIELD;
+						break;
+					}
+					case FIELD_VALUE :
+					{
+						localeKey = EnoLocaleKey.MISSING_FIELD_VALUE;
+						break;
+					}
+					case FIELD_LIST :
+					{
+						localeKey = EnoLocaleKey.MISSING_LIST;
+						break;
+					}
+					case FIELD_SET :
+					{
+						localeKey = EnoLocaleKey.MISSING_FIELDSET;
+						break;
+					}
+					case LIST_ITEM :
+					{
+						localeKey = EnoLocaleKey.MISSING_LIST_ITEM_VALUE;
+						break;
+					}
+					case SET_ELEMENT :
+					{
+						localeKey = EnoLocaleKey.MISSING_FIELDSET_ENTRY_VALUE;
+						break;
+					}
+					default :
+					{
+						localeKey = EnoLocaleKey.MISSING_ELEMENT;
+						break;
+					}
+				}
 				MessageFormat problem = new MessageFormat(
 						ExceptionStore.getStore().getExceptionMessage(
 								ExceptionStore.VALIDATION, localeKey ) );
@@ -179,8 +225,18 @@ public class Section extends EnoElement
 				{
 					return new FakeSection( complaint );
 				}
-				else // TODO
-					return null; // return corresponding fake type
+				else if ( expectedType == FIELD_LIST )
+				{
+					return new FakeList( complaint );
+				}
+				else if ( expectedType == FIELD_SET )
+				{
+					return new FakeSet( complaint );
+				}
+				else
+				{
+					return new FakeField( complaint );
+				}
 			}
 			else
 			{
