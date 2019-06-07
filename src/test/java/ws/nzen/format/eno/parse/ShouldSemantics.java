@@ -32,37 +32,12 @@ class ShouldSemantics
 	@Test
 	void testAnalyze()
 	{
-		/*
-		docStr.clear();
-		String orphanComment = "orphan", associatedComment = " preceeding",
-				multiName = "field", multiText = "\ttext";
-		docStr.add( ">     "+ orphanComment );
-		docStr.add( "" );
-		docStr.add( "> "+ associatedComment );
-		docStr.add( "-- "+ multiName );
-		docStr.add( multiText );
-		docStr.add( "--  "+ multiName +" " );
-		Semantologist knowy = new Semantologist();
-		Section doc = knowy.analyze( docStr );
-		assertTrue( doc.getName().isEmpty() );
-		assertTrue( doc.getDepth() == 0 );
-		List<String> comments = doc.getComments();
-		assertTrue( comments.size() == 1 );
-		assertTrue( comments.get( 0 ).equals( orphanComment ) );
-		List<EnoElement> fieldsOfDoc = doc.getChildren();
-		assertTrue( fieldsOfDoc.size() == 1 );
-		Multiline field = (Multiline)fieldsOfDoc.get( 0 );
-		assertTrue( field.getNameEscapes() == 0 );
-		assertTrue( field.getBoundaryLength() == 2 );
-		assertTrue( field.optionalStringValue().equals( multiText ) );
-		comments = field.getComments();
-		assertTrue( field.firstCommentPreceededName() );
-		assertTrue( field.optionalStringComment().equals( associatedComment ) );
-		fail( "Not yet implemented" );
-		*/
 		shouldHandleEmptyDocument();
 		shouldCommentOnlyDocument();
 		shouldSingleElementBody();
+		shouldMultiElementBody();
+		// templates
+		// missing element api
 	}
 
 
@@ -181,6 +156,54 @@ class ShouldSemantics
 	}
 
 
+	private void shouldMultiElementBody()
+	{
+		char secOp = Lexeme.SECTION_OP.getChar();
+		Semantologist knowy = new Semantologist();
+		Section document = new Section( "", 0 );
+		// section ;; section ;; section
+		docStr.clear();
+		docStr.add( ""+ secOp + dict[ dMultiInd ] );
+		docStr.add( ""+ secOp + dict[ dMultiInd ] );
+		docStr.add( ""+ secOp + dict[ dMultiInd ] );
+		document.getChildren().clear();
+		Section secSibling0 = new Section( dict[ dMultiInd ], 0 );
+		secSibling0.setDepth( 1 );
+		Section secSibling1 = new Section( dict[ dMultiInd ], 0 );
+		secSibling1.setDepth( 1 );
+		Section secSibling2 = new Section( dict[ dMultiInd ], 0 );
+		secSibling2.setDepth( 1 );
+		document.addChild( secSibling0 );
+		document.addChild( secSibling1 );
+		document.addChild( secSibling2 );
+		compareAsSection( document, knowy.analyze( docStr ) );
+		// section > section > section > section > section
+		docStr.clear();
+		docStr.add( ""+ secOp + dict[ dMultiInd ] );
+		docStr.add( ""+ secOp + secOp + dict[ dMultiInd ] );
+		docStr.add( ""+ secOp + secOp + secOp + dict[ dMultiInd ] );
+		docStr.add( ""+ secOp + secOp + secOp + secOp + dict[ dMultiInd ] );
+		docStr.add( ""+ secOp + secOp + secOp + secOp + secOp + dict[ dMultiInd ] );
+		Section secChild4 = new Section( dict[ dMultiInd ], 0 );
+		secChild4.setDepth( 5 );
+		Section secChild3 = new Section( dict[ dMultiInd ], 0 );
+		secChild3.setDepth( 4 );
+		Section secChild2 = new Section( dict[ dMultiInd ], 0 );
+		secChild2.setDepth( 3 );
+		Section secChild1 = new Section( dict[ dMultiInd ], 0 );
+		secChild1.setDepth( 2 );
+		Section secChild0 = new Section( dict[ dMultiInd ], 0 );
+		secChild0.setDepth( 1 );
+		secChild3.addChild( secChild4 );
+		secChild2.addChild( secChild3 );
+		secChild1.addChild( secChild2 );
+		secChild0.addChild( secChild1 );
+		document.addChild( secChild0 );
+		compareAsSection( document, knowy.analyze( docStr ) );
+		
+	}
+
+
 	private void compareAsElement( EnoElement expected, EnoElement result )
 	{
 		if ( expected.equals( result ) )
@@ -198,7 +221,7 @@ class ShouldSemantics
 			for ( int ind = 0; ind < expectedComments.size(); ind++ )
 			{
 				assertEquals( "ae comment "+ ind, expectedComments.get( ind ),
-						resultComments.get( ind ));
+						resultComments.get( ind ) );
 			}
 		}
 		if ( expected.getTemplate() == null )
@@ -207,8 +230,98 @@ class ShouldSemantics
 		}
 		else
 		{
+			assertEquals( "ae copyop", expected.isShallowTemplate(),
+					result.isShallowTemplate() );
 			compareAsElement( expected.getTemplate(), result.getTemplate() );
 		}
+	}
+
+
+	private void compareAsSection( Section expected, Section result )
+	{
+		compareAsElement( expected, result ); // NOTE not assuming, as these may be the document
+		assertEquals( "depth differed", expected.getDepth(), result.getDepth() );
+		List<EnoElement> expectedChildren = expected.elements();
+		List<EnoElement> actualChildren = result.elements();
+		assertEquals( "child count differed",
+				expectedChildren.size(), actualChildren.size() );
+		for ( int ind = 0; ind < expectedChildren.size(); ind++ )
+		{
+			EnoElement expectedChild = expectedChildren.get( ind );
+			EnoElement actualChild = actualChildren.get( ind );
+			compareAsElement( expectedChild, actualChild );
+			if ( expectedChild.getType() == EnoType.SECTION )
+			{
+				compareAsSection( (Section)expectedChild, (Section)actualChild );
+			}
+			else
+			{
+				compareAsField( (Field)expectedChild, (Field)actualChild );
+			}
+		}
+		// improve compare templates, if they exist
+	}
+
+
+	private void compareAsField( Field expected, Field result )
+	{
+		// assert we already compared as elements
+		if ( expected.getType() == EnoType.FIELD_LIST )
+		{
+			compareAsList( (FieldList)expected, (FieldList)result );
+		}
+		else if ( expected.getType() == EnoType.FIELD_SET )
+		{
+			compareAsFset( (FieldSet)expected, (FieldSet)result );
+		}
+	}
+
+
+	private void compareAsValue( Value expected, Value result )
+	{
+		if ( result.optionalStringValue() == null )
+		{
+			assertNull( expected.optionalStringValue() );
+		}
+		else
+		{
+			assertTrue( result.optionalStringValue()
+					.equals( expected.optionalStringValue() ) );
+		}
+	}
+
+
+	private void compareAsList( FieldList expected, FieldList result )
+	{
+		List<ListItem> expectedItems = expected.items();
+		List<ListItem> actualItems = result.items();
+		assertEquals( "item count differed",
+				expectedItems.size(), actualItems.size() );
+		for ( int ind = 0; ind < expectedItems.size(); ind++ )
+		{
+			ListItem expectedChild = expectedItems.get( ind );
+			ListItem actualChild = actualItems.get( ind );
+			compareAsElement( expectedChild, actualChild );
+			compareAsValue( expectedChild, actualChild );
+		}
+		// improve compare templates, if they exist
+	}
+
+
+	private void compareAsFset( FieldSet expected, FieldSet result )
+	{
+		List<SetEntry> expectedEntries = expected.entries();
+		List<SetEntry> actualEntries = result.entries();
+		assertEquals( "entry count differed",
+				expectedEntries.size(), actualEntries.size() );
+		for ( int ind = 0; ind < expectedEntries.size(); ind++ )
+		{
+			SetEntry expectedChild = expectedEntries.get( ind );
+			SetEntry actualChild = actualEntries.get( ind );
+			compareAsElement( expectedChild, actualChild );
+			compareAsValue( expectedChild, actualChild );
+		}
+		// improve compare templates, if they exist
 	}
 
 	

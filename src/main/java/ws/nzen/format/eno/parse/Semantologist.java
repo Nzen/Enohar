@@ -31,7 +31,7 @@ public class Semantologist
 {
 	private static final String cl = "s.";
 	private List<List<Word>> parsedLines = new ArrayList<>();
-	private List<EnoElement> fields = new ArrayList<>();
+	private List<Field> fields = new ArrayList<>();
 	private List<Section> sections = new ArrayList<>();
 	private List<Dependence> transitiveFields = new LinkedList<>();
 	private List<Dependence> transitiveSections = new LinkedList<>();
@@ -69,7 +69,7 @@ public class Semantologist
 
 	private Section buildDocument()
 	{
-			String here = cl +"bd ";
+		String here = cl +"bd ";
 		Section theDocument = new Section();
 		EnoElement currElem = null;
 		lineChecked = -1;
@@ -268,7 +268,7 @@ public class Semantologist
 			currWord = popCurrentWordOfLine();
 			stdoutHistoryDebugger( here, "21", currWord, true );
 			if ( currWord.type == null || currWord.type != FIELD )
-				throw new RuntimeException( "expected template name" ); // assert paranoid
+				throw new RuntimeException( "expected template name" ); // assert paranoid, parser should catch
 			Dependence reference = new Dependence();
 			reference.hasReference = container;
 			reference.nameOfReferredTo = currWord.value;
@@ -477,7 +477,7 @@ public class Semantologist
 					{
 						if ( fieldType == FIELD_EMPTY )
 						{
-							emptySelf.addComment( currWord.value );
+							emptySelf.addComment( currWord.value ); 
 						}
 						else if ( fieldType == FIELD_VALUE )
 						{
@@ -1054,6 +1054,50 @@ public class Semantologist
 			else
 			{
 				ref.isReferredTo = sections.get( indOfCandidate );
+				ref.hasReference.setTemplate( ref.isReferredTo );
+				// Improve check if there's a deeper cyclic dependency
+			}
+		}
+		// check fields ;; also todo
+		for ( Dependence ref : transitiveFields )
+		{
+			if ( ref.hasReference.getName().equals( ref.nameOfReferredTo )
+					&& ref.hasReference.getNameEscapes() == ref.escapesOfReferredTo )
+			{
+				MessageFormat problem = new MessageFormat(
+						ExceptionStore.getStore().getExceptionMessage(
+								ExceptionStore.VALIDATION,
+								EnoLocaleKey.CYCLIC_DEPENDENCY ) );
+				throw new NoSuchElementException( problem.format( new Object[]{ ref.nameOfReferredTo } ) ); // Improve may need to add escapes to distinguish
+			}
+			int indOfCandidate = -1;
+			for ( int ind = 0; ind < fields.size(); ind++ )
+			{
+				Field candidate = fields.get( ind );
+				if ( ref.nameOfReferredTo.equals( candidate.getName() )
+						&& ref.escapesOfReferredTo == candidate.getNameEscapes() )
+				{
+					if ( indOfCandidate >= 0 )
+					{
+						// FIX canon complaint about multiple templates
+					}
+					else
+					{
+						indOfCandidate = ind;
+					}
+				}
+			}
+			if ( indOfCandidate < 0 )
+			{
+				MessageFormat problem = new MessageFormat(
+						ExceptionStore.getStore().getExceptionMessage(
+								null  ,//ExceptionStore., resolution FIX es doesn't know about r file, ensure it has all of them
+								EnoLocaleKey.MISSING_FIELD_VALUE ) );
+				throw new NoSuchElementException( problem.format( new Object[]{ ref.nameOfReferredTo } ) );
+			}
+			else
+			{
+				ref.isReferredTo = fields.get( indOfCandidate );
 				ref.hasReference.setTemplate( ref.isReferredTo );
 				// Improve check if there's a deeper cyclic dependency
 			}

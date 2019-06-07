@@ -1,4 +1,8 @@
 
+# 190604
+
+I've validated that I can parse single element eno documents. I need to validate that this doesn't fall over when analyzing a more complex document. I'll need to decide how much of the missing element api to honor. Unlike the missing element api, templates are part of the spec, so I'll need to ensure that elements can reference shallow templates, at least. I won't need either of those, though, to reenable note_enojes, using the canon spec.eno file and po files. In that case, I can use the new canon complaints. I'd make sure that I can emit a representation of each element.
+
 # 190509
 
 I've confirmed that peekAtNextLineType() indeed has consumers which have different expectations about what next means. Rather than a bool called inclusive, I think that I'll send an int called offset so the different callers can supply their own opinion.

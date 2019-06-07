@@ -335,6 +335,10 @@ public class Section extends EnoElement
 	}
 
 
+	public List<EnoElement> elements()
+	{
+		return children;
+	}
 	public List<EnoElement> getChildren()
 	{
 		return children;

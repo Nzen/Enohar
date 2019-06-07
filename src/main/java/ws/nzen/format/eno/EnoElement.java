@@ -42,6 +42,37 @@ public class EnoElement
 	{
 		return type;
 	}
+	public boolean yieldsSection()
+	{
+		return type == EnoType.SECTION;
+	}
+	public boolean yieldsFieldsetEntry()
+	{
+		return type == EnoType.SET_ELEMENT;
+	}
+	public boolean yieldsListItem()
+	{
+		return type == EnoType.LIST_ITEM;
+	}
+	public boolean yieldsEmpty()
+	{
+		return type == EnoType.FIELD_EMPTY;
+	}
+	public boolean yieldsFieldset()
+	{
+		return type == EnoType.FIELD_SET;
+	}
+	public boolean yieldsList()
+	{
+		return type == EnoType.FIELD_LIST;
+	}
+	public boolean yieldsField()
+	{
+		return yieldsEmpty() || yieldsFieldset()
+				|| yieldsList()
+				|| type == EnoType.MULTILINE
+				|| type == EnoType.FIELD_VALUE;
+	}
 
 
 	public String stringKey()
