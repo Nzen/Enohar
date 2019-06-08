@@ -19,6 +19,12 @@ public class FieldSet extends Field
 	}
 
 
+	public FieldSet( String nameToHave )
+	{
+		this( nameToHave, 0 );
+	}
+
+
 	public FieldSet( String nameToHave, int escapes )
 	{
 		super( EnoType.FIELD_SET, nameToHave, escapes );
@@ -39,6 +45,13 @@ public class FieldSet extends Field
 		{
 			// warn or die
 		}
+	}
+	
+	
+	public void addEntry( String name, String value )
+	{
+		// IMPROVE check for escapes; elsewhere too, I guess
+		addEntry( new SetEntry( name, 0, value ) );
 	}
 
 

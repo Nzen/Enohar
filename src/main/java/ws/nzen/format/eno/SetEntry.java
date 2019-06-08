@@ -7,9 +7,21 @@ import java.text.MessageFormat;
 public class SetEntry extends Value
 {
 
+	public SetEntry( String nameToHave )
+	{
+		this( nameToHave, 0 );
+	}
+
 	public SetEntry( String nameToHave, int escapes )
 	{
 		super( EnoType.SET_ELEMENT, nameToHave, escapes );
+	}
+
+
+	public SetEntry( String nameToHave, int escapes, String value )
+	{
+		this( nameToHave, escapes );
+		setStringValue( value );
 	}
 
 

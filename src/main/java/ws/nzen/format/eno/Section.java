@@ -34,6 +34,12 @@ public class Section extends EnoElement
 	}
 
 
+	public Section( String nameToHave )
+	{
+		this( nameToHave, 0 );
+	}
+
+
 	public Section( String nameToHave, int escapes )
 	{
 		super( SECTION, nameToHave, escapes );

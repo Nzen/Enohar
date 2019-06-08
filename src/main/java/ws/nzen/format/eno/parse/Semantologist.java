@@ -569,7 +569,6 @@ public class Semantologist
 							}
 						}
 						currChild = new ListItem( currWord.value );
-						currChild.setName( listSelf.getName() ); // per spec
 						if ( ! docComment.isEmpty() )
 						{
 							currChild.addComment( docComment );

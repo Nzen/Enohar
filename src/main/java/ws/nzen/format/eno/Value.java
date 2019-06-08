@@ -11,7 +11,13 @@ public class Value extends Field
 {
 	protected String value = null; // per spec
 	// IMPROVE Map<int, boolean> continuations :: index, empty/space style continuation
-	// and then append() would add new records each time; setSV() would strip line separators 
+	// and then append() would add new records each time; setSV() would strip line separators
+
+
+	public Value( String nameToHave )
+	{
+		this( nameToHave, 0 );
+	} 
 
 	public Value( String nameToHave, int escapes )
 	{

@@ -20,6 +20,12 @@ public class FieldList extends Field
 	}
 
 
+	public FieldList( String nameToHave )
+	{
+		this( nameToHave, 0 );
+	}
+
+
 	public FieldList( String nameToHave, int escapes )
 	{
 		super( EnoType.FIELD_LIST, nameToHave, escapes );
@@ -53,7 +59,9 @@ public class FieldList extends Field
 	{
 		if ( justValue == null )
 			justValue = "";
-		values.add( new ListItem( justValue ) );
+		ListItem another = new ListItem( justValue );
+		another.setName( getName() );
+		values.add( another );
 	}
 
 
@@ -61,6 +69,7 @@ public class FieldList extends Field
 	{
 		if ( fullValue == null )
 			fullValue = new ListItem( "" );
+		fullValue.setName( getName() );
 		values.add( fullValue );
 	}
 

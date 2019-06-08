@@ -28,6 +28,13 @@ public class Field extends EnoElement
 	}
 
 
+	/** convenience for Field( name, escapes ), assuming no escapes */
+	public Field( String nameToHave )
+	{
+		this( nameToHave, 0 );
+	}
+
+
 	public Field( String nameToHave, int escapes )
 	{
 		super( EnoType.FIELD_EMPTY, nameToHave, escapes );

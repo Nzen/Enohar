@@ -158,7 +158,12 @@ class ShouldSemantics
 
 	private void shouldMultiElementBody()
 	{
-		char secOp = Lexeme.SECTION_OP.getChar();
+		char secOp = Lexeme.SECTION_OP.getChar(),
+				fieOp = Lexeme.FIELD_START_OP.getChar(),
+				lstOp = Lexeme.LIST_OP.getChar(),
+				setOp = Lexeme.SET_OP.getChar(),
+				empOP = Lexeme.CONTINUE_OP_EMPTY.getChar(),
+				spaOp = Lexeme.CONTINUE_OP_SPACE.getChar();
 		Semantologist knowy = new Semantologist();
 		Section document = new Section( "", 0 );
 		// section ;; section ;; section
@@ -184,6 +189,7 @@ class ShouldSemantics
 		docStr.add( ""+ secOp + secOp + secOp + dict[ dMultiInd ] );
 		docStr.add( ""+ secOp + secOp + secOp + secOp + dict[ dMultiInd ] );
 		docStr.add( ""+ secOp + secOp + secOp + secOp + secOp + dict[ dMultiInd ] );
+		document.getChildren().clear();
 		Section secChild4 = new Section( dict[ dMultiInd ], 0 );
 		secChild4.setDepth( 5 );
 		Section secChild3 = new Section( dict[ dMultiInd ], 0 );
@@ -200,7 +206,32 @@ class ShouldSemantics
 		secChild0.addChild( secChild1 );
 		document.addChild( secChild0 );
 		compareAsSection( document, knowy.analyze( docStr ) );
-		
+		// field ;; value ;; list ;; fset
+		docStr.clear();
+		docStr.add( dict[ dAssocInd ] + fieOp );
+		docStr.add( dict[ dOrphInd ] + fieOp );
+		docStr.add( empOP + dict[ dOrphInd ] + fieOp );
+		docStr.add( dict[ dFieldInd ] + fieOp );
+		docStr.add( lstOp + dict[ dOrphInd ] + fieOp );
+		docStr.add( dict[ dAssocInd ].toUpperCase() + fieOp );
+		docStr.add( dict[ dEscapeInd ] + dict[ dFieldInd ] + dict[ dEscapeInd ]
+				+ setOp + dict[ dFieldInd ] );
+		document.getChildren().clear();
+		Field bare = new Field( dict[ dAssocInd ] );
+		Value oneLine = new Value( dict[ dOrphInd ] );
+		oneLine.setStringValue( dict[ dOrphInd ] + fieOp );
+		FieldList list = new FieldList( dict[ dFieldInd ] );
+		ListItem subValue = new ListItem( dict[ dOrphInd ] + fieOp );
+		list.addItem( subValue );
+		FieldSet fset = new FieldSet( dict[ dAssocInd ].toUpperCase() );
+		SetEntry pair = new SetEntry( dict[ dFieldInd ],
+				dict[ dEscapeInd ].length(), dict[ dFieldInd ] );
+		fset.addEntry( pair );
+		document.addChild( bare );
+		document.addChild( oneLine );
+		document.addChild( list );
+		document.addChild( fset );
+		compareAsSection( document, knowy.analyze( docStr ) );
 	}
 
 

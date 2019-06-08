@@ -17,6 +17,12 @@ public class Multiline extends Field
 	}
 
 
+	public Multiline( String nameToHave )
+	{
+		this( nameToHave, 0 );
+	}
+
+
 	public Multiline( String nameToHave, int escapes )
 	{
 		super( EnoType.MULTILINE, nameToHave, escapes );
