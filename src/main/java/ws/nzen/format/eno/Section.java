@@ -413,6 +413,13 @@ public class Section extends EnoElement
 	}
 
 
+	// ide version
+	public String toString()
+	{
+		return type.name() +"-"+ depth +" "+ name;
+	}
+
+
 
 }
 

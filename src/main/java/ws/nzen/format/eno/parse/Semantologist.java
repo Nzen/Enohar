@@ -233,20 +233,23 @@ public class Semantologist
 		}
 		int ownDepth = sectionOperator.modifier;
 		// NOTE checking if it's too deep
-		if ( ownDepth > parentDepth +1 )
+		if ( ownDepth != parentDepth +1 )
 		{
-			MessageFormat problem = new MessageFormat(
-					ExceptionStore.getStore().getExceptionMessage(
-							ExceptionStore.ANALYSIS, EnoLocaleKey
-								.SECTION_HIERARCHY_LAYER_SKIP ) );
-			throw new RuntimeException( problem.format( new Object[]{ currWord.line } ) );
-		}
-		else if ( ownDepth <= parentDepth )
-		{
-			// NOTE if a sibling or parent, let another level construct this section
-			wordIndOfLine = 0;
-			stdoutHistoryDebugger( here, "19", currWord, false );
-			return null;
+			if ( ownDepth > parentDepth )
+			{
+				MessageFormat problem = new MessageFormat(
+						ExceptionStore.getStore().getExceptionMessage(
+								ExceptionStore.ANALYSIS, EnoLocaleKey
+									.SECTION_HIERARCHY_LAYER_SKIP ) );
+				throw new RuntimeException( problem.format( new Object[]{ currWord.line } ) );
+			}
+			else
+			{
+				// NOTE if a sibling or parent, let another level construct this section
+				wordIndOfLine = 0;
+				stdoutHistoryDebugger( here, "19", currWord, false );
+				return null;
+			}
 		}
 		if ( currWord.type == null || currWord.type != FIELD )
 			throw new RuntimeException( "expected section name" ); // assert paranoid
@@ -261,6 +264,7 @@ public class Semantologist
 			container.addComment( firstComment );
 		}
 		container.setDepth( ownDepth );
+		container.setLine( currWord.line );
 		currWord = popCurrentWordOfLine();
 		if ( currWord != null && currWord.type == COPY )
 		{
@@ -281,7 +285,7 @@ public class Semantologist
 		boolean addingChildren = true;
 		while ( addingChildren )
 		{
-			nextType = peekAtNextLineType( 1 );
+			nextType = peekAtNextLineType( 0 );
 			stdoutHistoryDebugger( here, "22", nextType );
 			switch ( nextType )
 			{
@@ -328,9 +332,11 @@ public class Semantologist
 				{
 					// NOTE ensuring we don't lose the preceeding comment
 					int currLine = lineChecked;
+					advanceLine();
 					stdoutHistoryDebugger( here, "30",
 							currWord, false );
-					currChild = section( getPreceedingComment(), ownDepth );
+					currChild = section(
+							getPreceedingComment(), ownDepth );
 					stdoutHistoryDebugger( here, "31"
 							, currWord, false );
 					if ( currChild == null )
@@ -373,7 +379,7 @@ public class Semantologist
 					throw new RuntimeException( problem.format( new Object[]{ currWord.line } ) );
 				}
 			}
-			if ( currWord != null )
+			if ( currChild != null )
 			{
 				container.addChild( currChild );
 			}
@@ -579,6 +585,7 @@ public class Semantologist
 							currChild.setPreceedingEmptyLines( emptyLines.modifier );
 							emptyLines.modifier = 0;
 						}
+						currChild.setLine( currWord.line );
 						listSelf.addItem( (ListItem)currChild );
 					}
 					else if ( fieldType == FIELD_VALUE )
@@ -646,6 +653,7 @@ public class Semantologist
 							currChild.setPreceedingEmptyLines( emptyLines.modifier );
 							emptyLines.modifier = 0;
 						}
+						currChild.setLine( currWord.line );
 						pairedSelf.addEntry( (SetEntry)currChild );
 					}
 					else if ( fieldType == FIELD_LIST )

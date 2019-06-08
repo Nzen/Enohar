@@ -172,12 +172,15 @@ class ShouldSemantics
 		docStr.add( ""+ secOp + dict[ dMultiInd ] );
 		docStr.add( ""+ secOp + dict[ dMultiInd ] );
 		document.getChildren().clear();
-		Section secSibling0 = new Section( dict[ dMultiInd ], 0 );
+		Section secSibling0 = new Section( dict[ dMultiInd ] );
 		secSibling0.setDepth( 1 );
-		Section secSibling1 = new Section( dict[ dMultiInd ], 0 );
+		secSibling0.setLine( 1 );
+		Section secSibling1 = new Section( dict[ dMultiInd ] );
 		secSibling1.setDepth( 1 );
-		Section secSibling2 = new Section( dict[ dMultiInd ], 0 );
+		secSibling1.setLine( 2 );
+		Section secSibling2 = new Section( dict[ dMultiInd ] );
 		secSibling2.setDepth( 1 );
+		secSibling2.setLine( 3 );
 		document.addChild( secSibling0 );
 		document.addChild( secSibling1 );
 		document.addChild( secSibling2 );
@@ -190,19 +193,24 @@ class ShouldSemantics
 		docStr.add( ""+ secOp + secOp + secOp + secOp + dict[ dMultiInd ] );
 		docStr.add( ""+ secOp + secOp + secOp + secOp + secOp + dict[ dMultiInd ] );
 		document.getChildren().clear();
-		Section secChild4 = new Section( dict[ dMultiInd ], 0 );
+		Section secChild4 = new Section( dict[ dMultiInd ] );
 		secChild4.setDepth( 5 );
-		Section secChild3 = new Section( dict[ dMultiInd ], 0 );
+		secChild4.setLine( 5 );
+		Section secChild3 = new Section( dict[ dMultiInd ] );
 		secChild3.setDepth( 4 );
-		Section secChild2 = new Section( dict[ dMultiInd ], 0 );
-		secChild2.setDepth( 3 );
-		Section secChild1 = new Section( dict[ dMultiInd ], 0 );
-		secChild1.setDepth( 2 );
-		Section secChild0 = new Section( dict[ dMultiInd ], 0 );
-		secChild0.setDepth( 1 );
+		secChild3.setLine( 4 );
 		secChild3.addChild( secChild4 );
+		Section secChild2 = new Section( dict[ dMultiInd ] );
+		secChild2.setDepth( 3 );
+		secChild2.setLine( 3 );
 		secChild2.addChild( secChild3 );
+		Section secChild1 = new Section( dict[ dMultiInd ] );
+		secChild1.setDepth( 2 );
+		secChild1.setLine( 2 );
 		secChild1.addChild( secChild2 );
+		Section secChild0 = new Section( dict[ dMultiInd ] );
+		secChild0.setDepth( 1 );
+		secChild0.setLine( 1 );
 		secChild0.addChild( secChild1 );
 		document.addChild( secChild0 );
 		compareAsSection( document, knowy.analyze( docStr ) );
@@ -218,14 +226,20 @@ class ShouldSemantics
 				+ setOp + dict[ dFieldInd ] );
 		document.getChildren().clear();
 		Field bare = new Field( dict[ dAssocInd ] );
+		bare.setLine( 1 );
 		Value oneLine = new Value( dict[ dOrphInd ] );
 		oneLine.setStringValue( dict[ dOrphInd ] + fieOp );
+		oneLine.setLine( 2 );
 		FieldList list = new FieldList( dict[ dFieldInd ] );
+		list.setLine( 4 );
 		ListItem subValue = new ListItem( dict[ dOrphInd ] + fieOp );
+		subValue.setLine( 5 );
 		list.addItem( subValue );
 		FieldSet fset = new FieldSet( dict[ dAssocInd ].toUpperCase() );
+		fset.setLine( 6 );
 		SetEntry pair = new SetEntry( dict[ dFieldInd ],
 				dict[ dEscapeInd ].length(), dict[ dFieldInd ] );
+		pair.setLine( 7 );
 		fset.addEntry( pair );
 		document.addChild( bare );
 		document.addChild( oneLine );
@@ -247,8 +261,11 @@ class ShouldSemantics
 		assertEquals( "ae pel", expected.getPreceedingEmptyLines(), result.getPreceedingEmptyLines() );
 		List<String> expectedComments = expected.getComments();
 		List<String> resultComments = result.getComments();
+		assertEquals( "num of comments", expectedComments.size(), resultComments.size() );
 		if ( ! expectedComments.isEmpty() )
 		{
+			assertEquals( "f c is associated", expected.firstCommentPreceededName(),
+					result.firstCommentPreceededName() );
 			for ( int ind = 0; ind < expectedComments.size(); ind++ )
 			{
 				assertEquals( "ae comment "+ ind, expectedComments.get( ind ),
