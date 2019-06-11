@@ -315,15 +315,17 @@ public class Semantologist
 				}
 				case FIELD :
 				{
+					advanceLine();
 					stdoutHistoryDebugger( here, "26", currWord, false );
-					currChild = field( getPreceedingComment() );
+					currChild = field( getPreceedingComment( true ) );
 					stdoutHistoryDebugger( here, "27", currWord, false );
 					break;
 				}
 				case MULTILINE_BOUNDARY :
 				{
+					advanceLine();
 					stdoutHistoryDebugger( here, "28", currWord, false );
-					currChild = multiline( getPreceedingComment() );
+					currChild = multiline( getPreceedingComment( true ) );
 					stdoutHistoryDebugger( here, "29",
 							currWord, false );
 					break;
@@ -336,7 +338,7 @@ public class Semantologist
 					stdoutHistoryDebugger( here, "30",
 							currWord, false );
 					currChild = section(
-							getPreceedingComment(), ownDepth );
+							getPreceedingComment( true ), ownDepth );
 					stdoutHistoryDebugger( here, "31"
 							, currWord, false );
 					if ( currChild == null )

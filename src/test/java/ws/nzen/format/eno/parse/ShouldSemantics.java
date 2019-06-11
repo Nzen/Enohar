@@ -164,6 +164,8 @@ class ShouldSemantics
 				setOp = Lexeme.SET_OP.getChar(),
 				empOP = Lexeme.CONTINUE_OP_EMPTY.getChar(),
 				spaOp = Lexeme.CONTINUE_OP_SPACE.getChar();
+		DocGen synth = new DocGen();
+		int line = 1;
 		Semantologist knowy = new Semantologist();
 		Section document = new Section( "", 0 );
 		// section ;; section ;; section
@@ -174,13 +176,13 @@ class ShouldSemantics
 		document.getChildren().clear();
 		Section secSibling0 = new Section( dict[ dMultiInd ] );
 		secSibling0.setDepth( 1 );
-		secSibling0.setLine( 1 );
+		secSibling0.setLine( line++ );
 		Section secSibling1 = new Section( dict[ dMultiInd ] );
 		secSibling1.setDepth( 1 );
-		secSibling1.setLine( 2 );
+		secSibling1.setLine( line++ );
 		Section secSibling2 = new Section( dict[ dMultiInd ] );
 		secSibling2.setDepth( 1 );
-		secSibling2.setLine( 3 );
+		secSibling2.setLine( line++ );
 		document.addChild( secSibling0 );
 		document.addChild( secSibling1 );
 		document.addChild( secSibling2 );
@@ -193,24 +195,25 @@ class ShouldSemantics
 		docStr.add( ""+ secOp + secOp + secOp + secOp + dict[ dMultiInd ] );
 		docStr.add( ""+ secOp + secOp + secOp + secOp + secOp + dict[ dMultiInd ] );
 		document.getChildren().clear();
+		line = 5;
 		Section secChild4 = new Section( dict[ dMultiInd ] );
 		secChild4.setDepth( 5 );
-		secChild4.setLine( 5 );
+		secChild4.setLine( line-- );
 		Section secChild3 = new Section( dict[ dMultiInd ] );
 		secChild3.setDepth( 4 );
-		secChild3.setLine( 4 );
+		secChild3.setLine( line-- );
 		secChild3.addChild( secChild4 );
 		Section secChild2 = new Section( dict[ dMultiInd ] );
 		secChild2.setDepth( 3 );
-		secChild2.setLine( 3 );
+		secChild2.setLine( line-- );
 		secChild2.addChild( secChild3 );
 		Section secChild1 = new Section( dict[ dMultiInd ] );
 		secChild1.setDepth( 2 );
-		secChild1.setLine( 2 );
+		secChild1.setLine( line-- );
 		secChild1.addChild( secChild2 );
 		Section secChild0 = new Section( dict[ dMultiInd ] );
 		secChild0.setDepth( 1 );
-		secChild0.setLine( 1 );
+		secChild0.setLine( line-- );
 		secChild0.addChild( secChild1 );
 		document.addChild( secChild0 );
 		compareAsSection( document, knowy.analyze( docStr ) );
@@ -225,26 +228,76 @@ class ShouldSemantics
 		docStr.add( dict[ dEscapeInd ] + dict[ dFieldInd ] + dict[ dEscapeInd ]
 				+ setOp + dict[ dFieldInd ] );
 		document.getChildren().clear();
+		line = 1;
 		Field bare = new Field( dict[ dAssocInd ] );
-		bare.setLine( 1 );
+		bare.setLine( line++ );
 		Value oneLine = new Value( dict[ dOrphInd ] );
 		oneLine.setStringValue( dict[ dOrphInd ] + fieOp );
-		oneLine.setLine( 2 );
+		oneLine.setLine( line++ );
+		line++;
 		FieldList list = new FieldList( dict[ dFieldInd ] );
-		list.setLine( 4 );
+		list.setLine( line++ );
 		ListItem subValue = new ListItem( dict[ dOrphInd ] + fieOp );
-		subValue.setLine( 5 );
+		subValue.setLine( line++ );
 		list.addItem( subValue );
 		FieldSet fset = new FieldSet( dict[ dAssocInd ].toUpperCase() );
-		fset.setLine( 6 );
+		fset.setLine( line++ );
 		SetEntry pair = new SetEntry( dict[ dFieldInd ],
 				dict[ dEscapeInd ].length(), dict[ dFieldInd ] );
-		pair.setLine( 7 );
+		pair.setLine( line++ );
 		fset.addEntry( pair );
 		document.addChild( bare );
 		document.addChild( oneLine );
 		document.addChild( list );
 		document.addChild( fset );
+		compareAsSection( document, knowy.analyze( docStr ) );
+		// section { value section { fset } } section { list }
+		docStr = synth.section( dict[ dFieldInd ], 1 )
+			.field( dict[ dOrphInd ] )
+			.empty( 2 )
+			.moreValue( dict[ dOrphInd ], true )
+			.section( dict[ dAssocInd ], 2 )
+				.field( dict[ dAssocInd ] )
+				.setPair( dict[ dFieldInd ], dict[ dOrphInd ] )
+			.empty( 2 )
+			.section( dict[ dAssocInd ], 1 )
+				.field( dict[ dFieldInd ] )
+				.comment( dict[ dEscapeInd ] )
+				.listItem( dict[ dFieldInd ] )
+			.toStrList();
+		document.getChildren().clear();
+		line = 1;
+		secSibling0.setName( dict[ dFieldInd ] );
+		secSibling0.getChildren().clear();
+		secSibling0.setLine( line++ );
+		oneLine.setName( dict[ dOrphInd ] );
+		oneLine.setStringValue( dict[ dOrphInd ] );
+		oneLine.setLine( line++ );
+		line++; line++;
+		secSibling0.addChild( oneLine );
+		secChild0.setName( dict[ dAssocInd ] );
+		secChild0.setLine( line++ );
+		secChild0.getChildren().clear();
+		fset.entries().clear();
+		fset.setName( dict[ dAssocInd ] );
+		fset.setLine( line++ );
+		pair.setName( dict[ dFieldInd ] );
+		pair.setStringValue( dict[ dOrphInd ] );
+		pair.setLine( line++ );
+		fset.addEntry( pair );
+		secChild0.addChild( fset );
+		line++; line++;
+		secSibling1.setName( dict[ dAssocInd ] );
+		list.setName( dict[ dFieldInd ] );
+		list.setLine( line++ );
+		list.items().clear();
+		line++;
+		subValue.setStringValue( dict[ dFieldInd ] );
+		subValue.setLine( line++ );
+		subValue.addComment( dict[ dEscapeInd ] );
+		subValue.setFirstCommentPreceededName( true );
+		list.addItem( subValue );
+		secSibling1.addChild( list );
 		compareAsSection( document, knowy.analyze( docStr ) );
 	}
 

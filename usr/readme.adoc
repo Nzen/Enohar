@@ -1,0 +1,4 @@
+
+== Purpose
+
+This folder has miscellaneous files produced during the design and initial implementation of Enohar. They aren't documentation, so much as prepatory work for eventual documentation.

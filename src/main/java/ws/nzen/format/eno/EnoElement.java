@@ -147,7 +147,7 @@ public class EnoElement
 		this.comments.clear();
 		for ( String one : comments )
 		{
-			comments.add( new String( one ) );
+			this.comments.add( new String( one ) );
 		}
 	}
 
