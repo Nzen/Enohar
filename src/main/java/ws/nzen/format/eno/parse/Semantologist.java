@@ -459,6 +459,14 @@ public class Semantologist
 		boolean nonChild = false; // NOTE encountered sibling field or parent section
 		while ( true )
 		{
+			/*
+			NP here I pull out the next line type, which is a preceeding
+			comment, but I'm treating as a normal field comment.
+			I'm concerned that if I pull out preceeding comment, it'll
+			change the line cursor, especialy because I advance the
+			line only if there isn't a doccomment. Figure out how to
+			FIX it
+			*/
 			Syntaxeme nextType = peekAtNextLineType( 0 ); // NP here this was 1; differs now
 			stdoutHistoryDebugger( here, "37", nextType );
 			switch ( nextType )

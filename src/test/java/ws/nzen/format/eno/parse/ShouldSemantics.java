@@ -252,43 +252,54 @@ class ShouldSemantics
 		document.addChild( fset );
 		compareAsSection( document, knowy.analyze( docStr ) );
 		// section { value section { fset } } section { list }
-		docStr = synth.section( dict[ dFieldInd ], 1 )
-			.field( dict[ dOrphInd ] )
+		docStr = synth
+			.section( Integer.toString( 1 ), 1 )
+				.field( Integer.toString( 2 ) )
+				.empty( 2 )
+				.moreValue( dict[ dOrphInd ], true )
+				.section( Integer.toString( 3 ), 2 )
+					.field( Integer.toString( 4 ) )
+					.setPair( Integer.toString( 5 ), dict[ dOrphInd ] )
 			.empty( 2 )
-			.moreValue( dict[ dOrphInd ], true )
-			.section( dict[ dAssocInd ], 2 )
-				.field( dict[ dAssocInd ] )
-				.setPair( dict[ dFieldInd ], dict[ dOrphInd ] )
-			.empty( 2 )
-			.section( dict[ dAssocInd ], 1 )
-				.field( dict[ dFieldInd ] )
+			.section( Integer.toString( 6 ), 1 )
+				.field( Integer.toString( 7 ) )
 				.comment( dict[ dEscapeInd ] )
 				.listItem( dict[ dFieldInd ] )
 			.toStrList();
 		document.getChildren().clear();
 		line = 1;
-		secSibling0.setName( dict[ dFieldInd ] );
 		secSibling0.getChildren().clear();
+		secSibling0.setName( Integer.toString( 1 ) );
 		secSibling0.setLine( line++ );
-		oneLine.setName( dict[ dOrphInd ] );
-		oneLine.setStringValue( dict[ dOrphInd ] );
+		secSibling0.setDepth( 1 );
+		oneLine.setName( Integer.toString( 2 ) );
 		oneLine.setLine( line++ );
-		line++; line++;
+		oneLine.setStringValue( dict[ dOrphInd ] );
 		secSibling0.addChild( oneLine );
-		secChild0.setName( dict[ dAssocInd ] );
-		secChild0.setLine( line++ );
+		line++; line++; line++;
 		secChild0.getChildren().clear();
+		secChild0.setName( Integer.toString( 3 ) );
+		secChild0.setLine( line++ );
+		secChild0.setDepth( 2 );
 		fset.entries().clear();
-		fset.setName( dict[ dAssocInd ] );
+		fset.setName( Integer.toString( 4 ) );
 		fset.setLine( line++ );
-		pair.setName( dict[ dFieldInd ] );
-		pair.setStringValue( dict[ dOrphInd ] );
+		pair.setName( Integer.toString( 5 ) );
 		pair.setLine( line++ );
+		pair.setNameEscapes( 0 );
+		pair.setStringValue( dict[ dOrphInd ] );
 		fset.addEntry( pair );
 		secChild0.addChild( fset );
+		secSibling0.addChild( secChild0 );
+		document.addChild( secSibling0 );
 		line++; line++;
-		secSibling1.setName( dict[ dAssocInd ] );
-		list.setName( dict[ dFieldInd ] );
+		secSibling1.getChildren().clear();
+		secSibling1.setName( Integer.toString( 6 ) );
+		secSibling1.setNameEscapes( 0 );
+		secSibling1.setLine( line++ );
+		secSibling1.setDepth( 1 );
+		secSibling1.setPreceedingEmptyLines( 2 );
+		list.setName( Integer.toString( 7 ) );
 		list.setLine( line++ );
 		list.items().clear();
 		line++;
@@ -298,6 +309,7 @@ class ShouldSemantics
 		subValue.setFirstCommentPreceededName( true );
 		list.addItem( subValue );
 		secSibling1.addChild( list );
+		document.addChild( secSibling1 );
 		compareAsSection( document, knowy.analyze( docStr ) );
 	}
 
@@ -307,17 +319,18 @@ class ShouldSemantics
 		if ( expected.equals( result ) )
 			return; // relevant things will match or it will be the literal same
 		// if ( expected == null ) assert paranoid
-		assertEquals( "ae line", expected.getLine(), result.getLine() );
 		assertEquals( "ae name", expected.getName(), result.getName() );
-		assertEquals( "ae name esc", expected.getNameEscapes(), result.getNameEscapes() );
-		assertEquals( "ae type", expected.getType(), result.getType() );
-		assertEquals( "ae pel", expected.getPreceedingEmptyLines(), result.getPreceedingEmptyLines() );
+		String name = expected.getName();
+		assertEquals( "ae line of "+ name, expected.getLine(), result.getLine() );
+		assertEquals( "ae name esc of "+ name, expected.getNameEscapes(), result.getNameEscapes() );
+		assertEquals( "ae type of "+ name, expected.getType(), result.getType() );
+		assertEquals( "ae pel of "+ name, expected.getPreceedingEmptyLines(), result.getPreceedingEmptyLines() );
 		List<String> expectedComments = expected.getComments();
 		List<String> resultComments = result.getComments();
-		assertEquals( "num of comments", expectedComments.size(), resultComments.size() );
+		assertEquals( "// count of "+ name, expectedComments.size(), resultComments.size() );
 		if ( ! expectedComments.isEmpty() )
 		{
-			assertEquals( "f c is associated", expected.firstCommentPreceededName(),
+			assertEquals( "f c is assoc", expected.firstCommentPreceededName(),
 					result.firstCommentPreceededName() );
 			for ( int ind = 0; ind < expectedComments.size(); ind++ )
 			{
@@ -344,7 +357,7 @@ class ShouldSemantics
 		assertEquals( "depth differed", expected.getDepth(), result.getDepth() );
 		List<EnoElement> expectedChildren = expected.elements();
 		List<EnoElement> actualChildren = result.elements();
-		assertEquals( "child count differed",
+		assertEquals( "child count btwx "+ expected.getName() +"-"+ result.getName(),
 				expectedChildren.size(), actualChildren.size() );
 		for ( int ind = 0; ind < expectedChildren.size(); ind++ )
 		{
