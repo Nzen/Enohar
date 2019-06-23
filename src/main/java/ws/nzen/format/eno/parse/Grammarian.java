@@ -27,7 +27,7 @@ import ws.nzen.format.eno.Value;
 import ws.nzen.format.eno.parse.Parser.Word;
 
 /**  */
-public class Semantologist
+public class Grammarian
 {
 	private static final String cl = "s.";
 	private List<List<Word>> parsedLines = new ArrayList<>();
@@ -48,7 +48,7 @@ public class Semantologist
 	}
 
 
-	public Semantologist()
+	public Grammarian()
 	{
 	}
 

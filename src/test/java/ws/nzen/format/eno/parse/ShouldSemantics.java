@@ -14,7 +14,7 @@ import java.util.NoSuchElementException;
 import org.junit.jupiter.api.Test;
 
 import ws.nzen.format.eno.*;
-import ws.nzen.format.eno.parse.Semantologist;
+import ws.nzen.format.eno.parse.Grammarian;
 
 /**  */
 class ShouldSemantics
@@ -27,7 +27,7 @@ class ShouldSemantics
 			dEscapeInd = dFormatInd +1, dMultiInd = dEscapeInd +1;
 
 	/**
-	 * Test method for {@link ws.nzen.format.eno.parse.Semantologist#analyze(java.util.List)}.
+	 * Test method for {@link ws.nzen.format.eno.parse.Grammarian#analyze(java.util.List)}.
 	 */
 	@Test
 	void testAnalyze()
@@ -44,7 +44,7 @@ class ShouldSemantics
 	private void shouldHandleEmptyDocument()
 	{
 		docStr.clear();
-		Semantologist knowy = new Semantologist();
+		Grammarian knowy = new Grammarian();
 		Section doc = knowy.analyze( docStr );
 		assertTrue( doc.getName().isEmpty() );
 		assertTrue( doc.getDepth() == 0 );
@@ -55,7 +55,7 @@ class ShouldSemantics
 	{
 		docStr.clear();
 		docStr.add( Lexeme.COMMENT_OP.getChar() + dict[ dOrphInd ] );
-		Semantologist knowy = new Semantologist();
+		Grammarian knowy = new Grammarian();
 		Section doc = knowy.analyze( docStr );
 		assertTrue( "not associated", ! doc.firstCommentPreceededName() );
 		List<String> comments = doc.getComments();
@@ -70,7 +70,7 @@ class ShouldSemantics
 		docStr.clear();
 		// empty field
 		docStr.add( dict[ dFieldInd ] + Lexeme.FIELD_START_OP.getChar() );
-		Semantologist knowy = new Semantologist();
+		Grammarian knowy = new Grammarian();
 		Section doc = knowy.analyze( docStr );
 		assertTrue( doc.getComments().isEmpty() );
 		Field baseField = doc.field( dict[ dFieldInd ] );
@@ -166,7 +166,7 @@ class ShouldSemantics
 				spaOp = Lexeme.CONTINUE_OP_SPACE.getChar();
 		DocGen synth = new DocGen();
 		int line = 1;
-		Semantologist knowy = new Semantologist();
+		Grammarian knowy = new Grammarian();
 		Section document = new Section( "", 0 );
 		// section ;; section ;; section
 		docStr.clear();
