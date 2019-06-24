@@ -5,17 +5,26 @@ import java.util.TreeSet;
 
 public enum EnoType
 {
-	SECTION,
-	FIELD_EMPTY,
-	FIELD_VALUE,
-	FIELD_SET,
-	FIELD_LIST,
-	MULTILINE,
-	LIST_ITEM,
-	SET_ELEMENT,
-	MISSING,
-	FIELD_GENERIC,
-	UNKNOWN;
+	SECTION( false ),
+	FIELD_EMPTY( true ),
+	FIELD_VALUE( true ),
+	FIELD_SET( true ),
+	FIELD_LIST( true ),
+	MULTILINE( false ),
+	LIST_ITEM( false ),
+	SET_ELEMENT( false ),
+	EMPTY( false ),
+	MISSING( false ),
+	FIELD_GENERIC( true ),
+	UNKNOWN( false );
+
+	private boolean amFieldVariant;
+
+
+	private EnoType( boolean fieldBased )
+	{
+		amFieldVariant = fieldBased;
+	}
 
 
 	public static Set<EnoType> singleRelationFieldTypes()
@@ -25,6 +34,12 @@ public enum EnoType
 		phylogeny.add( FIELD_VALUE );
 		phylogeny.add( MULTILINE );
 		return phylogeny;
+	}
+
+
+	public boolean templateAsField()
+	{
+		return amFieldVariant;
 	}
 
 }

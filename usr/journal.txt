@@ -1,4 +1,12 @@
 
+= Enohar Journal
+
+== 190623
+
+* fix associated comments for setelement and listitem
+* parse recognizes the 'empty' element
+* enable templating
+
 # 190604
 
 I've validated that I can parse single element eno documents. I need to validate that this doesn't fall over when analyzing a more complex document. I'll need to decide how much of the missing element api to honor. Unlike the missing element api, templates are part of the spec, so I'll need to ensure that elements can reference shallow templates, at least. I won't need either of those, though, to reenable note_enojes, using the canon spec.eno file and po files. In that case, I can use the new canon complaints. I'd make sure that I can emit a representation of each element.
@@ -117,7 +125,7 @@ The section interior portions that complain should note that I need to substitut
 
 In field, I took the rest of the line as the field. That might have whitespace. Trim the rest of line (assuming I've already not found a copy operator).
 
-# 181208
+== 181208
 
 Ensure that Lexeme and Syntaxeme have disjoint names so I can static import them rather than have the class name noise.
 
@@ -127,7 +135,7 @@ Send a delimiter character to unescaped name. I'll be using it for maps (ie thei
 
 Verb names for the semantic analyzer : impute, attribute, reckon, ascribe.
 
-# 181114
+== 181114
 
 The compiler book I've read suggests that I let Lexer keep the last lexeme's text representation. That way, instead of carrying around copies of the text of keywords (single char operators in this case), I can just save text for the parsemes that matter, ie text. Maybe I'd have a length for continuable operators (ex section), rather than the entire string.
 

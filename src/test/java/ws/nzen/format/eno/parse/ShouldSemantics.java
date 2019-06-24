@@ -263,7 +263,6 @@ class ShouldSemantics
 			.empty( 2 )
 			.section( Integer.toString( 6 ), 1 )
 				.field( Integer.toString( 7 ) )
-				.comment( dict[ dEscapeInd ] )
 				.listItem( dict[ dFieldInd ] )
 			.toStrList();
 		document.getChildren().clear();
@@ -302,15 +301,33 @@ class ShouldSemantics
 		list.setName( Integer.toString( 7 ) );
 		list.setLine( line++ );
 		list.items().clear();
-		line++;
 		subValue.setStringValue( dict[ dFieldInd ] );
 		subValue.setLine( line++ );
-		subValue.addComment( dict[ dEscapeInd ] );
-		subValue.setFirstCommentPreceededName( true );
 		list.addItem( subValue );
 		secSibling1.addChild( list );
 		document.addChild( secSibling1 );
 		compareAsSection( document, knowy.analyze( docStr ) );
+	}
+
+
+	private void shouldAssociateComments()
+	{
+		DocGen synth = new DocGen();
+		int line = 1;
+		Grammarian knowy = new Grammarian();
+		Section document = new Section( "", 0 );
+		// section ;; section ;; section
+		docStr.clear();
+		// sibling sections first has assoc and comm
+		docStr = synth
+			.empty( 1 )
+			.comment( Integer.toString( 1 ) )
+			.section( Integer.toString( 1 ), 1 )
+			.comment( Integer.toString( 1 ) )
+			.empty( 1 )
+			.section( Integer.toString( 2 ), 1 )
+			.toStrList();
+		Section sibling0 = new Section( Integer.toString( 1 ), 1 );
 	}
 
 

@@ -6,6 +6,7 @@ import static ws.nzen.format.eno.parse.Syntaxeme.*;
 
 import java.text.MessageFormat;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.NoSuchElementException;
@@ -92,7 +93,7 @@ public class Grammarian
 			stdoutHistoryDebugger( here, "2", focusType );
 			String firstComment;
 			Word currWord;
-			if ( focusType == EMPTY )
+			if ( focusType == Syntaxeme.EMPTY )
 			{
 				break; // end of input; parser tells me how much trailing space to include
 			}
@@ -103,7 +104,7 @@ public class Grammarian
 				stdoutHistoryDebugger( here, "4", currWord, true );
 				if ( currWord == null )
 					continue;
-				else if ( currWord.type == EMPTY )
+				else if ( currWord.type == Syntaxeme.EMPTY )
 				{
 					currWord = popCurrentWordOfLine(); // NOTE assuming well formed parser lines
 					stdoutHistoryDebugger( here, "5", currWord, true );
@@ -125,11 +126,12 @@ public class Grammarian
 			currWord = peekAtCurrentWordOfLine();
 			if ( currWord == null )
 				continue;
-			else if ( currWord.type == EMPTY )
+			else if ( currWord.type == Syntaxeme.EMPTY )
 			{
 				stdoutHistoryDebugger( here, "6", currWord, true );
 				wordIndOfLine += 1;
-				currWord = peekAtCurrentWordOfLine(); // NOTE assuming well formed parser lines
+				currWord = peekAtCurrentWordOfLine();
+					// NOTE assuming well formed parser lines
 				stdoutHistoryDebugger( here, "7", currWord, true );
 				if ( currWord == null )
 					continue; // assert paranoid
@@ -216,7 +218,7 @@ public class Grammarian
 		Word emptyLines = null;
 		if ( currWord.type == null )
 			throw new RuntimeException( "expected section" ); // assert paranoid
-		else if ( currWord.type == EMPTY )
+		else if ( currWord.type == Syntaxeme.EMPTY )
 		{
 			emptyLines = currWord;
 			currWord = popCurrentWordOfLine();
@@ -300,7 +302,7 @@ public class Grammarian
 					stdoutHistoryDebugger( here, "23", currWord, false );
 					currWord = popCurrentWordOfLine();
 					stdoutHistoryDebugger( here, "24", currWord, true );
-					if ( currWord.type == EMPTY )
+					if ( currWord.type == Syntaxeme.EMPTY )
 					{
 						// NOTE not keeping comments separated, else we'd need to save them as Value
 						currWord = popCurrentWordOfLine();
@@ -403,7 +405,7 @@ public class Grammarian
 		stdoutHistoryDebugger( here, "32", null, false );
 		Word currWord = popCurrentWordOfLine();
 		stdoutHistoryDebugger( here, "33", currWord, true );
-		if ( currWord.type == EMPTY )
+		if ( currWord.type == Syntaxeme.EMPTY )
 		{
 			emptyLines = currWord;
 			currWord = popCurrentWordOfLine();
@@ -482,7 +484,7 @@ public class Grammarian
 					stdoutHistoryDebugger( here, "38", currWord, true );
 					currWord = popCurrentWordOfLine();
 					stdoutHistoryDebugger( here, "39", currWord, true );
-					if ( currWord.type == EMPTY )
+					if ( currWord.type == Syntaxeme.EMPTY )
 					{
 						// NOTE not keeping comments separated, else we'd need to save them as Value
 						currWord = popCurrentWordOfLine();
@@ -516,7 +518,7 @@ public class Grammarian
 					currWord = popCurrentWordOfLine();
 					stdoutHistoryDebugger( here, "42"
 							, currWord, true );
-					if ( currWord.type == EMPTY )
+					if ( currWord.type == Syntaxeme.EMPTY )
 					{
 						// NOTE not keeping value substrings separated
 						currWord = popCurrentWordOfLine();
@@ -562,7 +564,7 @@ public class Grammarian
 					currWord = popCurrentWordOfLine();
 					stdoutHistoryDebugger( here, "46"
 							, currWord, true );
-					if ( currWord.type == EMPTY )
+					if ( currWord.type == Syntaxeme.EMPTY )
 					{
 						emptyLines = currWord;
 						currWord = popCurrentWordOfLine();
@@ -628,7 +630,7 @@ public class Grammarian
 					currWord = popCurrentWordOfLine();
 					stdoutHistoryDebugger( here, "50"
 							, currWord, true );
-					if ( currWord.type == EMPTY )
+					if ( currWord.type == Syntaxeme.EMPTY )
 					{
 						emptyLines = currWord;
 						currWord = popCurrentWordOfLine();
@@ -727,7 +729,7 @@ public class Grammarian
 		Word currWord = popCurrentWordOfLine();
 		stdoutHistoryDebugger( here, "54"
 				, currWord, true );
-		if ( currWord.type == EMPTY )
+		if ( currWord.type == Syntaxeme.EMPTY )
 		{
 			emptyLines = currWord;
 			currWord = popCurrentWordOfLine();
@@ -786,7 +788,7 @@ public class Grammarian
 			currWord = popCurrentWordOfLine();
 			stdoutHistoryDebugger( here, "59"
 					, currWord, true );
-			if ( currWord.type == EMPTY )
+			if ( currWord.type == Syntaxeme.EMPTY )
 			{
 				currWord = popCurrentWordOfLine();
 				stdoutHistoryDebugger( here, "60"
@@ -833,7 +835,7 @@ public class Grammarian
 						, currToken, true );
 				if ( currToken == null )
 					continue;
-				else if ( currToken.type == EMPTY )
+				else if ( currToken.type == Syntaxeme.EMPTY )
 				{
 					currToken = popCurrentWordOfLine();
 					stdoutHistoryDebugger( here, "64"
@@ -841,7 +843,7 @@ public class Grammarian
 					if ( currToken == null )
 						continue;
 					// loop if paranoid, I'll assume we're well formed here
-					else if ( currToken.type != EMPTY )
+					else if ( currToken.type != Syntaxeme.EMPTY )
 					{
 						lineHasContent = true;
 						break;
@@ -874,7 +876,7 @@ public class Grammarian
 				currToken = popCurrentWordOfLine();
 				stdoutHistoryDebugger( here, "68"
 						, currToken, true );
-				if ( currToken == null || currToken.type == EMPTY )
+				if ( currToken == null || currToken.type == Syntaxeme.EMPTY )
 				{
 					break;
 				}
@@ -978,7 +980,7 @@ public class Grammarian
 				}
 				else
 				{
-					return EMPTY;
+					return Syntaxeme.EMPTY;
 				}
 			}
 			line = parsedLines.get( nextLineInd );
@@ -1031,9 +1033,24 @@ public class Grammarian
 
 	private void resolveForwardReferences()
 	{
-		// FIX todo
-		for ( Dependence ref : transitiveSections )
+		findReferences( sections, transitiveSections );
+		findReferences( fields, transitiveFields );
+		/*
+		validate that values aren't pointing at lists aren't pointing at sets
+		fully check for cyclic dependendies (dijkstra ?)
+		*/
+	}
+
+
+	/** Assumes caller provided elements of the right combination:
+	 * provides minimal type checking. */
+	private void findReferences( 
+			Collection<? extends EnoElement> concreteElements,
+			Collection<Dependence> toResolve )
+	{
+		for ( Dependence ref : toResolve )
 		{
+			// check for template < template
 			if ( ref.hasReference.getName().equals( ref.nameOfReferredTo )
 					&& ref.hasReference.getNameEscapes() == ref.escapesOfReferredTo )
 			{
@@ -1041,82 +1058,47 @@ public class Grammarian
 						ExceptionStore.getStore().getExceptionMessage(
 								ExceptionStore.VALIDATION,
 								EnoLocaleKey.CYCLIC_DEPENDENCY ) );
-				throw new NoSuchElementException( problem.format( new Object[]{ ref.nameOfReferredTo } ) ); // Improve may need to add escapes to distinguish
+				throw new NoSuchElementException( problem.format(
+						new Object[]{ ref.nameOfReferredTo } ) );
 			}
-			int indOfCandidate = -1;
-			for ( int ind = 0; ind < sections.size(); ind++ )
+			EnoElement target = null;
+			for ( EnoElement candidate : concreteElements )
 			{
-				Section candidate = sections.get( ind );
 				if ( ref.nameOfReferredTo.equals( candidate.getName() )
 						&& ref.escapesOfReferredTo == candidate.getNameEscapes() )
 				{
-					if ( indOfCandidate >= 0 )
+					// type matches or it's two field geneology (which != subclass)
+					if ( target == null
+							&& ( ref.hasReference.getType() == candidate.getType() )
+								|| ( ref.hasReference.getType().templateAsField()
+									&& candidate.getType().templateAsField() ) )
 					{
-						// FIX canon complaint about multiple templates
+						target = candidate;
 					}
 					else
 					{
-						indOfCandidate = ind;
+						MessageFormat problem = new MessageFormat(
+								ExceptionStore.getStore().getExceptionMessage(
+										ExceptionStore.VALIDATION,
+										EnoLocaleKey.MULTIPLE_TEMPLATES_FOUND ) );
+						throw new RuntimeException( problem.format(
+								new Object[]{ ref.nameOfReferredTo } ) );
 					}
 				}
 			}
-			if ( indOfCandidate < 0 )
-			{
-				MessageFormat problem = new MessageFormat(
-						ExceptionStore.getStore().getExceptionMessage(
-								null  ,//ExceptionStore., resolution FIX es doesn't know about r file, ensure it has all of them
-								EnoLocaleKey.MISSING_FIELD_VALUE ) );
-				throw new NoSuchElementException( problem.format( new Object[]{ ref.nameOfReferredTo } ) );
-			}
-			else
-			{
-				ref.isReferredTo = sections.get( indOfCandidate );
-				ref.hasReference.setTemplate( ref.isReferredTo );
-				// Improve check if there's a deeper cyclic dependency
-			}
-		}
-		// check fields ;; also todo
-		for ( Dependence ref : transitiveFields )
-		{
-			if ( ref.hasReference.getName().equals( ref.nameOfReferredTo )
-					&& ref.hasReference.getNameEscapes() == ref.escapesOfReferredTo )
+			if ( target == null )
 			{
 				MessageFormat problem = new MessageFormat(
 						ExceptionStore.getStore().getExceptionMessage(
 								ExceptionStore.VALIDATION,
-								EnoLocaleKey.CYCLIC_DEPENDENCY ) );
-				throw new NoSuchElementException( problem.format( new Object[]{ ref.nameOfReferredTo } ) ); // Improve may need to add escapes to distinguish
-			}
-			int indOfCandidate = -1;
-			for ( int ind = 0; ind < fields.size(); ind++ )
-			{
-				Field candidate = fields.get( ind );
-				if ( ref.nameOfReferredTo.equals( candidate.getName() )
-						&& ref.escapesOfReferredTo == candidate.getNameEscapes() )
-				{
-					if ( indOfCandidate >= 0 )
-					{
-						// FIX canon complaint about multiple templates
-					}
-					else
-					{
-						indOfCandidate = ind;
-					}
-				}
-			}
-			if ( indOfCandidate < 0 )
-			{
-				MessageFormat problem = new MessageFormat(
-						ExceptionStore.getStore().getExceptionMessage(
-								null  ,//ExceptionStore., resolution FIX es doesn't know about r file, ensure it has all of them
-								EnoLocaleKey.MISSING_FIELD_VALUE ) );
-				throw new NoSuchElementException( problem.format( new Object[]{ ref.nameOfReferredTo } ) );
+								EnoLocaleKey.TEMPLATE_NOT_FOUND ) );
+				throw new NoSuchElementException( problem.format(
+						new Object[]{ ref.nameOfReferredTo } ) );
 			}
 			else
 			{
-				ref.isReferredTo = fields.get( indOfCandidate );
+				ref.isReferredTo = target;
 				ref.hasReference.setTemplate( ref.isReferredTo );
-				// Improve check if there's a deeper cyclic dependency
 			}
 		}
 	}
