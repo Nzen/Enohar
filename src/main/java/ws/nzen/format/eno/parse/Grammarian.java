@@ -777,7 +777,8 @@ public class Grammarian
 			// NOTE likely a Parser implementation problem, not user error
 			throw new RuntimeException( problem.format( new Object[]{ currWord.line } ) );
 		}
-		currElem.setValue( currWord.value );
+		currElem.setStringValue( ( currWord.value.isEmpty() )
+				? null : currWord.value );
 		// NOTE look for succeeding comments
 		while ( peekAtNextLineType( 1 ) == COMMENT )
 		{
@@ -818,7 +819,7 @@ public class Grammarian
 	{
 		String here = cl +"gpc\t";
 		List<String> comments = new ArrayList<>();
-		boolean firstTime = true, lineHasContent = false;
+		boolean lineHasContent = false;
 		int initialGlobalLineCursor = lineChecked;
 		if ( startAtCurrentLine )
 			lineChecked -= 1;
@@ -947,12 +948,6 @@ public class Grammarian
 					, null, false );
 			return "";
 		}
-	}
-
-
-	private Syntaxeme peekAtNextLineType()
-	{
-		return peekAtNextLineType( 0 );
 	}
 
 

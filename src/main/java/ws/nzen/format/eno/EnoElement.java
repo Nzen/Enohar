@@ -1,4 +1,4 @@
-/** see ../../../../../LICENSE for release details */
+/* see ../../../../../LICENSE for release details */
 package ws.nzen.format.eno;
 
 import java.text.MessageFormat;
@@ -8,7 +8,6 @@ import java.util.List;
 import java.util.NoSuchElementException;
 
 import ws.nzen.format.eno.EnoType;
-import ws.nzen.format.eno.parse.Syntaxeme;
 
 /** Using a composite rather than insisting on casting */
 public class EnoElement

@@ -1,4 +1,4 @@
-/** see ../../../../../LICENSE for release details */
+/* see ../../../../../LICENSE for release details */
 package ws.nzen.format.eno;
 
 import java.util.LinkedList;
@@ -120,14 +120,26 @@ public class DocGen
 
 	public DocGen multiline( String name, String value )
 	{
-		document.append( Lexeme.MULTILINE_OP.getChar() );
-		document.append( Lexeme.MULTILINE_OP.getChar() );
+		return multiline( name, 2, value );
+	}
+
+
+	/** Caller preps a value of literally multiple lines. */
+	public DocGen multiline( String name, int boundary, String value )
+	{
+		if ( boundary < 2 )
+			boundary = 2;
+		for ( int ind = boundary; ind > 0; ind-- )
+			document.append( Lexeme.MULTILINE_OP.getChar() );
 		document.append( name );
 		document.append( System.lineSeparator() );
-		document.append( value );
-		document.append( System.lineSeparator() );
-		document.append( Lexeme.MULTILINE_OP.getChar() );
-		document.append( Lexeme.MULTILINE_OP.getChar() );
+		if ( value != null )
+		{
+			document.append( value );
+			document.append( System.lineSeparator() );
+		}
+		for ( int ind = boundary; ind > 0; ind-- )
+			document.append( Lexeme.MULTILINE_OP.getChar() );
 		document.append( name );
 		document.append( System.lineSeparator() );
 		return this;

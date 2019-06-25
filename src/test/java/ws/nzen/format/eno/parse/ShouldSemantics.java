@@ -1,11 +1,10 @@
-/** see ../../../../../LICENSE for release details */
+/* see ../../../../../LICENSE for release details */
 package ws.nzen.format.eno.parse;
 
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.fail;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -37,8 +36,8 @@ class ShouldSemantics
 		shouldSingleElementBody();
 		shouldMultiElementBody();
 		shouldAssociateComments();
-		// templates
-		// missing element api
+		shouldHonorTemplates();
+		// shouldForgiveMissingElements();
 	}
 
 
@@ -67,6 +66,7 @@ class ShouldSemantics
 	// no template checks, that's later
 	private void shouldSingleElementBody()
 	{
+		DocGen synth = new DocGen();
 		docStr.clear();
 		// empty field
 		docStr.add( dict[ dFieldInd ] + Lexeme.FIELD_START_OP.getChar() );
@@ -97,15 +97,19 @@ class ShouldSemantics
 		trash = doc.optionalField( dict[ dEscapeInd ] );
 		assertTrue( "optional missing null", trash == null );
 		// empty multiline
-		docStr.clear();
-		docStr.add( dict[ dMultiInd ] + dict[ dFieldInd ] );
-		docStr.add( dict[ dMultiInd ] + dict[ dFieldInd ] );
-		doc = knowy.analyze( docStr );
-		baseField = doc.field( dict[ dFieldInd ] );
-		assertTrue( "type is multiline", baseField.getType() == EnoType.MULTILINE );
-		Multiline emptyMultiline = (Multiline)baseField;
+		synth.reset();
+		doc.getChildren().clear();
+		docStr = synth
+				.multiline( dict[ dFieldInd ], null )
+				.toStrList();
+		Multiline block = new Multiline( dict[ dFieldInd ] );
+		doc.addChild( block );
+		Section resultDoc = knowy.analyze( docStr );
+		compareAsSection( doc, resultDoc );
+		Multiline emptyMultiline = (Multiline)resultDoc.field( block.getName() );
 		assertThrows( NoSuchElementException.class,
-				() -> { assertTrue( "dead code", emptyMultiline.requiredStringValue() == null ); } );
+				() -> { assertTrue( "dead code",
+						emptyMultiline.requiredStringValue() == null ); } );
 		// multiline
 		docStr.clear();
 		docStr.add( dict[ dMultiInd ] + dict[ dFieldInd ] );
@@ -162,8 +166,7 @@ class ShouldSemantics
 				fieOp = Lexeme.FIELD_START_OP.getChar(),
 				lstOp = Lexeme.LIST_OP.getChar(),
 				setOp = Lexeme.SET_OP.getChar(),
-				empOP = Lexeme.CONTINUE_OP_EMPTY.getChar(),
-				spaOp = Lexeme.CONTINUE_OP_SPACE.getChar();
+				empOP = Lexeme.CONTINUE_OP_EMPTY.getChar();
 		DocGen synth = new DocGen();
 		int line = 1;
 		Grammarian knowy = new Grammarian();
@@ -375,6 +378,26 @@ class ShouldSemantics
 	}
 
 
+	private void shouldHonorTemplates()
+	{
+		/*
+		empty section templates empty
+		empty field templates value and is value
+		empty templates
+		reject value templates list
+		reject list elem templates value
+		section scopy section with fset, value; hides fset
+		as above deepcopy mixes fset
+		*/
+	}
+
+
+	private void shouldForgiveMissingElements()
+	{
+		// TODO
+	}
+
+
 	private void compareAsElement( EnoElement expected, EnoElement result )
 	{
 		if ( expected.equals( result ) )
@@ -405,9 +428,37 @@ class ShouldSemantics
 		}
 		else
 		{
-			assertEquals( "ae copyop", expected.isShallowTemplate(),
+			assertEquals( "ae copyop",
+					expected.isShallowTemplate(),
 					result.isShallowTemplate() );
-			compareAsElement( expected.getTemplate(), result.getTemplate() );
+			switch ( expected.getTemplate().getType() )
+			{
+				case SECTION :
+				{
+					compareAsSection(
+							(Section)expected.getTemplate(),
+							(Section)result.getTemplate() );
+					break;
+				}
+				case FIELD_VALUE :
+				case MULTILINE :
+				{
+					compareAsValue(
+							(Value)expected.getTemplate(),
+							(Value)result.getTemplate() );
+					break;
+				}
+				default :
+				{
+					compareAsElement(
+							expected.getTemplate(),
+							result.getTemplate() );
+					compareAsField(
+							(Field)expected.getTemplate(),
+							(Field)result.getTemplate() );
+					break;
+				}
+			}
 		}
 	}
 
@@ -434,7 +485,6 @@ class ShouldSemantics
 				compareAsField( (Field)expectedChild, (Field)actualChild );
 			}
 		}
-		// improve compare templates, if they exist
 	}
 
 

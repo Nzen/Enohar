@@ -1,55 +1,72 @@
 
 = Enohar Journal
 
+== 190625
+
+I'm inclined to tackle associated comments today because it seems trickier than the other two, for the moment.
+
+Q does copying refer to comments as well ? Well, I'm given to undersand that enolib doesn't preserve unassociated comments, so: I'm not _required_ to mix comments.
+
+* grammarian checks types of references, plus tests
+* grammarian fully checks for reference cycles, plus tests
+* section, et al honor reference when searching children
+* fix this deal with name with/without escapes
+* javadoc for other elements
+* parser recognizes the empty element (ie without template operator)
+* grammarian recognizes the empty element
+* handle the remaining api for missing elements
+* refactor previous tests to use compareAsElement()
+
 == 190623
 
 * fix associated comments for setelement and listitem
 * parse recognizes the 'empty' element
-* enable templating
+* enable templating in Grammarian and Section, fields
+* fill javadoc for the various eno elements
 
-# 190604
+== 190604
 
 I've validated that I can parse single element eno documents. I need to validate that this doesn't fall over when analyzing a more complex document. I'll need to decide how much of the missing element api to honor. Unlike the missing element api, templates are part of the spec, so I'll need to ensure that elements can reference shallow templates, at least. I won't need either of those, though, to reenable note_enojes, using the canon spec.eno file and po files. In that case, I can use the new canon complaints. I'd make sure that I can emit a representation of each element.
 
-# 190509
+== 190509
 
 I've confirmed that peekAtNextLineType() indeed has consumers which have different expectations about what next means. Rather than a bool called inclusive, I think that I'll send an int called offset so the different callers can supply their own opinion.
 
-# 190408
+== 190408
 
 Oh man. I just noticed the canon 'missing element' functionality. Enolib offers the ability to get elements that aren't in the document. That bomb either sputters if we ask for an optional whatever, by returning null. The bomb goes off if we ask for a required value. But, it doesn't go off where we asked for the value. He links each missing element to its parent so it can call its parent's _missing_exception() method, which will go upward to the first concrete element, even if that's just the section that represents the document.
 
 I could imitate that pattern, but I think that I can get by with a single class that gets the first missing exception and either returns itself, when asking for children, or returns that first exception. Except, my geneology only allows for a single parent. So, I can't return a MissingElement when I should return a Section. So, I either need to make a child class for each one -as he has- or widen the returned type of Section.section( str ) to EnoElement, which is unacceptable.
 
-# 190403
+== 190403
 
 I read some opinions about method chaining as a builder pattern. I'm using it for an sql dsl at work, but I see some of the limitations there, as when I want to insert a different branch into that chain. This thought, though, is in service of building up an eno document. Semantologist is in a special situation, in terms of line numbers, in the sense that I trust it, as well as for forward references. Should I have a separate api for non parser buildup or make these eno elements more cautious ? But, again, Semantologist is going to defer putting in value x until it's convenient. To be fair, I largely regard the cursor api as optional, rather than required. But what about forward references ? Well, I thought I'd resolve them lazily, or when asked to validate that or as part of the Eno class, or something.
 
-# 190331
+== 190331
 
 Oh. The eno locale repository merged with enoLib and doesn't create a json file anymore. le sigh. I'll need to choose whether to complain, not satisfy the spec by trailing, donate a generator for listresourcebundle, or reimplement the locales generator project. For the moment, I'll trail the spec.
 
 Next is section() and prepare tests for when I have this draft ready.
 
-# 190329
+== 190329
 
 Oh, maybe I could infer the type of the field from the type of the referenced element. On the other hand, these may be forward referenced, so it's an occasion for complaint, not assistance. At best, I could change an empty to a whatever when resolving forward references.
 
 Add canon complaints for when I find a set element in a list. Fill in the FieldSet and SetElement api`s. Fill in the set element section of field() much as I did the list section. Break from the loop; return the field that corresponds to the real one. Then, I'll spend a later session filling in section() and make initial tests for this second pass of parsing. In the farther future, after that's debugged (as I'm doubtless forgetting where I've left the cursor), then I could work on enabling forward references.
 
-# 190325
+== 190325
 
 Semantologist field needs to have a local variable for the current child, that way, if when I find a loose comment, I can add it to that, rather than the larger element. Or maybe punt and just add it to the field. It's just space, it doesn't seem particularly hard. Okay. I need to make classes for ListItem and SetElement, so they can store associated and other comments. Um, the list item shouldn't really have a name though. Oh well. If it's vital that it not be of the heirarchy, I can reimplement that section. Then, I'll switch to the section() and vet this draft.
 
 While I am of a desire to say 'and that's mvp' (which it can be, if I choose), the part after that would involve resolving template references. With that done, then I'd be at a comfortable mvp, such that I could start reading from eno files.
 
-# 190302
+== 190302
 
 I'm ambivalent about moving the parsing classes to their own package. I'm also ambivalent about making their private methods protected.
 
 I watched [Gil Tene talk](https://www.youtube.com/watch?v=kczX1y1oR2w) about making software libraries and things to consider. It's something I searched for a little when starting Enohar. I'd read that I should keep to the oldest version of java (or my platform in general) that I could withstand, to maximize the audience for my library. I know I use java 8 Path, and I'm ambivalent about java 9 module descriptor. I don't think that I'll roll back the use of Path and Files, but I can keep to 8.
 
-# 190227
+== 190227
 
 I'm inclined to have a symbol resolution pass before building the document. Specifically, note all the names, whether they are templates of other things, the list line of that name, and a reference if it's valid. That way, as I build the document, if I encounter a copy operation, I can save the global line, assemble that thing, return its children, paste them into the current context, restore the global line, and handle merging this thing's children in a fashion that reflects the copy depth. The preassembly is recursive, so if I have an antagonistic document that forward references a template, it will try to assemble that element, and go down to assemble the concrete element. Alternatively, if the element already exists, it will just make a copy of its children and merge.
 Of course, templates and the line continuations are probably why SR's eno libraries are currently read only. Well, for mvp, I'm just going to emit things as is. Later, I can keep track of where line continuations are and so on. Make a limitation section in the readme or a status document.
@@ -58,7 +75,7 @@ I'm explicitly rejecting the idea of not joining all the value lines. I'll just 
 
 If I'm not going to synthesize the entire templated element, then should attachment be a post document step rather than predocument, given that I don't have an intention of building them, and hence won't need to find the list's line to build it from. I will need to check for duplicates. Yeah, this is a post process step.
 
-# 190215
+== 190215
 
 Todo:
 Remove recognition code
@@ -66,7 +83,7 @@ Add expected types
 (move parsing stuff to a different package ?)
 Use or ditch ExceptionStore
 
-# 190209
+== 190209
 
 having a problem loading properties, try
 https://stackoverflow.com/questions/9983426/loading-properties-file-in-junit-beforeclass
@@ -80,7 +97,7 @@ save the names of these to a 'stack' of symbol tables (to fill in templates)
 
 I added 'try to ignore errors' to the todo list. That means that, rather than throwing an exception and dying, I'd try to find the next field or section and continue parsing. Otherwise, enohar couldn't be used in some realtime editor. Of course, that's a very far future feature, but I think that it deserves to be on the list.
 
-# 190202
+== 190202
 
 I've left a dissonant state regarding prefix words for operators. Which is to say, decide whether field escapes become a separate, empty word or not. If not, remove it from the start of escapedName() and the corresponding tests. If so, vet that I'm doing the right thing.
 
@@ -91,7 +108,7 @@ It's looking like the answer is remove what I did and fix the test. It's late, b
 
 Oh. You know that part where I tested the output of note_enojes ? It turns out I didn't do that part. Good thing it hasn't been published yet. I think that's just a formality, though.
 
-# 190124
+== 190124
 
 Should I use eno for this journal ? le sigh.
 
@@ -99,23 +116,23 @@ I'm in a bind with section. It needs a name, an indicator of how deep the sectio
 
 unescaped name returns word. Maybe I should just be symmetric across both. Well, I want to include whitespace, so unless I add the collection from name to the active list, I might as well accept and return list from both, on the assumption that I should use each the same way.
 
-# 190123
+== 190123
 
 Trying a simpler parser that just classifies the tokens on the line. Then, I can have another pass check the syntax for whether there's a value continuation followed by a list sub element. When I'm there, I'm inclined to make a tree of ContainerElement, which will be section or 'field'. When looking through, I'll cast to the appropriate subclass based on the type. I'm not going to give the base class everything. I'll just have to deal with the consequence of that, rather than carry a map and list and string on every element, even components. Time over space, this round.
 
-# 190121
+== 190121
 
 Oh, his 'templated fields and blocks should not permit continuations' rfc needs to be rejected in syntax analysis (maybe) or syntax needs to leave a mark on the field, such that semantic analysis will notice the continued value field on a templated field and reject it. I can worry about it when I actually build the tree.
 To be clear, I may be 'interpreting' these values too early. Which is to say, maybe I shouldn't be binding all the values together, so much as recognizing the phrases in each line and just saying what it is. You know: field name ; template name ;; continuation ;; comment. Then semantic analysis vets whether there's a map list combo in the same field or whatever. Maybe.
 Actually, maybe I should do exactly that. Parser then produces a list of lines, which are a list of phrases. It can hand that to a syntax analyzer that will actually check for things like a continuation below a templated field. That sounds a bit like semantic analysis, but the latter will perform the template operations and prep the symbol table (Or each section has its own symbol table?)
 
-# 190119
+== 190119
 
 Working on recognizing. Make sure that these things that try next line inflexibly don't just try forever. Consider catching with the complaining version, to know when to break. Or, if I have a thing that knows when the document is fully recognized (no lines left), break and let the stack unwind.
 
 Jumping back from field value (or list) into field any, rather than directly to section interior, seems like it will be less complicated. I'm probably just struggling against the areas where I'm not top down parsing. Oh well.
 
-# 181209
+== 181209
 
 I've still not decided whether I should just recognize the line type or put the entire value together. Which is to say, whether I recognize a line continuation and leave it there or if I have semantic analysis ensure that it gets put together. Well, I'm only going to recognize things for now. In that regard, I'm already on the right path, given that only field interior will recognize line continuations. It's probably worth noting that, if field interior is too complex, I should extract methods to recognize list elements or sets. It's a bit strange that field interior may have to dump from set to section interior or a different field interior, for sets.
 
@@ -131,7 +148,7 @@ Ensure that Lexeme and Syntaxeme have disjoint names so I can static import them
 
 Send a delimiter character to unescaped name. I'll be using it for maps (ie their delimiter is = but section level fields delimit with : ).
 
-# 181207
+== 181207
 
 Verb names for the semantic analyzer : impute, attribute, reckon, ascribe.
 
