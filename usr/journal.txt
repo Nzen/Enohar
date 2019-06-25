@@ -69,8 +69,11 @@ I watched [Gil Tene talk](https://www.youtube.com/watch?v=kczX1y1oR2w) about mak
 == 190227
 
 I'm inclined to have a symbol resolution pass before building the document. Specifically, note all the names, whether they are templates of other things, the list line of that name, and a reference if it's valid. That way, as I build the document, if I encounter a copy operation, I can save the global line, assemble that thing, return its children, paste them into the current context, restore the global line, and handle merging this thing's children in a fashion that reflects the copy depth. The preassembly is recursive, so if I have an antagonistic document that forward references a template, it will try to assemble that element, and go down to assemble the concrete element. Alternatively, if the element already exists, it will just make a copy of its children and merge.
+
 Of course, templates and the line continuations are probably why SR's eno libraries are currently read only. Well, for mvp, I'm just going to emit things as is. Later, I can keep track of where line continuations are and so on. Make a limitation section in the readme or a status document.
+
 What if I tried to keep the same structure ? I mean, build a section or field with only the custom values, mark the element (or children?) with the copy level. That means writing would be clear as to what to emit. It will mean a slower runtime, though, as I'll need to check the symbol table and maybe even more than once to report all the children or whatever. It does make the analysis much closer though.
+
 I'm explicitly rejecting the idea of not joining all the value lines. I'll just keep a list of indicies and types (or only emit no op continuations) so I can emit correctly, but I'm more likely to read and want to avoid repeated string concatenation over making the eventual write much easier.
 
 If I'm not going to synthesize the entire templated element, then should attachment be a post document step rather than predocument, given that I don't have an intention of building them, and hence won't need to find the list's line to build it from. I will need to check for duplicates. Yeah, this is a post process step.
@@ -123,7 +126,9 @@ Trying a simpler parser that just classifies the tokens on the line. Then, I can
 == 190121
 
 Oh, his 'templated fields and blocks should not permit continuations' rfc needs to be rejected in syntax analysis (maybe) or syntax needs to leave a mark on the field, such that semantic analysis will notice the continued value field on a templated field and reject it. I can worry about it when I actually build the tree.
+
 To be clear, I may be 'interpreting' these values too early. Which is to say, maybe I shouldn't be binding all the values together, so much as recognizing the phrases in each line and just saying what it is. You know: field name ; template name ;; continuation ;; comment. Then semantic analysis vets whether there's a map list combo in the same field or whatever. Maybe.
+
 Actually, maybe I should do exactly that. Parser then produces a list of lines, which are a list of phrases. It can hand that to a syntax analyzer that will actually check for things like a continuation below a templated field. That sounds a bit like semantic analysis, but the latter will perform the template operations and prep the symbol table (Or each section has its own symbol table?)
 
 == 190119
