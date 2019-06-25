@@ -4,7 +4,12 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.NoSuchElementException;
 
-/** to ensure all fake elements can complain */
+/** To ensure all fake elements can complain.
+ * Bombs are obliged to throw exceptions when requested required
+ * (object) fields and nulls for optional (object) fields.
+ * (object) field is a roundabout way of referring to the
+ * fields of a java class, rather than the Field elements
+ * of an eno document. */
 public interface Bomb
 {
 
@@ -42,7 +47,7 @@ public interface Bomb
 	public default void addComment( String another )
 	{
 	}
-	/** Congrats, you just cut the wrong wire.
+	/** Sorry, you just cut the live wire.
 	 *  @throws NoSuchElementException inflexibly */
 	public default String requiredStringComment()
 	{
@@ -73,6 +78,7 @@ public interface Bomb
 	{
 		return false;
 	}
+	/** no op */
 	public default void setFirstCommentPreceededName( boolean firstCommentPreceededName )
 	{
 	}
@@ -82,6 +88,7 @@ public interface Bomb
 	{
 		return 0;
 	}
+	/** no op */
 	public default void setPreceedingEmptyLines( int preceedingEmptyLines )
 	{
 	}
@@ -90,6 +97,7 @@ public interface Bomb
 	{
 		return null;
 	}
+	/** no op */
 	public default void setTemplateName( String templateElementName )
 	{
 	}
@@ -98,6 +106,7 @@ public interface Bomb
 	{
 		return 0;
 	}
+	/** no op */
 	public default void setTemplateEscapes( int templateEscapes )
 	{
 	}
@@ -106,6 +115,7 @@ public interface Bomb
 	{
 		return false;
 	}
+	/** no op */
 	public default void setShallowTemplate( boolean shallowTemplate )
 	{
 	}
@@ -114,6 +124,7 @@ public interface Bomb
 	{
 		return 0;
 	}
+	/** no op */
 	public default void setLine( int line )
 	{
 	}

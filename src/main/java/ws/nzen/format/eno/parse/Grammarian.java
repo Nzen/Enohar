@@ -121,7 +121,7 @@ public class Grammarian
 				}
 				continue;
 			}
-			firstComment = getPreceedingComment();
+			firstComment = getPreceedingComment( true );
 			stdoutHistoryDebugger( here, "5 post-gpc", null, false );
 			currWord = peekAtCurrentWordOfLine();
 			if ( currWord == null )
@@ -136,7 +136,8 @@ public class Grammarian
 				if ( currWord == null )
 					continue; // assert paranoid
 				else
-					wordIndOfLine -= 1; // NOTE reset word cursor
+					wordIndOfLine -= 1; // NOTE reset word cursor;
+					// Fix ASK why ? it'll point at empty again
 				stdoutHistoryDebugger( here, "8", currWord, true );
 			}
 			switch ( currWord.type )
@@ -959,7 +960,7 @@ public class Grammarian
 	{
 		String here = cl +"panlt\t";
 		/*
-		if list is empty, continue, nonstandard parser input
+		if line is empty, continue, nonstandard parser input
 		if the first of it is empty, check next word
 		if not comment, return that
 		if comment iterate until a line starts with empty or noncomment
@@ -993,40 +994,29 @@ public class Grammarian
 			while ( wordInd < line.size() )
 			{
 				currWord = line.get( wordInd );
-				if ( currWord.type == Syntaxeme.EMPTY
-						&& ! vettingComment )
+				if ( currWord.type == Syntaxeme.EMPTY )
 				{
-					wordInd++;
-				}
-				else if ( vettingComment )
-				{
-					return  Syntaxeme.COMMENT;
+					if ( vettingComment )
+						return Syntaxeme.COMMENT;
+					else
+						wordInd++;
 				}
 				else
 				{
 					break;
 				}
 			}
-			if ( wordInd >= line.size() )
-			{
-				continue;
-			}
-			if ( currWord.type == COMMENT 
+			if ( currWord.type == COMMENT
 					&& firstTime )
 			{
 				vettingComment = true;
 				firstTime = false;
-				continue;
 			}
-			else if ( currWord.type == COMMENT 
-					&& vettingComment )
-			{
-				continue;
-			}
-			else
+			else if ( wordInd < line.size() )
 			{
 				return currWord.type;
 			}
+			// NOTE else, check next line
 		}
 	}
 

@@ -36,6 +36,7 @@ class ShouldSemantics
 		shouldCommentOnlyDocument();
 		shouldSingleElementBody();
 		shouldMultiElementBody();
+		shouldAssociateComments();
 		// templates
 		// missing element api
 	}
@@ -45,9 +46,8 @@ class ShouldSemantics
 	{
 		docStr.clear();
 		Grammarian knowy = new Grammarian();
-		Section doc = knowy.analyze( docStr );
-		assertTrue( doc.getName().isEmpty() );
-		assertTrue( doc.getDepth() == 0 );
+		Section doc = new Section();
+		compareAsSection( doc, knowy.analyze( docStr ) );
 	}
 
 
@@ -251,7 +251,8 @@ class ShouldSemantics
 		document.addChild( list );
 		document.addChild( fset );
 		compareAsSection( document, knowy.analyze( docStr ) );
-		// section { value section { fset } } section { list }
+		// section { value section { fset } } section { list } 
+		synth.reset();
 		docStr = synth
 			.section( Integer.toString( 1 ), 1 )
 				.field( Integer.toString( 2 ) )
@@ -316,18 +317,61 @@ class ShouldSemantics
 		int line = 1;
 		Grammarian knowy = new Grammarian();
 		Section document = new Section( "", 0 );
-		// section ;; section ;; section
-		docStr.clear();
-		// sibling sections first has assoc and comm
+		// sibling sections first has associated, other goes on first because of empty line 
+		synth.reset();
 		docStr = synth
 			.empty( 1 )
-			.comment( Integer.toString( 1 ) )
+			.comment( Integer.toString( 0 ) )
 			.section( Integer.toString( 1 ), 1 )
 			.comment( Integer.toString( 1 ) )
 			.empty( 1 )
 			.section( Integer.toString( 2 ), 1 )
 			.toStrList();
-		Section sibling0 = new Section( Integer.toString( 1 ), 1 );
+		Section sibling0 = new Section( Integer.toString( 1 ) );
+		sibling0.setDepth( 1 );
+		sibling0.addComment( Integer.toString( 0 ) );
+		sibling0.setFirstCommentPreceededName( true );
+		sibling0.addComment( Integer.toString( 1 ) );
+		// IMPROVE consider tracking the empty line before the associated comment
+		sibling0.setLine( 3 );
+		document.addChild( sibling0 );
+		Section sibling1 = new Section( Integer.toString( 2 ) );
+		sibling1.setDepth( 1 );
+		sibling1.setLine( 6 );
+		sibling1.setPreceedingEmptyLines( 1 );
+		document.addChild( sibling1 );
+		compareAsSection( document, knowy.analyze( docStr ) );
+		// fset with comment associated to set entries 
+		synth.reset();
+		document.getChildren().clear();
+		docStr = synth
+				.field( dict[ dEscapeInd ] + Integer.toString( 0 ) + dict[ dEscapeInd ] )
+				.comment( Integer.toString( 0 ) )
+				.empty( 1 )
+				.comment( Integer.toString( 1 ) )
+				.setPair( Integer.toString( 1 ), Integer.toString( 1 ) )
+				.comment( Integer.toString( 2 ) )
+				.setPair( Integer.toString( 2 ), Integer.toString( 2 ) )
+				.toStrList();
+		FieldSet imitatesMap = new FieldSet(
+				Integer.toString( 0 ), dict[ dEscapeInd ].length() );
+		imitatesMap.addComment( Integer.toString( 0 ) );
+		imitatesMap.setLine( 1 );
+		SetEntry pair0 = new SetEntry(
+				Integer.toString( 1 ), 0, Integer.toString( 1 ) );
+		pair0.addComment( Integer.toString( 1 ) );
+		pair0.setFirstCommentPreceededName( true );
+		pair0.setLine( 5 );
+		imitatesMap.addEntry( pair0 );
+		SetEntry pair1 = new SetEntry(
+				Integer.toString( 2 ), 0, Integer.toString( 2 ) );
+		pair1.addComment( Integer.toString( 2 ) );
+		pair1.setFirstCommentPreceededName( true );
+		pair1.setLine( 7 );
+		imitatesMap.addEntry( pair1 );
+		document.addChild( imitatesMap );
+		compareAsSection( document, knowy.analyze( docStr ) );
+		// IMPROVE add other variants { multiline association }
 	}
 
 
@@ -341,7 +385,7 @@ class ShouldSemantics
 		assertEquals( "ae line of "+ name, expected.getLine(), result.getLine() );
 		assertEquals( "ae name esc of "+ name, expected.getNameEscapes(), result.getNameEscapes() );
 		assertEquals( "ae type of "+ name, expected.getType(), result.getType() );
-		assertEquals( "ae pel of "+ name, expected.getPreceedingEmptyLines(), result.getPreceedingEmptyLines() );
+		assertEquals( "ae pEmpty of "+ name, expected.getPreceedingEmptyLines(), result.getPreceedingEmptyLines() );
 		List<String> expectedComments = expected.getComments();
 		List<String> resultComments = result.getComments();
 		assertEquals( "// count of "+ name, expectedComments.size(), resultComments.size() );

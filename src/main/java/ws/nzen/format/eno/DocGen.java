@@ -1,7 +1,7 @@
 /** see ../../../../../LICENSE for release details */
 package ws.nzen.format.eno;
 
-import java.util.Arrays;
+import java.util.LinkedList;
 import java.util.List;
 
 import ws.nzen.format.eno.parse.Lexeme;
@@ -150,7 +150,13 @@ public class DocGen
 
 	public List<String> toStrList()
 	{
-		return Arrays.asList( toString().split( System.lineSeparator() ) );
+		String[] fixedLines = toString().split( System.lineSeparator() );
+		List<String> forParsing = new LinkedList<>();
+		for ( String oneLine : fixedLines )
+		{
+			forParsing.add( oneLine );
+		}
+		return forParsing;
 	}
 
 }
