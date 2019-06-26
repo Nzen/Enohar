@@ -1,0 +1,34 @@
+
+= Enohar Changelog
+
+== Unreleased
+
+* Able to resolve templated elements
+
+== [[0.0-alpha.4.0]] - 2019-06-25
+
+=== Changed
+
+* Comments immediately preceeding set entry and list item associate with them, rather than the enclosing field.
+* Comments at the start of the document with preceeding empty lines now associate with the first element, rather than the enclosing document. 
+* Multiline is now a Value subclass, rather than Field subclass
+
+== [[0.0-alpha.3.0]] - 2019-06-23
+
+=== Changed
+
+* Renames Semantologist as Grammarian.
+
+== [[0.0-alpha.2.0]] - 2019-02-16
+
+=== Added
+
+* Tests for multiline and partial document (Which is to say, a compliant parser).
+
+== [[0.0-alpha.1.0]] - 2018-02-02
+
+=== Changed
+
+* Lexer calculates divergence from section operator for same, not escapes (Which is to say, a compliant lexer).
+
+// Added Changed Removed
