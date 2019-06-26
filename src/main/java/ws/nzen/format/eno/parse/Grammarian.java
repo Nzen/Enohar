@@ -7,12 +7,16 @@ import static ws.nzen.format.eno.parse.Syntaxeme.*;
 import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Set;
 import java.util.TreeSet;
 
+import ws.nzen.format.eno.DocGen;
 import ws.nzen.format.eno.EnoElement;
 import ws.nzen.format.eno.EnoLocaleKey;
 import ws.nzen.format.eno.EnoType;
@@ -1029,7 +1033,7 @@ public class Grammarian
 
 	/** Assumes caller provided elements of the right combination:
 	 * provides minimal type checking. */
-	private void findReferences( 
+	private void findReferences(
 			Collection<? extends EnoElement> concreteElements,
 			Collection<Dependence> toResolve )
 	{
@@ -1044,7 +1048,7 @@ public class Grammarian
 								ExceptionStore.VALIDATION,
 								EnoLocaleKey.CYCLIC_DEPENDENCY ) );
 				throw new NoSuchElementException( problem.format(
-						new Object[]{ ref.nameOfReferredTo } ) );
+						new Object[]{ ref.hasReference.getName() } ) );
 			}
 			EnoElement target = null;
 			for ( EnoElement candidate : concreteElements )
@@ -1083,7 +1087,103 @@ public class Grammarian
 			else
 			{
 				ref.isReferredTo = target;
+				affirmTemplateTypesAreCompatible(
+						ref.hasReference.getType(),
+						ref.isReferredTo.getType(),
+						ref.hasReference.getName() );
 				ref.hasReference.setTemplate( ref.isReferredTo );
+			}
+		}
+		prohibitCycles( concreteElements, toResolve );
+	}
+
+
+	/**  */
+	private void affirmTemplateTypesAreCompatible(
+			EnoType hasReference, EnoType isReferredTo, String name )
+	{
+		if ( hasReference == isReferredTo )
+		{
+			return;
+		}
+		else if ( hasReference == EnoType.SECTION )
+		{
+			// assert not possible for a well behaved grammarian, given the field/section separation
+			String key;
+			switch ( isReferredTo )
+			{
+				case FIELD_EMPTY : { key = EnoLocaleKey.EXPECTED_SECTION_GOT_EMPTY; break; }
+				case FIELD_GENERIC :
+					{ key = EnoLocaleKey.EXPECTED_SECTION_GOT_FIELD; break; }
+				case FIELD_VALUE :
+				case MULTILINE :
+					{ key = EnoLocaleKey.EXPECTED_SECTION_GOT_FIELD; break; }
+				case FIELD_LIST :
+				case LIST_ITEM :
+				{ key = EnoLocaleKey.EXPECTED_SECTION_GOT_LIST; break; }
+				case FIELD_SET :
+				case SET_ELEMENT :
+				{ key = EnoLocaleKey.EXPECTED_SECTION_GOT_FIELDSET; break; }
+				default : { key = EnoLocaleKey.EXPECTED_ELEMENT_GOT_ELEMENTS; break; }
+			}
+			MessageFormat problem = new MessageFormat(
+					ExceptionStore.getStore().getExceptionMessage(
+							ExceptionStore.VALIDATION, key ) );
+			throw new NoSuchElementException( problem.format(
+					new Object[]{ name } ) );
+		}
+		// TODO continue for other complaints or allowances
+	}
+
+
+	/** Follows a chain of templates to null (vetted)
+	 * or a previously seen name, at which point, it complains.
+	 * Assumes that all forward references have been populated. */
+	private void prohibitCycles(
+			Collection<? extends EnoElement> concreteElements,
+			Collection<Dependence> toResolve )
+	{
+		Map<Integer, String> escapeCache = new HashMap<>();
+		escapeCache.put( Integer.valueOf( 0 ), "" );
+		escapeCache.put( Integer.valueOf( 1 ),
+				""+ Lexeme.ESCAPE_OP.getChar() );
+		escapeCache.put( Integer.valueOf( 2 ),
+				""+ Lexeme.ESCAPE_OP.getChar() + Lexeme.ESCAPE_OP.getChar() );
+		Set<String> geneology = new HashSet<>();
+		EnoElement referent = null;
+		String escapes, fullName;
+		int numEscapes = 0;
+		for ( Dependence ref : toResolve )
+		{
+			geneology.clear();
+			numEscapes = ref.hasReference.getNameEscapes();
+			if ( ! escapeCache.containsKey( Integer.valueOf( numEscapes ) ) )
+				escapes = DocGen.genEscapes( numEscapes );
+			escapes = escapeCache.get( Integer.valueOf( numEscapes ) );
+			fullName = ref.hasReference.getName() + escapes;
+			geneology.add( fullName );
+			referent = ref.hasReference.getTemplate();
+			while ( referent != null )
+			{
+				numEscapes = ref.hasReference.getNameEscapes();
+				if ( ! escapeCache.containsKey( Integer.valueOf( numEscapes ) ) )
+					escapes = DocGen.genEscapes( numEscapes );
+				escapes = escapeCache.get( Integer.valueOf( numEscapes ) );
+				fullName = referent.getName();
+				if ( ! geneology.contains( fullName ) )
+				{
+					geneology.add( fullName );
+				}
+				else
+				{
+					MessageFormat problem = new MessageFormat(
+							ExceptionStore.getStore().getExceptionMessage(
+									ExceptionStore.VALIDATION,
+									EnoLocaleKey.CYCLIC_DEPENDENCY ) );
+					throw new NoSuchElementException( problem.format(
+							new Object[]{ ref.hasReference.getName() } ) );
+				}
+				referent = referent.getTemplate();
 			}
 		}
 	}

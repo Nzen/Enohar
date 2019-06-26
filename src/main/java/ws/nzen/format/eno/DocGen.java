@@ -14,6 +14,17 @@ public class DocGen
 	private StringBuilder document = new StringBuilder();
 
 
+	public static String genEscapes( int howMany )
+	{
+		String escapes = "";
+		for ( int ind = howMany; ind > 0; ind-- )
+		{
+			escapes += Lexeme.ESCAPE_OP.getChar();
+		}
+		return escapes;
+	}
+
+
 	public void reset()
 	{
 		document = new StringBuilder();

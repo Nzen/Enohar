@@ -12,6 +12,7 @@ Q does copying refer to comments as well ? Well, I'm given to undersand that eno
 * section, et al honor reference when searching children
 * fix this deal with name with/without escapes
 * javadoc for other elements
+* tests of eno elements (ie req string)
 * parser recognizes the empty element (ie without template operator)
 * grammarian recognizes the empty element
 * handle the remaining api for missing elements
