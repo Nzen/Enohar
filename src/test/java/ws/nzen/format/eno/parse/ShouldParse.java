@@ -26,6 +26,7 @@ class ShouldParse
 	@Test
 	void testParse()
 	{
+		shouldTrim();
 		shouldIgnoreEmptyBody();
 		shouldParseSingleLine();
 		shouldParseSingleElementMultiLine();
@@ -398,13 +399,36 @@ class ShouldParse
 	}
 
 
-	void shouldParseMultiline()
+	private void shouldParseMultiline()
 	{
 		// multi empty
 		// multi with body
 		// ensure multi body preserves formatting
 		// reject unterminated via bare
 		// reject unterminated via escaped start, unescaped end
+	}
+
+
+	private void shouldTrim()
+	{
+		Parser lang = new Parser();
+		String allText = "vv ll",
+				lpad = "  "+ allText,
+				rpad = allText +"\t ";
+		assertEquals( "", lang.ltrim( "" ) );
+		assertEquals( "", lang.rtrim( "" ) );
+		//
+		assertEquals( "", lang.ltrim( "  " ) );
+		assertEquals( "", lang.rtrim( "\t" ) );
+		//
+		assertEquals( allText, lang.ltrim( allText ) );
+		assertEquals( allText, lang.rtrim( allText ) );
+		//
+		assertEquals( allText, lang.ltrim( lpad ) );
+		assertEquals( lpad, lang.rtrim( lpad ) );
+		//
+		assertEquals( rpad, lang.ltrim( rpad ) );
+		assertEquals( allText, lang.rtrim( rpad ) );
 	}
 
 }

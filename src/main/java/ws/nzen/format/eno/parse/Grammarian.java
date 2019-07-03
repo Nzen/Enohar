@@ -284,6 +284,7 @@ public class Grammarian
 			reference.hasReference = container;
 			reference.nameOfReferredTo = currWord.value;
 			reference.escapesOfReferredTo = currWord.modifier;
+			transitiveSections.add( reference );
 		}
 		sections.add( container );
 		// ASK advanceLine();
@@ -457,6 +458,7 @@ public class Grammarian
 				reference.hasReference = emptySelf;
 				reference.nameOfReferredTo = currWord.value;
 				reference.escapesOfReferredTo = currWord.modifier;
+				transitiveFields.add( reference );
 			}
 			else
 				throw new RuntimeException( "expected nothing, not "+ currWord.type ); // assert paranoid

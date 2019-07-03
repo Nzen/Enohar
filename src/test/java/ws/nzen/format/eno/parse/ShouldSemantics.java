@@ -402,7 +402,7 @@ class ShouldSemantics
 		docStr = synth
 				.field( Integer.toString( 1 ) )
 				.listItem( Integer.toString( 3 ) )
-				.field( Integer.toString( 2 ),
+				.field( Integer.toString( 2 ), // < copy from ...
 						Integer.toString( 1 ), true )
 				.listItem( Integer.toString( 4 ) )
 				.toStrList();
@@ -416,6 +416,8 @@ class ShouldSemantics
 		ListItem addedItem = new ListItem( Integer.toString( 4 ) );
 		addedItem.setLine( line++ );
 		client2.addItem( addedItem );
+		client2.setTemplate( base1 );
+		client2.setShallowTemplate( true );
 		document.addChild( base1 );
 		document.addChild( client2 );
 		compareAsSection( document, knowy.analyze( docStr ) );
@@ -476,6 +478,20 @@ class ShouldSemantics
 					compareAsValue(
 							(Value)expected.getTemplate(),
 							(Value)result.getTemplate() );
+					break;
+				}
+				case FIELD_LIST :
+				{
+					compareAsList(
+							(FieldList)expected.getTemplate(),
+							(FieldList)result.getTemplate() );
+					break;
+				}
+				case FIELD_SET :
+				{
+					compareAsFset(
+							(FieldSet)expected.getTemplate(),
+							(FieldSet)result.getTemplate() );
 					break;
 				}
 				default :

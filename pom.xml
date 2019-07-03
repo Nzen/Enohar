@@ -17,9 +17,7 @@
 	<artifactId>
 		enohar
 		</artifactId>
-	<version>
-		0.0-alpha.6.0+j8-SNAPSHOT
-		</version>
+	<version>0.0-alpha.6.0+j8</version>
 	<description>
 		An eno document serialization library
 		</description>

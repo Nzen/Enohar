@@ -106,7 +106,7 @@ public class FieldList extends Field
 	{
 		List<ListItem> allItems = items();
 		List<String> justValues = new ArrayList<>( allItems.size() );
-		for ( ListItem child : values )
+		for ( ListItem child : allItems )
 		{
 			if ( complain )
 			{
@@ -145,14 +145,14 @@ public class FieldList extends Field
 		}
 		// else
 		// FIX use real keys
-		if ( baseInstance.type != EnoType.UNKNOWN )
+		if ( baseInstance.type != EnoType.FIELD_LIST )
 		throw new RuntimeException( "FIX 4test NP change to match context" );
 		String localeComplaint = "";
 		switch ( baseInstance.getType() )
 		{
-			case SECTION :
+			case FIELD_LIST :
 			{
-				setTemplate( (Section)baseInstance );
+				setTemplate( (FieldList)baseInstance );
 				return;
 			}
 			case FIELD_EMPTY :
@@ -166,7 +166,6 @@ public class FieldList extends Field
 				localeComplaint = EnoLocaleKey.EXPECTED_SECTION_GOT_FIELD;
 				break;
 			}
-			case FIELD_LIST :
 			case LIST_ITEM :
 			{
 				localeComplaint = EnoLocaleKey.EXPECTED_SECTION_GOT_LIST;

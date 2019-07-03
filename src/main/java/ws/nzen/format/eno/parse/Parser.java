@@ -517,6 +517,7 @@ public class Parser
 			line = unescapedName( line, DELIM_SET_FIELD_COPY );
 		}
 		skipWhitespace();
+		String temp;
 		if ( currToken.type == SET_OP )
 		{
 			nextToken();
@@ -526,7 +527,11 @@ public class Parser
 				line.get( line.size() -1 ).type = SET_ELEMENT;
 				Word value = new Word();
 				value.type = VALUE;
-				value.value = currToken.word.trim() + alphabet.restOfLine().trim();
+				temp = alphabet.restOfLine();
+				if ( ! temp.isEmpty() )
+					value.value = ltrim( currToken.word ) + rtrim( alphabet.restOfLine() );
+				else
+					value.value = currToken.word.trim();
 				value.line = currLine;
 				line.add( value );
 			}
@@ -543,7 +548,11 @@ public class Parser
 			{
 				Word value = new Word();
 				value.type = VALUE;
-				value.value = currToken.word.trim() + alphabet.restOfLine().trim();
+				temp = alphabet.restOfLine();
+				if ( ! temp.isEmpty() )
+					value.value = ltrim( currToken.word ) + rtrim( alphabet.restOfLine() );
+				else
+					value.value = currToken.word.trim();
 				value.line = currLine;
 				line.add( value );
 			}
@@ -635,7 +644,52 @@ public class Parser
 	}
 
 
-	
+	// normally this would be private, but I've exposed it for testing
+	public String ltrim( String suspect )
+	{
+		if ( suspect == null
+				|| suspect.isEmpty()
+				|| ! Character.isWhitespace( suspect.charAt( 0 ) ) )
+			return suspect;
+		int cutInd = -1;
+		for ( int ind = 0; ind < suspect.length(); ind++ )
+		{
+			if ( ! Character.isWhitespace( suspect.charAt( ind ) ) )
+			{
+				cutInd = ind;
+				break;
+			}
+		}
+		if ( cutInd < 0 )
+			return "";
+		else
+			return suspect.substring( cutInd );
+	}
+
+
+	public String rtrim( String suspect )
+	{
+		if ( suspect == null
+				|| suspect.isEmpty()
+				|| ! Character.isWhitespace( suspect.charAt(
+						suspect.length() -1 ) ) )
+			return suspect;
+		int cutInd = -1;
+		for ( int ind = suspect.length() -1; ind >= 0; ind-- )
+		{
+			if ( ! Character.isWhitespace( suspect.charAt( ind ) ) )
+			{
+				cutInd = ind;
+				break;
+			}
+		}
+		if ( cutInd < 0 )
+			return "";
+		else
+			return suspect.substring( 0, cutInd +1 );
+	}
+
+
 
 }
 
