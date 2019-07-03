@@ -160,10 +160,10 @@ public class Section extends EnoElement
 				? EnoType.singleRelationFieldTypes() : null;
 		for ( EnoElement actual : children )
 		{
-			if ( expectedType == actual.getType()
+			if ( ( expectedType == actual.getType()
 					|| ( expectedType == FIELD_GENERIC
-						&& fieldSpecific.contains( actual.getType() )
-						&& actual.getName().equals( nameOfExpected ) ) )
+						&& fieldSpecific.contains( actual.getType() ) ) )
+				&& actual.getName().equals( nameOfExpected ) )
 			{
 				candidate = actual;
 				break;

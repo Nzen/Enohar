@@ -15,6 +15,7 @@
 === Changed
 
 * FieldList provides the combined items of itself and the template when it has a non-null reference.
+* Section.element(name) gets an element of that name, rather than the first of that type.
 
 == [[0.0-alpha.5.0]] - 2019-06-26
 
