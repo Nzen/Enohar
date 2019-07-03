@@ -37,7 +37,7 @@ class ShouldSemantics
 		shouldMultiElementBody();
 		shouldAssociateComments();
 		shouldHonorTemplates();
-		// shouldForgiveMissingElements();
+		shouldForgiveMissingElements();
 	}
 
 
@@ -389,6 +389,36 @@ class ShouldSemantics
 		section scopy section with fset, value; hides fset
 		as above deepcopy mixes fset
 		*/
+		shouldHonorTemplateFieldList();
+	}
+
+
+	private void shouldHonorTemplateFieldList()
+	{
+		DocGen synth = new DocGen();
+		Section document = new Section( "", 0 );
+		Grammarian knowy = new Grammarian();
+		int line = 1;
+		docStr = synth
+				.field( Integer.toString( 1 ) )
+				.listItem( Integer.toString( 3 ) )
+				.field( Integer.toString( 2 ),
+						Integer.toString( 1 ), true )
+				.listItem( Integer.toString( 4 ) )
+				.toStrList();
+		FieldList base1 = new FieldList( Integer.toString( 1 ) );
+		base1.setLine( line++ );
+		ListItem baseItem = new ListItem( Integer.toString( 3 ) );
+		baseItem.setLine( line++ );
+		base1.addItem( baseItem );
+		FieldList client2 = new FieldList( Integer.toString( 2 ) );
+		client2.setLine( line++ );
+		ListItem addedItem = new ListItem( Integer.toString( 4 ) );
+		addedItem.setLine( line++ );
+		client2.addItem( addedItem );
+		document.addChild( base1 );
+		document.addChild( client2 );
+		compareAsSection( document, knowy.analyze( docStr ) );
 	}
 
 

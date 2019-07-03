@@ -1039,6 +1039,7 @@ public class Grammarian
 	{
 		for ( Dependence ref : toResolve )
 		{
+			// FIX actually, below is not appropriate to reject as cyclic, if there's another
 			// check for template < template
 			if ( ref.hasReference.getName().equals( ref.nameOfReferredTo )
 					&& ref.hasReference.getNameEscapes() == ref.escapesOfReferredTo )

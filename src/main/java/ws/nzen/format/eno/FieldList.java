@@ -44,14 +44,28 @@ public class FieldList extends Field
 		super( which );
 		if ( which != MISSING )
 		{
-			// warn or die
+			// warn or die. probably die, as there's no subclass
 		}
 	}
 
 
+	/** Provides a defensive copy if this list has a template */
 	public List<ListItem> items()
 	{
-		return values;
+		if ( template == null )
+		{
+			return values;
+		}
+		else
+		{
+			List<ListItem> items = new ArrayList<>(
+					((FieldList)template).items() );
+			for ( ListItem own : values )
+			{
+				items.add( own );
+			}
+			return items;
+		}
 	}
 
 
@@ -90,7 +104,8 @@ public class FieldList extends Field
 	/** @throws NoSuchElementException if has no value and complaing */
 	protected List<String> getOnlyValues( final boolean complain )
 	{
-		List<String> justValues = new ArrayList<>( values.size() );
+		List<ListItem> allItems = items();
+		List<String> justValues = new ArrayList<>( allItems.size() );
 		for ( ListItem child : values )
 		{
 			if ( complain )
@@ -108,6 +123,15 @@ public class FieldList extends Field
 
 	public void setTemplate( FieldList baseInstance )
 	{
+		if ( baseInstance.equals( this ) )
+		{
+			MessageFormat problem = new MessageFormat(
+					ExceptionStore.getStore().getExceptionMessage(
+							ExceptionStore.VALIDATION,
+							EnoLocaleKey.CYCLIC_DEPENDENCY ) );
+			throw new NoSuchElementException( problem.format(
+					new Object[]{ getName() } ) );
+		}
 		template = baseInstance;
 	}
 

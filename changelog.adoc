@@ -5,6 +5,12 @@
 
 * Able to resolve templated elements
 
+== [[0.0-alpha.6.0]] - 2019-07-02
+
+=== Changed
+
+* FieldList provides the combined items of itself and the template when it has a non-null reference. 
+
 == [[0.0-alpha.5.0]] - 2019-06-26
 
 === Added

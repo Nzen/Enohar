@@ -1,6 +1,54 @@
 
 = Enohar Journal
 
+== 190702
+
+I'll just worry about the obvious use case for copying / templates. I can worry about more exciting uses later.
+
+Section : (shallow) this provides access to all the other section's children. If this sectio n has a child of the same name, shallow only presents the element of this one.
+
+Section : (deep) this provides access, to own children mixed with template's children.
+
+Section copying, hence is amenable with the system I have so far. If it's a shallow copy, I'll stop if I find a child with the same key. In the deep case, I'll have propagated the copy style flag down and set the reference to the corresponding child.
+
+Lists basically always function as deep copy (in the online demo, though that isn't aware of empty, so maybe it's stale).
+
+Fset is unclear, given the rfc about avoiding merging, given that enolib has weird dynamic typing behaviors that I'm not apt to run into.
+
+I acknowledge that, post parsing, it's possible to get stale references that don't match the current state. I mean section 4 has list 3. 4 templates from 2, which (when parsed) had no list 3. Later I add a list 3 to 2. Section 4 may need to check 'again' whether the template has that list. I guess that's what I expected to do. It's also worth noting that, if a caller removes a template (because, why not ?), I would need to propagate that downward too.
+
+* test for section template reference, directly, before parsing this
+* test for list template reference
+* test for list of section reference, deep and shallow
+* test of grammarian to ensure it sets these up correctly
+* grammarian allows a reference of the same name, if exactly one other exists
+
+* parser marks an empty element distinctly from an empty field
+* grammarian recognizes an empty element
+* refactor previous tests to use compare as element
+
+* all elements provide a bomb correctly  
+
+== 190626
+
+```
+# a
+b :
+- 1
+e:
+- 2
+# h << a
+b:
+- 3
+```
+
+The second b is just -3 still, rather than -1 -3 . wrist.
+Also, apparently field copying to the same name is fine. b<b is fine, presumably because it's elsewhere, so I would continue on the first check if candidate.equals( ref.hasReference )
+
+Ugh, apparently, deep copy is only valid for sections. In fact, enolib lexes the copy operators as separate tokens, such that "ff << bla" tries to find a template called "< bla" rather than bla.
+
+Note\_enojes should have several profiles so maven doesn't quit when I don't unlock the gpg key. Publish note_enohaste to sonatype/maven.
+
 == 190625
 
 I'm inclined to tackle associated comments today because it seems trickier than the other two, for the moment.
