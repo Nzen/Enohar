@@ -257,13 +257,21 @@ public class Section extends EnoElement
 	}
 
 
+	public List<Section> sections()
+	{
+		return sections( null );
+	}
+
+
 	public List<Section> sections( String nameOfExpected )
 	{
 		List<Section> duplicates = new LinkedList<>();
+		boolean needsName = nameOfExpected != null;
 		for ( EnoElement candidate : children )
 		{
 			if ( candidate.type == SECTION
-					&& nameOfExpected.equals( candidate.getName() ) )
+					&& ( ( needsName && nameOfExpected.equals( candidate.getName() ) )
+					|| ! needsName ) )
 			{
 				duplicates.add( (Section)candidate );
 			}
@@ -272,13 +280,21 @@ public class Section extends EnoElement
 	}
 
 
+	public List<FieldList> lists()
+	{
+		return lists( null );
+	}
+
+
 	public List<FieldList> lists( String nameOfExpected )
 	{
 		List<FieldList> duplicates = new LinkedList<>();
+		boolean needsName = nameOfExpected != null;
 		for ( EnoElement candidate : children )
 		{
 			if ( candidate.type == FIELD_LIST
-					&& nameOfExpected.equals( candidate.getName() ) )
+					&& ( ( needsName && nameOfExpected.equals( candidate.getName() ) )
+					|| ! needsName ) )
 			{
 				duplicates.add( (FieldList)candidate );
 			}
@@ -287,18 +303,32 @@ public class Section extends EnoElement
 	}
 
 
+	public List<FieldSet> fieldSets()
+	{
+		return fieldSets( null );
+	}
+
+
 	public List<FieldSet> fieldSets( String nameOfExpected )
 	{
 		List<FieldSet> duplicates = new LinkedList<>();
+		boolean needsName = nameOfExpected != null;
 		for ( EnoElement candidate : children )
 		{
 			if ( candidate.type == FIELD_SET
-					&& nameOfExpected.equals( candidate.getName() ) )
+					&& ( ( needsName && nameOfExpected.equals( candidate.getName() ) )
+					|| ! needsName ) )
 			{
 				duplicates.add( (FieldSet)candidate );
 			}
 		}
 		return duplicates;
+	}
+
+
+	public List<Field> fields()
+	{
+		return fields( null );
 	}
 
 
@@ -309,10 +339,12 @@ public class Section extends EnoElement
 	{
 		List<Field> duplicates = new LinkedList<>();
 		Set<EnoType> applicable = EnoType.singleRelationFieldTypes();
+		boolean needsName = nameOfExpected != null;
 		for ( EnoElement candidate : children )
 		{
-			if ( applicable.contains( candidate.type )
-					&& nameOfExpected.equals( candidate.getName() ) )
+			if ( applicable.contains( candidate.type ) // IMPROVE yieldsField()
+					&& ( ( needsName && nameOfExpected.equals( candidate.getName() ) )
+					|| ! needsName ) )
 			{
 				duplicates.add( (Field)candidate );
 			}

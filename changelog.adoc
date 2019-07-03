@@ -7,9 +7,14 @@
 
 == [[0.0-alpha.6.0]] - 2019-07-02
 
+=== Added
+
+* Exposes section.fields().fieldsets() etc, to get all elements of that type.
+* Exposes deserialization via a new class, Eno.
+
 === Changed
 
-* FieldList provides the combined items of itself and the template when it has a non-null reference. 
+* FieldList provides the combined items of itself and the template when it has a non-null reference.
 
 == [[0.0-alpha.5.0]] - 2019-06-26
 
