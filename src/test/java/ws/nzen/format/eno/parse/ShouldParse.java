@@ -1,4 +1,4 @@
-/** see ../../../../../LICENSE for release details */
+/* see ../../../../../LICENSE for release details */
 package ws.nzen.format.eno.parse;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -389,11 +389,12 @@ class ShouldParse
 
 	private void rejectInvalidDocument( Parser mvp, List<String> file, String why )
 	{
-		assertThrows( RuntimeException.class,
+		assertThrows(
+				RuntimeException.class,
 				() -> {
 					mvp.parse( file );
 				},
-			why );
+				why );
 	}
 
 

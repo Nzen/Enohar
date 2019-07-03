@@ -1,4 +1,4 @@
-/** see ../../../../../LICENSE for release details */
+/* see ../../../../../LICENSE for release details */
 package ws.nzen.format.eno.parse;
 
 import static org.junit.Assert.assertTrue;

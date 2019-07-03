@@ -5,6 +5,16 @@
 
 * Able to resolve templated elements
 
+== [[0.0-alpha.5.0]] - 2019-06-26
+
+=== Added
+
+* Depends on note_enohaste for locale files, reflected in pom.xml
+
+=== Removed
+
+* Copies of locale files from resources (so as not to shadow the new jar).
+
 == [[0.0-alpha.4.0]] - 2019-06-25
 
 === Changed

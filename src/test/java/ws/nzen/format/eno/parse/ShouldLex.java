@@ -1,4 +1,4 @@
-/** see ../../../../../LICENSE for release details */
+/* see ../../../../../LICENSE for release details */
 package ws.nzen.format.eno.parse;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -9,7 +9,7 @@ import org.junit.jupiter.api.Test;
 import ws.nzen.format.eno.parse.Lexeme;
 import ws.nzen.format.eno.parse.Lexer;
 
-/**  */
+/** Validates that lexer provides expected output */
 class ShouldLex
 {
 

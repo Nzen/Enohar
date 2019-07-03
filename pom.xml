@@ -18,7 +18,7 @@
 		enohar
 		</artifactId>
 	<version>
-		0.0-alpha.4.0+j8-SNAPSHOT
+		0.0-alpha.5.0+j8-SNAPSHOT
 		</version>
 	<description>
 		An eno document serialization library
@@ -50,6 +50,18 @@
 				</version>
 			</dependency>
 			-->
+		<dependency>
+			<!-- For locale properties -->
+			<groupId>
+				ws.nzen.format.eno
+				</groupId>
+			<artifactId>
+				note_enohaste
+				</artifactId>
+			<version>
+				1.0
+				</version>
+			</dependency>
 		<dependency>
 			<groupId>
 				org.junit.jupiter
@@ -186,10 +198,10 @@
 						true
 					</skipTests>
 					 -->
-				</configuration>
-			</plugin>
-		</plugins>
-	</build>
+					</configuration>
+				</plugin>
+			</plugins>
+		</build>
 	<profiles>
 		<profile>
 			<!-- profile to compile as java 8 for local repo -->
