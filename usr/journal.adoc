@@ -1,6 +1,10 @@
 
 = Enohar Journal
 
+== 190718
+
+While working on MHC, I've looked at some other aspects I'd like to integrate into enohar : slf4j, cucumber test desc, and maybe conventional commi messagess.
+
 == 190702
 
 I'll just worry about the obvious use case for copying / templates. I can worry about more exciting uses later.
