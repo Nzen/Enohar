@@ -1,6 +1,10 @@
 
 = Enohar Journal
 
+== 190719
+
+Ah, by allowing programmatic creation of elements, I'll need to decide what it means for "regular Field elements can never contain line breaks". Which is to say, do I convert these to multiline, truncate at \n, or use literal \n ? To honor the spec and not lose a client's info, I'm inclined toward the latter, and insisting that the consumer be aware of this limitation.
+
 == 190718
 
 While working on MHC, I've looked at some other aspects I'd like to integrate into enohar : slf4j, cucumber test desc, and maybe conventional commi messagess.
