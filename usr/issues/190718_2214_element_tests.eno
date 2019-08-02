@@ -1,14 +1,12 @@
 
 # issue 190718_2214
 
-## 190718 22:14 cst
-
-comment author : Nicholas (Nzen)
+## body
 
 assignee : Nicholas (Nzen)
 
 title :
-	provide tests for each eno element
+	| provide tests for each eno element
 
 status : in progress
 
@@ -17,6 +15,12 @@ priority : high
 -- desc
 Enohar assumes that the various eno elemets conform to their api, but doesn't have tests to prove so. Provide them.
 -- desc
+
+labels:
+
+## 190718 22:14 cst
+
+comment author : Nicholas (Nzen)
 
 -- comment
 Consider splitting this issue up by element.

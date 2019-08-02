@@ -1,14 +1,12 @@
 
 # issue 190718_2253
 
-## 190718 22:53 cst
-
-comment author : Nicholas (Nzen)
+## body
 
 assignee : Nicholas (Nzen)
 
 title :
-	provide client configurable logging with slf4j
+	| provide client configurable logging with slf4j
 
 status : to do
 
@@ -17,6 +15,12 @@ priority : high
 -- desc
 Enohar currently emits messages to standard err and standard out. Consuming libraries may prefer to choose their own logging library. Accommodate this by writing messages with https://www.slf4j.org/[slf4j] rather than a 'particular' logging framework (ex log4j2).
 -- desc
+
+labels:
+
+## 190718 22:53 cst
+
+comment author : Nicholas (Nzen)
 
 -- comment
 It's not clear if / how this impacts imitating enolib's different logging formats (ex html), as I've only glanced at it.
