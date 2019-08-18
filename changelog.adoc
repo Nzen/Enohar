@@ -5,6 +5,12 @@
 
 * Able to resolve templated elements
 
+== [[0.0-alpha.8.0]] - 2019-08-17
+
+=== Added
+
+* Recognizes bare names and exposes these via section.empty() or .empties().
+
 == [[0.0-alpha.6.0]] - 2019-07-02
 
 === Added
@@ -21,7 +27,7 @@
 
 === Added
 
-* Depends on note_enohaste for locale files, reflected in pom.xml
+* Depends on note_enohaste for locale files, reflected in pom.xml _
 
 === Removed
 

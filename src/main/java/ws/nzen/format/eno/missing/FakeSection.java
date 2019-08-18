@@ -15,7 +15,7 @@ public class FakeSection extends Section implements Bomb
 
 	public FakeSection( String problem )
 	{
-		super( EnoType.MISSING );
+		this();
 		setComplaint( problem );
 	}
 

@@ -17,6 +17,7 @@ import java.util.Set;
 import java.util.TreeSet;
 
 import ws.nzen.format.eno.DocGen;
+import ws.nzen.format.eno.Empty;
 import ws.nzen.format.eno.EnoElement;
 import ws.nzen.format.eno.EnoLocaleKey;
 import ws.nzen.format.eno.EnoType;
@@ -79,7 +80,6 @@ public class Grammarian
 		EnoElement currElem = null;
 		lineChecked = -1;
 		int sectionDepth = 0;
-		// TODO vet these lines again with nextLineType()
 		System.out.println( "\n"+ here +"starting at -1 ----" );
 		int ind = 0;
 		for (List<Word> line : parsedLines)
@@ -165,6 +165,14 @@ public class Grammarian
 					stdoutHistoryDebugger( here, "13", currWord, true );
 					currElem = multiline( firstComment );
 					stdoutHistoryDebugger( here, "14", currWord, true );
+					break;
+				}
+				case BARE :
+				{
+					stdoutHistoryDebugger( here, "14a", currWord, true );
+					currElem = new Empty( currWord.value, currWord.modifier );
+					currElem.setLine( currWord.line );
+					stdoutHistoryDebugger( here, "14b", currWord, true );
 					break;
 				}
 				case VALUE :
@@ -318,7 +326,8 @@ public class Grammarian
 					{
 						container.addComment( currWord.value );
 					}
-					// else complain
+					else
+						throw new RuntimeException( "malformed parser line" );
 					break;
 				}
 				case FIELD :
@@ -343,14 +352,30 @@ public class Grammarian
 					// NOTE ensuring we don't lose the preceeding comment
 					int currLine = lineChecked;
 					advanceLine();
-					stdoutHistoryDebugger( here, "30",
-							currWord, false );
+					stdoutHistoryDebugger( here, "30",currWord, false );
 					currChild = section(
 							getPreceedingComment( true ), ownDepth );
-					stdoutHistoryDebugger( here, "31"
-							, currWord, false );
+					stdoutHistoryDebugger( here, "31", currWord, false );
 					if ( currChild == null )
 						lineChecked = currLine; // ASK vet that this is the right line to save
+					break;
+				}
+				case BARE :
+				{
+					advanceLine();
+					stdoutHistoryDebugger( here, "31a", currWord, true );
+					currWord = popCurrentWordOfLine();
+					if ( currWord.type == Syntaxeme.EMPTY )
+					{
+						currWord = popCurrentWordOfLine();
+					}
+					if ( currWord.type == COMMENT )
+					{
+						currChild = new Empty( currWord.value, currWord.modifier );
+					}
+					else
+						throw new RuntimeException( "malformed parser line" );
+					stdoutHistoryDebugger( here, "31c", currWord, true );
 					break;
 				}
 				case VALUE :
@@ -495,8 +520,7 @@ public class Grammarian
 					{
 						// NOTE not keeping comments separated, else we'd need to save them as Value
 						currWord = popCurrentWordOfLine();
-						stdoutHistoryDebugger( here, "40"
-								, currWord, true );
+						stdoutHistoryDebugger( here, "40", currWord, true );
 					}
 					if ( currWord.type == COMMENT )
 					{
@@ -514,23 +538,21 @@ public class Grammarian
 							currChild.addComment( currWord.value );
 						}
 					}
-					// else complain
+					else
+						throw new RuntimeException( "malformed parser line" );
 					break;
 				}
 				case VALUE :
 				{
 					advanceLine();
-					stdoutHistoryDebugger( here, "41"
-							, currWord, true );
+					stdoutHistoryDebugger( here, "41", currWord, true );
 					currWord = popCurrentWordOfLine();
-					stdoutHistoryDebugger( here, "42"
-							, currWord, true );
+					stdoutHistoryDebugger( here, "42", currWord, true );
 					if ( currWord.type == Syntaxeme.EMPTY )
 					{
 						// NOTE not keeping value substrings separated
 						currWord = popCurrentWordOfLine();
-						stdoutHistoryDebugger( here, "43"
-								, currWord, true );
+						stdoutHistoryDebugger( here, "43", currWord, true );
 					}
 					if ( currWord.type != VALUE )
 					{

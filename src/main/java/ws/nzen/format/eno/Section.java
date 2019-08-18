@@ -12,6 +12,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
 
+import ws.nzen.format.eno.missing.FakeBareName;
 import ws.nzen.format.eno.missing.FakeField;
 import ws.nzen.format.eno.missing.FakeList;
 import ws.nzen.format.eno.missing.FakeSection;
@@ -147,6 +148,29 @@ public class Section extends EnoElement
 	}
 
 
+	/** Get the requested bare name if it exists; FakeFieldList otherwise.
+	* Only provides the first, if multiple have this name */
+	public Empty empty( String nameOfExpected )
+	{
+		return (Empty)getSpecificChild( nameOfExpected,
+				EnoType.BARE, MissingChildConsequence.BOMB );
+	}
+	/** Get the requested bare name if it exists; RuntimeException otherwise.
+	* Only provides the first, if multiple have this name */
+	public Empty requiredEmpty( String nameOfExpected )
+	{
+		return (Empty)getSpecificChild( nameOfExpected,
+				EnoType.BARE, MissingChildConsequence.EXCEPTION );
+	}
+	/** Get the requested bare name if it exists; null otherwise.
+	* Only provides the first, if multiple have this name */
+	public Empty optionalEmpty( String nameOfExpected )
+	{
+		return (Empty)getSpecificChild( nameOfExpected,
+				EnoType.BARE, MissingChildConsequence.NULL );
+	}
+
+
 	/** Get the first element with the expected name. Otherwise,
 	* provide the response dictated by punishment. Bomb corresponds
 	* to the fake version of the expected type. Exception is a
@@ -238,6 +262,10 @@ public class Section extends EnoElement
 				else if ( expectedType == FIELD_SET )
 				{
 					return new FakeSet( complaint );
+				}
+				else if ( expectedType == EnoType.BARE )
+				{
+					return new FakeBareName( complaint );
 				}
 				else
 				{
@@ -347,6 +375,32 @@ public class Section extends EnoElement
 					|| ! needsName ) )
 			{
 				duplicates.add( (Field)candidate );
+			}
+		}
+		return duplicates;
+	}
+
+
+	public List<Empty> empties()
+	{
+		return empties( null );
+	}
+
+
+	/** returns list of field, value, multiline with the desired name.
+	 * For compatability with EnoLib. Caller handles distinguishing
+	 * the returned types. */
+	public List<Empty> empties( String nameOfExpected )
+	{
+		List<Empty> duplicates = new LinkedList<>();
+		boolean needsName = nameOfExpected != null;
+		for ( EnoElement candidate : children )
+		{
+			if ( candidate.type == EnoType.BARE
+					&& ( ( needsName && nameOfExpected.equals( candidate.getName() ) )
+					|| ! needsName ) )
+			{
+				duplicates.add( (Empty)candidate );
 			}
 		}
 		return duplicates;

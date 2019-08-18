@@ -157,6 +157,18 @@ class ShouldSemantics
 		Section subsection = doc.section( dict[ dMultiInd ] );
 		assertTrue( "section type", EnoType.SECTION == subsection.getType() );
 		assertEquals( "section depth", 1, subsection.getDepth() );
+		// bare name
+		docStr.clear();
+		synth.reset();
+		docStr = synth
+				.bare( dict[ dOrphInd ] )
+				.toStrList();
+		Empty bare = new Empty( dict[ dOrphInd ], 0 );
+		bare.setLine( 1 );
+		compareAsElement(
+				bare,
+				knowy.analyze( docStr )
+				.empties().get( 0 ) );
 	}
 
 
@@ -220,16 +232,21 @@ class ShouldSemantics
 		secChild0.addChild( secChild1 );
 		document.addChild( secChild0 );
 		compareAsSection( document, knowy.analyze( docStr ) );
-		// field ;; value ;; list ;; fset
+		// field ;; value ;; list ;; fset ;; bare-name
 		docStr.clear();
-		docStr.add( dict[ dAssocInd ] + fieOp );
-		docStr.add( dict[ dOrphInd ] + fieOp );
-		docStr.add( empOP + dict[ dOrphInd ] + fieOp );
-		docStr.add( dict[ dFieldInd ] + fieOp );
-		docStr.add( lstOp + dict[ dOrphInd ] + fieOp );
-		docStr.add( dict[ dAssocInd ].toUpperCase() + fieOp );
-		docStr.add( dict[ dEscapeInd ] + dict[ dFieldInd ] + dict[ dEscapeInd ]
-				+ setOp + dict[ dFieldInd ] );
+		synth.reset();
+		docStr = synth
+				.field( dict[ dAssocInd ] )
+				.field( dict[ dOrphInd ] )
+				.moreValue( dict[ dOrphInd ], true )
+				.field( dict[ dFieldInd ] )
+				.listItem( dict[ dOrphInd ] + fieOp )
+				.field( dict[ dAssocInd ].toUpperCase() )
+				.setPair(
+						dict[ dEscapeInd ] + dict[ dFieldInd ] + dict[ dEscapeInd ],
+						dict[ dFieldInd ] )
+				.bare( dict[ dOrphInd ].toUpperCase() )
+				.toStrList();
 		document.getChildren().clear();
 		line = 1;
 		Field bare = new Field( dict[ dAssocInd ] );
@@ -249,10 +266,13 @@ class ShouldSemantics
 				dict[ dEscapeInd ].length(), dict[ dFieldInd ] );
 		pair.setLine( line++ );
 		fset.addEntry( pair );
+		Empty bareName = new Empty( dict[ dOrphInd ].toUpperCase(), 0 );
+		bareName.setLine( line++ );
 		document.addChild( bare );
 		document.addChild( oneLine );
 		document.addChild( list );
 		document.addChild( fset );
+		document.addChild( bareName );
 		compareAsSection( document, knowy.analyze( docStr ) );
 		// section { value section { fset } } section { list } 
 		synth.reset();
@@ -525,6 +545,10 @@ class ShouldSemantics
 			if ( expectedChild.getType() == EnoType.SECTION )
 			{
 				compareAsSection( (Section)expectedChild, (Section)actualChild );
+			}
+			else if ( expectedChild.getType() == EnoType.BARE )
+			{
+				continue; // nothing else to check
 			}
 			else
 			{

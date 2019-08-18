@@ -1,0 +1,50 @@
+
+# issue 190817_1150
+
+## body
+
+assignee : Nicholas (Nzen)
+
+title :
+	| Recognize empty elements
+
+status : to do
+
+priority : High
+
+-- desc
+Contemporarily, Eno has an unopposed rfc to add bare names (called empty) to the list of recognized elements. Enohar currently rejects these during parsing. For compatibility, Enohar must recognize these elements.
+-- desc
+
+labels:
+
+## 190817 12:00 cst
+
+comment author : Nicholas (Nzen)
+
+-- comment
+Presumably, this involves adding another parseme type, changing unescapedName(), at line 347 to not reject End as a delimiter. Presumably, fieldAny() also needs to change.
+Grammarian section(), buildDocument(), and field() need to acknowledge the new parseme. There'll be another element class and so on.
+In abstract, these sound like risky changes that could upset my cursor logic and so on. I wonder if I shouldn't just rewrite this to avoid line orientation. It's alluring, but doubtless unnecessary.
+-- comment
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

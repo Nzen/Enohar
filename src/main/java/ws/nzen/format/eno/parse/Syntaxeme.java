@@ -18,6 +18,8 @@ public enum Syntaxeme
 	MULTILINE_BOUNDARY,
 	/** copy operator */
 	COPY,
+	/** bare name */
+	BARE,
 	/** comment text */
 	COMMENT,
 	/** blank lines */

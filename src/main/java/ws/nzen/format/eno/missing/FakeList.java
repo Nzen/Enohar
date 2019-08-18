@@ -22,7 +22,7 @@ public class FakeList extends FieldList implements Bomb
 
 	public FakeList( String problem )
 	{
-		super( EnoType.MISSING );
+		this();
 		setComplaint( problem );
 	}
 

@@ -17,7 +17,9 @@
 	<artifactId>
 		enohar
 		</artifactId>
-	<version>0.0-alpha.6.0+j8</version>
+	<version>
+		0.0-alpha.7.0+j8
+		</version>
 	<description>
 		An eno document serialization library
 		</description>
@@ -107,7 +109,7 @@
 				io.cucumber
 				</groupId>
 			<artifactId>
-				cucumber-java8
+				cucumber-java
 				</artifactId>
 			<version>
 				4.3.1

@@ -19,7 +19,7 @@ public class FakeField extends Field implements Bomb
 
 	public FakeField( String problem )
 	{
-		super( EnoType.MISSING );
+		this();
 		setComplaint( problem );
 	}
 
