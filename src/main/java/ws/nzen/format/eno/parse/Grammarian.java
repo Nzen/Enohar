@@ -177,38 +177,34 @@ public class Grammarian
 				}
 				case VALUE :
 				{
-					MessageFormat problem = new MessageFormat(
-							ExceptionStore.getStore().getExceptionMessage(
-									ExceptionStore.ANALYSIS, EnoLocaleKey
-										.MISSING_ELEMENT_FOR_CONTINUATION ) );
-					throw new RuntimeException( problem.format( new Object[]{ currWord.line } ) );
+					complain(
+							ExceptionStore.ANALYSIS,
+							EnoLocaleKey.MISSING_ELEMENT_FOR_CONTINUATION,
+							new Object[]{ currWord.line } );
 				}
 				case LIST_ELEMENT :
 				{
-					MessageFormat problem = new MessageFormat(
-							ExceptionStore.getStore().getExceptionMessage(
-									ExceptionStore.ANALYSIS, EnoLocaleKey
-										.MISSING_NAME_FOR_LIST_ITEM ) );
-					throw new RuntimeException( problem.format( new Object[]{ currWord.line } ) );
+					complain(
+							ExceptionStore.ANALYSIS,
+							EnoLocaleKey.MISSING_NAME_FOR_LIST_ITEM,
+							new Object[]{ currWord.line } );
 				}
 				case SET_ELEMENT :
 				{
-					MessageFormat problem = new MessageFormat(
-							ExceptionStore.getStore().getExceptionMessage(
-									ExceptionStore.ANALYSIS, EnoLocaleKey
-										.MISSING_NAME_FOR_FIELDSET_ENTRY ) );
-					throw new RuntimeException( problem.format( new Object[]{ currWord.line } ) );
+					complain(
+							ExceptionStore.ANALYSIS,
+							EnoLocaleKey.MISSING_NAME_FOR_FIELDSET_ENTRY,
+							new Object[]{ currWord.line } );
 				}
 				case MULTILINE_TEXT :
 				case COPY :
 				default :
 				{
-					MessageFormat problem = new MessageFormat(
-							ExceptionStore.getStore().getExceptionMessage(
-									ExceptionStore.TOKENIZATION,
-									EnoLocaleKey.INVALID_LINE ) );
 					// NOTE likely a Parser implementation problem, not user error
-					throw new RuntimeException( problem.format( new Object[]{ currWord.line } ) );
+					complain(
+							ExceptionStore.TOKENIZATION,
+							EnoLocaleKey.INVALID_LINE,
+							new Object[]{ currWord.line } );
 				}
 			}
 			if ( currElem != null )
@@ -252,11 +248,10 @@ public class Grammarian
 		{
 			if ( ownDepth > parentDepth )
 			{
-				MessageFormat problem = new MessageFormat(
-						ExceptionStore.getStore().getExceptionMessage(
-								ExceptionStore.ANALYSIS, EnoLocaleKey
-									.SECTION_HIERARCHY_LAYER_SKIP ) );
-				throw new RuntimeException( problem.format( new Object[]{ currWord.line } ) );
+				complain(
+						ExceptionStore.ANALYSIS,
+						EnoLocaleKey.SECTION_HIERARCHY_LAYER_SKIP,
+						new Object[]{ currWord.line } );
 			}
 			else
 			{
@@ -369,49 +364,47 @@ public class Grammarian
 					{
 						currWord = popCurrentWordOfLine();
 					}
-					if ( currWord.type == COMMENT )
+					if ( currWord.type == Syntaxeme.BARE )
 					{
 						currChild = new Empty( currWord.value, currWord.modifier );
+						currChild.setLine( currWord.line );
 					}
 					else
+					{
 						throw new RuntimeException( "malformed parser line" );
+					}
 					stdoutHistoryDebugger( here, "31c", currWord, true );
 					break;
 				}
 				case VALUE :
 				{
-					MessageFormat problem = new MessageFormat(
-							ExceptionStore.getStore().getExceptionMessage(
-									ExceptionStore.ANALYSIS, EnoLocaleKey
-										.MISSING_ELEMENT_FOR_CONTINUATION ) );
-					throw new RuntimeException( problem.format( new Object[]{ currWord.line } ) );
+					complain(
+							ExceptionStore.ANALYSIS,
+							EnoLocaleKey.MISSING_ELEMENT_FOR_CONTINUATION,
+							new Object[]{ currWord.line } );
 				}
 				case LIST_ELEMENT :
 				{
-					MessageFormat problem = new MessageFormat(
-							ExceptionStore.getStore().getExceptionMessage(
-									ExceptionStore.ANALYSIS, EnoLocaleKey
-										.MISSING_NAME_FOR_LIST_ITEM ) );
-					throw new RuntimeException( problem.format( new Object[]{ currWord.line } ) );
+					complain(
+							ExceptionStore.ANALYSIS,
+							EnoLocaleKey.MISSING_NAME_FOR_LIST_ITEM,
+							new Object[]{ currWord.line } );
 				}
 				case SET_ELEMENT :
 				{
-					MessageFormat problem = new MessageFormat(
-							ExceptionStore.getStore().getExceptionMessage(
-									ExceptionStore.ANALYSIS, EnoLocaleKey
-										.MISSING_NAME_FOR_FIELDSET_ENTRY ) );
-					throw new RuntimeException( problem.format( new Object[]{ currWord.line } ) );
+					complain(
+							ExceptionStore.ANALYSIS,
+							EnoLocaleKey.MISSING_NAME_FOR_FIELDSET_ENTRY,
+							new Object[]{ currWord.line } );
 				}
 				case MULTILINE_TEXT :
 				case COPY :
 				default :
 				{
-					MessageFormat problem = new MessageFormat(
-							ExceptionStore.getStore().getExceptionMessage(
-									ExceptionStore.TOKENIZATION,
-									EnoLocaleKey.INVALID_LINE ) );
-					// NOTE likely a Parser implementation problem, not user error
-					throw new RuntimeException( problem.format( new Object[]{ currWord.line } ) );
+					complain(
+							ExceptionStore.TOKENIZATION,
+							EnoLocaleKey.INVALID_LINE,
+							new Object[]{ currWord.line } );
 				}
 			}
 			if ( currChild != null )
@@ -631,19 +624,17 @@ public class Grammarian
 					}
 					else if ( fieldType == FIELD_VALUE )
 					{
-						MessageFormat problem = new MessageFormat(
-								ExceptionStore.getStore().getExceptionMessage(
-										ExceptionStore.ANALYSIS, EnoLocaleKey
-											.LIST_ITEM_IN_FIELD ) );
-						throw new RuntimeException( problem.format( new Object[]{ currWord.line } ) );
+						complain(
+								ExceptionStore.ANALYSIS,
+								EnoLocaleKey.LIST_ITEM_IN_FIELD,
+								new Object[]{ currWord.line } );
 					}
 					else if ( fieldType == FIELD_SET )
 					{
-						MessageFormat problem = new MessageFormat(
-								ExceptionStore.getStore().getExceptionMessage(
-										ExceptionStore.ANALYSIS, EnoLocaleKey
-											.LIST_ITEM_IN_FIELDSET ) );
-						throw new RuntimeException( problem.format( new Object[]{ currWord.line } ) );
+						complain(
+								ExceptionStore.ANALYSIS,
+								EnoLocaleKey.LIST_ITEM_IN_FIELDSET,
+								new Object[]{ currWord.line } );
 					}
 					break;
 				}
@@ -699,19 +690,17 @@ public class Grammarian
 					}
 					else if ( fieldType == FIELD_LIST )
 					{
-						MessageFormat problem = new MessageFormat(
-								ExceptionStore.getStore().getExceptionMessage(
-										ExceptionStore.ANALYSIS, EnoLocaleKey
-											.FIELDSET_ENTRY_IN_LIST ) );
-						throw new RuntimeException( problem.format( new Object[]{ currWord.line } ) );
+						complain(
+								ExceptionStore.ANALYSIS,
+								EnoLocaleKey.FIELDSET_ENTRY_IN_LIST,
+								new Object[]{ currWord.line } );
 					}
 					else if ( fieldType == FIELD_VALUE )
 					{
-						MessageFormat problem = new MessageFormat(
-								ExceptionStore.getStore().getExceptionMessage(
-										ExceptionStore.ANALYSIS, EnoLocaleKey
-											.FIELDSET_ENTRY_IN_FIELD ) );
-						throw new RuntimeException( problem.format( new Object[]{ currWord.line } ) );
+						complain(
+								ExceptionStore.ANALYSIS,
+								EnoLocaleKey.FIELDSET_ENTRY_IN_FIELD,
+								new Object[]{ currWord.line } );
 					}
 					break;
 				}
@@ -767,12 +756,11 @@ public class Grammarian
 		}
 		if ( currWord.type != MULTILINE_BOUNDARY )
 		{
-			MessageFormat problem = new MessageFormat(
-					ExceptionStore.getStore().getExceptionMessage(
-							ExceptionStore.TOKENIZATION,
-							EnoLocaleKey.INVALID_LINE ) );
+			complain(
+					ExceptionStore.TOKENIZATION,
+					EnoLocaleKey.INVALID_LINE,
+					new Object[]{ currWord.line } );
 			// NOTE likely a Parser implementation problem, not user error
-			throw new RuntimeException( problem.format( new Object[]{ currWord.line } ) );
 		}
 		int boundaryHyphens = currWord.modifier;
 		currWord = popCurrentWordOfLine();
@@ -780,12 +768,11 @@ public class Grammarian
 				, currWord, true );
 		if ( currWord.type != FIELD )
 		{
-			MessageFormat problem = new MessageFormat(
-					ExceptionStore.getStore().getExceptionMessage(
-							ExceptionStore.TOKENIZATION,
-							EnoLocaleKey.INVALID_LINE ) );
+			complain(
+					ExceptionStore.TOKENIZATION,
+					EnoLocaleKey.INVALID_LINE,
+					new Object[]{ currWord.line } );
 			// NOTE likely a Parser implementation problem, not user error
-			throw new RuntimeException( problem.format( new Object[]{ currWord.line } ) );
 		}
 		Multiline currElem = new Multiline( currWord.value, currWord.modifier );
 		currElem.setBoundaryLength( boundaryHyphens );
@@ -798,12 +785,11 @@ public class Grammarian
 				, currWord, true );
 		if ( currWord.type != MULTILINE_TEXT )
 		{
-			MessageFormat problem = new MessageFormat(
-					ExceptionStore.getStore().getExceptionMessage(
-							ExceptionStore.TOKENIZATION,
-							EnoLocaleKey.INVALID_LINE ) );
+			complain(
+					ExceptionStore.TOKENIZATION,
+					EnoLocaleKey.INVALID_LINE,
+					new Object[]{ currWord.line } );
 			// NOTE likely a Parser implementation problem, not user error
-			throw new RuntimeException( problem.format( new Object[]{ currWord.line } ) );
 		}
 		currElem.setStringValue( ( currWord.value.isEmpty() )
 				? null : currWord.value );
@@ -1068,12 +1054,10 @@ public class Grammarian
 			if ( ref.hasReference.getName().equals( ref.nameOfReferredTo )
 					&& ref.hasReference.getNameEscapes() == ref.escapesOfReferredTo )
 			{
-				MessageFormat problem = new MessageFormat(
-						ExceptionStore.getStore().getExceptionMessage(
-								ExceptionStore.VALIDATION,
-								EnoLocaleKey.CYCLIC_DEPENDENCY ) );
-				throw new NoSuchElementException( problem.format(
-						new Object[]{ ref.hasReference.getName() } ) );
+				complain(
+						ExceptionStore.VALIDATION,
+						EnoLocaleKey.CYCLIC_DEPENDENCY,
+						new Object[]{ ref.hasReference.getName() } );
 			}
 			EnoElement target = null;
 			for ( EnoElement candidate : concreteElements )
@@ -1091,23 +1075,19 @@ public class Grammarian
 					}
 					else
 					{
-						MessageFormat problem = new MessageFormat(
-								ExceptionStore.getStore().getExceptionMessage(
-										ExceptionStore.VALIDATION,
-										EnoLocaleKey.MULTIPLE_TEMPLATES_FOUND ) );
-						throw new RuntimeException( problem.format(
-								new Object[]{ ref.nameOfReferredTo } ) );
+						complain(
+								ExceptionStore.VALIDATION,
+								EnoLocaleKey.MULTIPLE_TEMPLATES_FOUND,
+								new Object[]{ ref.nameOfReferredTo } );
 					}
 				}
 			}
 			if ( target == null )
 			{
-				MessageFormat problem = new MessageFormat(
-						ExceptionStore.getStore().getExceptionMessage(
-								ExceptionStore.VALIDATION,
-								EnoLocaleKey.TEMPLATE_NOT_FOUND ) );
-				throw new NoSuchElementException( problem.format(
-						new Object[]{ ref.nameOfReferredTo } ) );
+				complain(
+						ExceptionStore.VALIDATION,
+						EnoLocaleKey.TEMPLATE_NOT_FOUND,
+						new Object[]{ ref.nameOfReferredTo } );
 			}
 			else
 			{
@@ -1151,11 +1131,10 @@ public class Grammarian
 				{ key = EnoLocaleKey.EXPECTED_SECTION_GOT_FIELDSET; break; }
 				default : { key = EnoLocaleKey.EXPECTED_ELEMENT_GOT_ELEMENTS; break; }
 			}
-			MessageFormat problem = new MessageFormat(
-					ExceptionStore.getStore().getExceptionMessage(
-							ExceptionStore.VALIDATION, key ) );
-			throw new NoSuchElementException( problem.format(
-					new Object[]{ name } ) );
+			complain(
+					ExceptionStore.VALIDATION,
+					key,
+					new Object[]{ name } );
 		}
 		// TODO continue for other complaints or allowances
 	}
@@ -1201,12 +1180,10 @@ public class Grammarian
 				}
 				else
 				{
-					MessageFormat problem = new MessageFormat(
-							ExceptionStore.getStore().getExceptionMessage(
-									ExceptionStore.VALIDATION,
-									EnoLocaleKey.CYCLIC_DEPENDENCY ) );
-					throw new NoSuchElementException( problem.format(
-							new Object[]{ ref.hasReference.getName() } ) );
+					complain(
+							ExceptionStore.VALIDATION,
+							EnoLocaleKey.CYCLIC_DEPENDENCY,
+							new Object[]{ ref.hasReference.getName() } );
 				}
 				referent = referent.getTemplate();
 			}
@@ -1317,6 +1294,19 @@ public class Grammarian
 		{
 			return false;
 		}
+	}
+
+
+	private void complain(
+			String category,
+			String key,
+			Object[] values )
+	{
+
+		MessageFormat problem = new MessageFormat(
+				ExceptionStore.getStore().getExceptionMessage(
+						category, key ) );
+		throw new RuntimeException( problem.format( values ) );
 	}
 
 

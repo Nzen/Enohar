@@ -32,6 +32,16 @@ public class Value extends Field
 	}
 
 
+	public Value(
+			String nameToHave,
+			int escapes,
+			String val )
+	{
+		this( nameToHave, escapes );
+		setStringValue( val );
+	}
+
+
 	public Value( Field likelyEmpty )
 	{
 		this( new String( likelyEmpty.getName() ), likelyEmpty.getNameEscapes() );
@@ -81,9 +91,15 @@ public class Value extends Field
 		}
 	}
 
+	/** Sets value, but removes line separators, in accordance
+	 * with the spec that only multiline can be multiline. */
 	public void setStringValue( String newValue )
 	{
-		value = newValue;
+		if ( newValue.contains( System.lineSeparator() ) )
+			value = newValue.replaceAll( System.lineSeparator(), "" );
+			// ASK or space ?
+		else
+			value = newValue;
 	}
 
 
@@ -154,20 +170,14 @@ public class Value extends Field
 
 	public StringBuilder toString( StringBuilder aggregator )
 	{
+		if ( aggregator == null )
+			aggregator = new StringBuilder();
 		aggregator = super.toString( aggregator );
-		aggregator.append( System.lineSeparator() );
-		aggregator.append( Lexeme.CONTINUE_OP_EMPTY );
+		aggregator.append( "\t" );
+		aggregator.append( Lexeme.CONTINUE_OP_EMPTY.getChar() );
 		aggregator.append( " " );
 		aggregator.append( value );
 		return aggregator;
-	}
-
-
-	@Override
-	// for subclasses
-	protected StringBuilder toString( StringBuilder aggregator, String declaration )
-	{
-		return super.toString( aggregator, declaration );
 	}
 
 

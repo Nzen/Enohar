@@ -450,7 +450,7 @@ class ShouldSemantics
 	}
 
 
-	private void compareAsElement( EnoElement expected, EnoElement result )
+	public void compareAsElement( EnoElement expected, EnoElement result )
 	{
 		if ( expected.equals( result ) )
 			return; // relevant things will match or it will be the literal same

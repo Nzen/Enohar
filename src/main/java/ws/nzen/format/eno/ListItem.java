@@ -16,16 +16,6 @@ public class ListItem extends Value
 	}
 
 
-	public StringBuilder toString( StringBuilder aggregator )
-	{
-		aggregator = super.toString( aggregator, "" );
-		aggregator.append( Lexeme.LIST_OP.getChar() );
-		aggregator.append( " " );
-		aggregator.append( value );
-		return aggregator;
-	}
-
-
 	public void setTemplate( FieldSet baseInstance )
 	{
 		template = baseInstance;
@@ -87,7 +77,58 @@ public class ListItem extends Value
 		throw new RuntimeException( problem.format( new Object[]{ baseInstance.getName() } ) );
 	}
 
+
+	public StringBuilder toString( StringBuilder aggregator )
+	{
+		StringBuilder declaration = new StringBuilder();
+		declaration.append( "\t" );
+		declaration.append( Lexeme.LIST_OP.getChar() );
+		declaration.append( " " );
+		declaration.append( value );
+		if ( aggregator == null )
+			aggregator = new StringBuilder();
+		return toString( aggregator, declaration.toString() );
+	}
+
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

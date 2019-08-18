@@ -29,6 +29,16 @@ public class Empty extends EnoElement
 		super( BARE, nameToHave, escapes );
 	}
 
+
+	public StringBuilder toString( StringBuilder aggregator )
+	{
+		if ( aggregator == null )
+			aggregator = new StringBuilder();
+		return super.toString(
+				aggregator,
+				super.nameWithEscapes( new StringBuilder() ).toString() );
+	}
+
 }
 
 

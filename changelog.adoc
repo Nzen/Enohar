@@ -5,7 +5,13 @@
 
 * Able to resolve templated elements
 
-== [[0.0-alpha.8.0]] - 2019-08-17
+== [[0.0-alpha.8.0]] - 2019-08-18
+
+=== Changed
+
+* Emits all eno elements, including children, rather than just the name of the parent.
+
+== [[0.0-alpha.7.0]] - 2019-08-17
 
 === Added
 
@@ -27,7 +33,7 @@
 
 === Added
 
-* Depends on note_enohaste for locale files, reflected in pom.xml _
+* Depends on note\_enohaste for locale files, reflected in pom.xml
 
 === Removed
 

@@ -104,8 +104,8 @@ Struck elements are not yet implemented.
 * parse some eno (0.0-alpha.2.0)
 * expose elements (0.0-alpha.3.0)
 * semantic analysis (0.0-alpha.4.0)
-* emit eno document (0.0-alpha.6.0)
 * recognize empty-element (0.0-alpha.7.0)
+* emit eno document (0.0-alpha.8.0)
 * >use canon localization
 * >use templates
 * >wrap missing-element api
@@ -128,16 +128,17 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import ws.nzen.format.eno.Eno;
 import ws.nzen.format.eno.Section;
+import ws.nzen.format.eno.Value;
 public class ExampleOfEnoUsage
 {
 	public static void main( String[] args )
 	{
 		/* NOTE assuming invocation with path as first argument,
-		ex `java -jar usesEnohar.jar usr/issues/190718_2253_slf4j.eno` */
+		ex `java -cp enohar-1.0+j8.jar ExampleOfEnoUsage usr/issues/190718_2253_slf4j.eno` */
 		try
 		{
 			Path whereIsFile = Paths.get( args[ 0 ] );
-			Section wholeDoc = Eno.deserialize( whereIsFile );
+			Section wholeDoc = new Eno().deserialize( whereIsFile );
 			/* NOTE assuming document content is:
 			# issue 190718_2253
 			assignee : Nicholas (Nzen)
@@ -149,7 +150,8 @@ public class ExampleOfEnoUsage
 			if ( issueStatus.requiredStringValue().equals( "to do" ) )
 			{
 				issueStatus.setStringValue( "in progress" );
-				StringBuilder asText = wholeDoc.toString( new StringBuilder(), "" );
+				StringBuilder asText = wholeDoc.toString( new StringBuilder() );
+				Path notReplacing = whereIsFile.getParent().resolve( "new.eno" );
 				Files.write( whereIsFile, asText.toString().getBytes() );
 			}
 		}

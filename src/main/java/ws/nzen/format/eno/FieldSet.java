@@ -151,6 +151,19 @@ public class FieldSet extends Field
 	}
 
 
+	public StringBuilder toString( StringBuilder aggregator )
+	{
+		if ( aggregator == null )
+			aggregator = new StringBuilder();
+		aggregator = super.toString( aggregator );
+		for ( SetEntry line : entries )
+		{
+			aggregator = line.toString( aggregator );
+		}
+		return aggregator;
+	}
+
+
 }
 
 
