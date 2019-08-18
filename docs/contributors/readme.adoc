@@ -1,0 +1,4 @@
+
+== Purpose
+
+This folder contains contributor license agreements. These authorize the owner of Enohar to release their contributions under the MIT license terms. The threshold is ten lines of code/content.
