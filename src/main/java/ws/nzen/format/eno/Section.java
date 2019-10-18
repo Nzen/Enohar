@@ -12,10 +12,12 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
 
+import ws.nzen.format.eno.missing.FakeBareName;
 import ws.nzen.format.eno.missing.FakeField;
 import ws.nzen.format.eno.missing.FakeList;
 import ws.nzen.format.eno.missing.FakeSection;
 import ws.nzen.format.eno.missing.FakeSet;
+import ws.nzen.format.eno.parse.Lexeme;
 
 /**  */
 public class Section extends EnoElement
@@ -147,6 +149,29 @@ public class Section extends EnoElement
 	}
 
 
+	/** Get the requested bare name if it exists; FakeFieldList otherwise.
+	* Only provides the first, if multiple have this name */
+	public Empty empty( String nameOfExpected )
+	{
+		return (Empty)getSpecificChild( nameOfExpected,
+				EnoType.BARE, MissingChildConsequence.BOMB );
+	}
+	/** Get the requested bare name if it exists; RuntimeException otherwise.
+	* Only provides the first, if multiple have this name */
+	public Empty requiredEmpty( String nameOfExpected )
+	{
+		return (Empty)getSpecificChild( nameOfExpected,
+				EnoType.BARE, MissingChildConsequence.EXCEPTION );
+	}
+	/** Get the requested bare name if it exists; null otherwise.
+	* Only provides the first, if multiple have this name */
+	public Empty optionalEmpty( String nameOfExpected )
+	{
+		return (Empty)getSpecificChild( nameOfExpected,
+				EnoType.BARE, MissingChildConsequence.NULL );
+	}
+
+
 	/** Get the first element with the expected name. Otherwise,
 	* provide the response dictated by punishment. Bomb corresponds
 	* to the fake version of the expected type. Exception is a
@@ -238,6 +263,10 @@ public class Section extends EnoElement
 				else if ( expectedType == FIELD_SET )
 				{
 					return new FakeSet( complaint );
+				}
+				else if ( expectedType == EnoType.BARE )
+				{
+					return new FakeBareName( complaint );
 				}
 				else
 				{
@@ -353,12 +382,65 @@ public class Section extends EnoElement
 	}
 
 
+	public List<Empty> empties()
+	{
+		return empties( null );
+	}
+
+
+	/** returns list of field, value, multiline with the desired name.
+	 * For compatability with EnoLib. Caller handles distinguishing
+	 * the returned types. */
+	public List<Empty> empties( String nameOfExpected )
+	{
+		List<Empty> duplicates = new LinkedList<>();
+		boolean needsName = nameOfExpected != null;
+		for ( EnoElement candidate : children )
+		{
+			if ( candidate.type == EnoType.BARE
+					&& ( ( needsName && nameOfExpected.equals( candidate.getName() ) )
+					|| ! needsName ) )
+			{
+				duplicates.add( (Empty)candidate );
+			}
+		}
+		return duplicates;
+	}
+
+
 	public void addChild( EnoElement another )
 	{
-		if ( another != null
-				&& another.getType() != EnoType.UNKNOWN )
+		if ( another != null )
 		{
-			children.add( another );
+			if ( another.getType() == EnoType.SECTION
+					&& ((Section)another).getDepth() > depth +1 )
+			{
+				MessageFormat problem = new MessageFormat(
+						ExceptionStore.getStore().getExceptionMessage(
+								ExceptionStore.ANALYSIS, EnoLocaleKey
+									.SECTION_HIERARCHY_LAYER_SKIP ) );
+				throw new RuntimeException( problem.format(
+						new Object[]{ another.getLine() } ) );
+			}
+			if ( another.getType() != EnoType.UNKNOWN
+					&& another.getType() != EnoType.LIST_ITEM
+					&& another.getType() != EnoType.SET_ELEMENT )
+			{
+				children.add( another );
+			}
+			else if ( another.getType() == EnoType.LIST_ITEM
+					|| another.getType() == EnoType.SET_ELEMENT )
+			{
+				String localeKey = another.getType() == EnoType.LIST_ITEM
+						? EnoLocaleKey.MISSING_NAME_FOR_LIST_ITEM
+						: EnoLocaleKey.MISSING_NAME_FOR_FIELDSET_ENTRY;
+				MessageFormat problem = new MessageFormat(
+						ExceptionStore.getStore().getExceptionMessage(
+								ExceptionStore.ANALYSIS, localeKey ) );
+				throw new RuntimeException( problem.format(
+						new Object[]{ another.getLine() } ) );
+			}
+			// ASK forgives unknown, apparently
 		}
 	}
 
@@ -449,6 +531,57 @@ public class Section extends EnoElement
 	public String toString()
 	{
 		return type.name() +"-"+ depth +" "+ name;
+	}
+
+
+	public StringBuilder toString( StringBuilder aggregator )
+	{
+		if ( aggregator == null )
+			aggregator = new StringBuilder();
+		StringBuilder declaration = new StringBuilder();
+		if ( depth > 0 )
+		{
+			for ( int ind = depth; ind > 0; ind-- )
+			{
+				declaration.append( Lexeme.SECTION_OP.getChar() );
+			}
+			declaration.append( " " );
+			declaration = super.nameWithEscapes( declaration );
+		}
+		return toString( aggregator, declaration.toString() );
+	}
+
+
+	@Override
+	protected StringBuilder toString( StringBuilder aggregator, String declaration )
+	{
+		aggregator = super.toString( aggregator, declaration );
+		for ( EnoElement child : children )
+		{
+			switch ( child.getType() )
+			{
+				case SECTION :
+				{	aggregator = ((Section)child).toString( aggregator ); break; }
+				case BARE :
+				{	aggregator = ((Empty)child).toString( aggregator ); break; }
+				case FIELD_LIST :
+				{	aggregator = ((FieldList)child).toString( aggregator ); break; }
+				case FIELD_SET :
+				{	aggregator = ((FieldSet)child).toString( aggregator ); break; }
+				case FIELD_GENERIC :
+				case FIELD_EMPTY :
+				{	aggregator = ((Field)child).toString( aggregator ); break; }
+				case FIELD_VALUE :
+				{	aggregator = ((Value)child).toString( aggregator ); break; }
+				case MULTILINE :
+				{	aggregator = ((Multiline)child).toString( aggregator ); break; }
+				default :
+					aggregator = child.toString(
+							aggregator,
+							child.nameWithEscapes( new StringBuilder() ).toString() );
+			}
+		}
+		return aggregator;
 	}
 
 

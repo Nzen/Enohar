@@ -3,6 +3,8 @@ package ws.nzen.format.eno;
 
 import java.text.MessageFormat;
 
+import ws.nzen.format.eno.parse.Lexeme;
+
 /**  */
 public class SetEntry extends Value
 {
@@ -84,6 +86,21 @@ public class SetEntry extends Value
 				ExceptionStore.getStore().getExceptionMessage(
 						ExceptionStore.ANALYSIS, localeComplaint ) );
 		throw new RuntimeException( problem.format( new Object[]{ baseInstance.getName() } ) );
+	}
+
+
+	public StringBuilder toString( StringBuilder aggregator )
+	{
+		if ( aggregator == null )
+			aggregator = new StringBuilder();
+		StringBuilder declaration = new StringBuilder();
+		declaration.append( "\t" );
+		declaration = super.nameWithEscapes( declaration );
+		declaration.append( " " );
+		declaration.append( Lexeme.SET_OP.getChar() );
+		declaration.append( " " );
+		declaration.append( value );
+		return super.toString( aggregator, declaration.toString() );
 	}
 
 }

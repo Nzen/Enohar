@@ -1,0 +1,4 @@
+
+== Purpose
+
+This folder has documentation for the Enohar project and library.

@@ -165,25 +165,12 @@ public class Field extends EnoElement
 	public StringBuilder toString( StringBuilder aggregator )
 	{
 		StringBuilder declaration = new StringBuilder();
-		if ( nameEscapes > 0 )
-		{
-			declaration.append( nameEscapes );
-			declaration.append( "`" );
-		}
-		declaration.append( name );
+		declaration = super.nameWithEscapes( declaration );
 		declaration.append( " " );
 		declaration.append( Lexeme.FIELD_START_OP.getChar() );
-		// if ( ! templateName )
-		// declaration.append(  );
+		if ( aggregator == null )
+			aggregator = new StringBuilder();
 		return toString( aggregator, declaration.toString() );
-	}
-
-
-	@Override
-	// for subclasses
-	protected StringBuilder toString( StringBuilder aggregator, String declaration )
-	{
-		return super.toString( aggregator, declaration );
 	}
 
 }

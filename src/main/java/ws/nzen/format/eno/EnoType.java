@@ -13,6 +13,7 @@ public enum EnoType
 	MULTILINE( false ),
 	LIST_ITEM( false ),
 	SET_ELEMENT( false ),
+	BARE( false ),
 	EMPTY( false ),
 	MISSING( false ),
 	FIELD_GENERIC( true ),

@@ -322,6 +322,14 @@ class ShouldParse
 		currWord.value = value;
 		expectedLine.add( currWord );
 		expectedResult.add( expectedLine );
+		// bare name
+		fileContent.add( "  "+ value );
+		expectedLine = new ArrayList<>();
+		currWord = mvp.new Word();
+		currWord.type = BARE;
+		currWord.value = value;
+		expectedLine.add( currWord );
+		expectedResult.add( expectedLine );
 		// comment
 		fileContent.add( ""+ COMMENT_OP.getChar() +" "+ value );
 		expectedLine = new ArrayList<>();
@@ -357,11 +365,18 @@ class ShouldParse
 			List<List<Parser.Word>> expectedWords )
 	{
 		List<List<Parser.Word>> entireResult = mvp.parse( fileContent );
-		assertTrue( expectedWords.size() == entireResult.size(), "num lines: ew"
-				+ expectedWords.size() +" er"+ entireResult.size() );
-		for ( int lineInd = 0; lineInd < entireResult.size(); lineInd++ )
+		elementsMatch( expectedWords, entireResult );
+	}
+
+
+	private void elementsMatch(  List<List<Parser.Word>> expectedWords,
+			List<List<Parser.Word>> actualWords )
+	{
+		assertTrue( expectedWords.size() == expectedWords.size(), "num lines: ew"
+				+ expectedWords.size() +" er"+ expectedWords.size() );
+		for ( int lineInd = 0; lineInd < expectedWords.size(); lineInd++ )
 		{
-			List<Parser.Word> resultLine = entireResult.get( lineInd );
+			List<Parser.Word> resultLine = expectedWords.get( lineInd );
 			List<Parser.Word> expectedLine = expectedWords.get( lineInd );
 			assertTrue( expectedLine.size() == resultLine.size(), "line words should match" );
 			for ( int wordInd = 0; wordInd < resultLine.size(); wordInd++ )
@@ -430,8 +445,47 @@ class ShouldParse
 		assertEquals( rpad, lang.ltrim( rpad ) );
 		assertEquals( allText, lang.rtrim( rpad ) );
 	}
+	
 
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

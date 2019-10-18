@@ -5,7 +5,19 @@
 
 * Able to resolve templated elements
 
-== [[0.0-alpha.6.0]] - 2019-07-03
+== [[0.0-alpha.8.0]] - 2019-08-18
+
+=== Changed
+
+* Emits all eno elements, including children, rather than just the name of the parent.
+
+== [[0.0-alpha.7.0]] - 2019-08-17
+
+=== Added
+
+* Recognizes bare names and exposes these via section.empty() or .empties().
+
+== [[0.0-alpha.6.0]] - 2019-07-02
 
 === Added
 
@@ -21,7 +33,7 @@
 
 === Added
 
-* Depends on note_enohaste for locale files, reflected in pom.xml
+* Depends on note\_enohaste for locale files, reflected in pom.xml
 
 === Removed
 

@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.NoSuchElementException;
 
 import ws.nzen.format.eno.EnoType;
+import ws.nzen.format.eno.parse.Lexeme;
 
 /** Using a composite rather than insisting on casting */
 public class EnoElement
@@ -32,8 +33,11 @@ public class EnoElement
 			String nameToHave, int escapes )
 	{
 		type = typeToBe;
-		name = nameToHave;
-		nameEscapes = escapes;
+		name = nameToHave.trim();
+		if ( escapes < 0 )
+			throw new RuntimeException( "escapes must be positive" ); // FIX find canon
+		else
+			nameEscapes = escapes;
 	}
 
 
@@ -221,6 +225,37 @@ public class EnoElement
 	}
 
 
+	protected boolean indentForToString()
+	{
+		return type == EnoType.LIST_ITEM
+				|| type == EnoType.SET_ELEMENT;
+	}
+
+
+	protected StringBuilder nameWithEscapes( StringBuilder declaration )
+	{
+		if ( nameEscapes > 0 )
+		{
+			for ( int ind = nameEscapes; ind > 0; ind-- )
+			{
+				declaration.append( Lexeme.ESCAPE_OP.getChar() );
+			}
+			declaration.append( " " );
+			// NOTE ensuring a leading escape isn't misinterpreted, this'll get trimmed
+		}
+		declaration.append( name );
+		if ( nameEscapes > 0 )
+		{
+			declaration.append( " " );
+			for ( int ind = nameEscapes; ind > 0; ind-- )
+			{
+				declaration.append( Lexeme.ESCAPE_OP.getChar() );
+			}
+		}
+		return declaration;
+	}
+
+
 	protected StringBuilder toString( StringBuilder aggregator, String declaration )
 	{
 		if ( aggregator == null )
@@ -231,30 +266,43 @@ public class EnoElement
 		}
 		if ( ! comments.isEmpty() && firstCommentPreceededName )
 		{
-			aggregator.append( comments.get( 0 ) );
-			aggregator.append( System.lineSeparator() );
+			for ( String comment : comments.get( 0 ).split( System.lineSeparator() ) )
+			{
+				if ( indentForToString() )
+					aggregator.append( "\t" );
+				aggregator.append( Lexeme.COMMENT_OP.getChar() );
+				aggregator.append( " " );
+				aggregator.append( comment );
+				aggregator.append( System.lineSeparator() );
+			}
 		}
 		// checking on behalf of list element
 		if ( ! declaration.isEmpty() )
 		{
 			aggregator.append( declaration );
+			if ( template != null )
+			{
+				aggregator.append( " " );
+				aggregator.append( Lexeme.COPY_OP_THIN.getChar() );
+				if ( ! shallowTemplate )
+					aggregator.append( Lexeme.COPY_OP_DEEP.getChar() );
+				aggregator.append( " " );
+				aggregator.append( template.getName() );
+			}
 			aggregator.append( System.lineSeparator() );
 		}
-		if ( comments.size() > 1 && firstCommentPreceededName )
+		if ( ! comments.isEmpty() )
 		{
 			Iterator<String> forSkippingFirst = comments.iterator();
-			forSkippingFirst.next();
+			if ( firstCommentPreceededName )
+				forSkippingFirst.next(); // NOTE handled above
 			while( forSkippingFirst.hasNext() )
 			{
+				if ( indentForToString() )
+					aggregator.append( "\t" );
+				aggregator.append( Lexeme.COMMENT_OP.getChar() );
+				aggregator.append( " " );
 				aggregator.append( forSkippingFirst.next() );
-				aggregator.append( System.lineSeparator() );
-			}
-		}
-		else if ( ! comments.isEmpty() && ! firstCommentPreceededName )
-		{
-			for ( String aComment : comments )
-			{
-				aggregator.append( aComment );
 				aggregator.append( System.lineSeparator() );
 			}
 		}

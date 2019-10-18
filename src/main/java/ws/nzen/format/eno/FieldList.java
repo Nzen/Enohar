@@ -192,20 +192,14 @@ public class FieldList extends Field
 
 	public StringBuilder toString( StringBuilder aggregator )
 	{
+		if ( aggregator == null )
+			aggregator = new StringBuilder();
 		aggregator = super.toString( aggregator );
 		for ( ListItem line : values )
 		{
 			aggregator = line.toString( aggregator );
 		}
 		return aggregator;
-	}
-
-
-	@Override
-	// for subclasses
-	protected StringBuilder toString( StringBuilder aggregator, String declaration )
-	{
-		return super.toString( aggregator, declaration );
 	}
 
 

@@ -17,7 +17,7 @@ public class FakeSet extends Field implements Bomb
 
 	public FakeSet( String problem )
 	{
-		super( EnoType.MISSING );
+		this();
 		setComplaint( problem );
 	}
 

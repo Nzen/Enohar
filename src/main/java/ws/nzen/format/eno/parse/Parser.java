@@ -21,6 +21,7 @@ public class Parser
 	private static final String cl = "p.";
 	protected static final Set<Lexeme> DELIM_END_COPY = new TreeSet<>();
 	protected static final Set<Lexeme> DELIM_SET_FIELD_COPY = new TreeSet<>();
+	protected static final Set<Lexeme> DELIM_SET_FIELD_COPY_END = new TreeSet<>();
 	protected static final Set<Lexeme> DELIM_FIELD_COPY = new TreeSet<>();
 	protected static final Set<Lexeme> DELIM_END = new TreeSet<>();
 	protected Queue<String> allLines = new LinkedList<>();
@@ -64,6 +65,11 @@ public class Parser
 		DELIM_FIELD_COPY.add( FIELD_START_OP );
 		DELIM_FIELD_COPY.add( COPY_OP_DEEP );
 		DELIM_FIELD_COPY.add( COPY_OP_THIN );
+		DELIM_SET_FIELD_COPY_END.add( SET_OP );
+		DELIM_SET_FIELD_COPY_END.add( FIELD_START_OP );
+		DELIM_SET_FIELD_COPY_END.add( COPY_OP_DEEP );
+		DELIM_SET_FIELD_COPY_END.add( COPY_OP_THIN );
+		DELIM_SET_FIELD_COPY_END.add( END );
 		DELIM_END.add( END );
 	}
 
@@ -514,7 +520,7 @@ public class Parser
 		}
 		else
 		{
-			line = unescapedName( line, DELIM_SET_FIELD_COPY );
+			line = unescapedName( line, DELIM_SET_FIELD_COPY_END );
 		}
 		skipWhitespace();
 		String temp;
@@ -560,6 +566,10 @@ public class Parser
 		else if ( isCopyOperator( currToken.type ) )
 		{
 			line = template( line );
+		}
+		else if ( currToken.type == END )
+		{
+			line.get( line.size() -1 ).type = BARE;
 		}
 		else if ( currToken.type != END )
 		{

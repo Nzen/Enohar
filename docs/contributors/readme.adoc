@@ -1,0 +1,15 @@
+
+== Purpose
+
+This folder contains contributor license agreements. These authorize the owner of Enohar to release their contributions under the MIT license terms. The threshold is ten lines of code/content.
+
+== Usage
+
+paraphrased from https://git-scm.com/book/en/v2/Git-Tools-Signing-Your-Work
+
+```sh
+(if you haven't) git config (--global) user.signingkey [[ the gpg public key id ]]
+gpg --clearsign docs/contributors/REPLACE_with_your_name.adoc
+git add docs/contributors/REPLACE_with_your_name.adoc.asc
+git commit -S -m 'chore: signing CLA as REPLACE_with_your_name'
+```

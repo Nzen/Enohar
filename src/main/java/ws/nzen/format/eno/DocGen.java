@@ -157,6 +157,14 @@ public class DocGen
 	}
 
 
+	public DocGen bare( String name )
+	{
+		document.append( name );
+		document.append( System.lineSeparator() );
+		return this;
+	}
+
+
 	public DocGen empty( int emptyLines )
 	{
 		for ( int ind = 0; ind < emptyLines; ind++ )
