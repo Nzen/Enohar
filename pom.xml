@@ -3,14 +3,14 @@
 		xmlns="http://maven.apache.org/POM/4.0.0"
 		xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 		xsi:schemaLocation="http://maven.apache.org/xsd/maven-4.0.0.xsd">
-	<modelVersion>
-		4.0.0
-	</modelVersion>
 	<!--
 	<mavenVersion>
 		3.6.0
 		</mavenVersion>
 		-->
+	<modelVersion>
+		4.0.0
+	</modelVersion>
 	<groupId>
 		ws.nzen.format.eno
 		</groupId>
@@ -18,25 +18,12 @@
 		enohar
 		</artifactId>
 	<version>
-		0.0-alpha.8.0+j8
+		0.0-alpha.8.0+j8-SNAPSHOT
 		<!-- change suffix to match the jre target -->
 		</version>
-	<description>
-		An eno document serialization library
-		</description>
-	<name>
-		Enohar
-		</name>
-	<licenses>
-		<license>
-			<name>
-				MIT v1.0
-				</name>
-			<url>
-				https://mitlicense.org
-				</url>
-			</license>
-		</licenses>
+	<packaging>
+		jar
+		</packaging>
 	<dependencies>
 		<!--
 		<dependency>
@@ -134,6 +121,12 @@
 				</scope>
 			</dependency>
 		</dependencies>
+	<!--
+		parent
+		dependencyManagement
+		modules
+		properties
+		-->
 	<build>
 	    <plugins>
 			<plugin>
@@ -231,6 +224,90 @@
 				</plugin>
 			</plugins>
 		</build>
+	<!--
+		reporting
+		-->
+	<name>
+		Enohar
+		</name>
+	<description>
+		An eno document serialization library
+		</description>
+	<url>
+		https://github.com/Nzen/Enohar
+		</url>
+	<inceptionYear>
+		2018
+		</inceptionYear>
+	<licenses>
+		<license>
+			<name>
+				MIT v1.0
+				</name>
+			<url>
+				https://mitlicense.org
+				</url>
+			</license>
+		</licenses>
+	<!--
+		organization
+		-->
+	<developers>
+		<developer>
+			<id>
+				Nzen
+				</id>
+				<name>
+					Nicholas Prado
+					</name>
+				<email>
+					nmprado@nzen.ws
+					</email>
+				<roles>
+					<role>
+						Implementor
+						</role>
+				</roles>
+				<timezone>
+					UTC-06:00
+					</timezone>
+			</developer>
+	<!--
+		contributors
+		ssueManagement
+		ciManagement
+		mailingLists
+		-->
+		</developers>
+	<scm>
+		<connection>
+			scm:git:https://github.com/Nzen/Enohar.git
+			</connection>
+		<developerConnection>
+			scm:git:https://github.com/Nzen/Enohar.git
+			</developerConnection>
+		<url>
+			https://github.com/Nzen/Enohar
+			</url>
+		</scm>
+	<distributionManagement>
+		<snapshotRepository>
+			<id>
+				ossrh
+				</id>
+			<url>
+				https://oss.sonatype.org/content/repositories/snapshots
+				</url>
+			</snapshotRepository>
+		<repository>
+			<id>
+				ossrh
+				</id>
+			<url>
+				https://oss.sonatype.org/service/local/staging/deploy/maven2/
+				</url>
+			</repository>
+		</distributionManagement>
 	<profiles>
 		<profile>
 			<!-- profile to compile as java 8 for local repo -->
@@ -1158,57 +1235,4 @@
 				</build>
 			</profile>
 		</profiles>
-	<inceptionYear>
-		2018
-		</inceptionYear>
-	<developers>
-		<developer>
-			<id>
-				Nzen
-				</id>
-				<name>
-					Nicholas Prado
-					</name>
-				<email>
-					nmprado@nzen.ws
-					</email>
-				<roles>
-					<role>
-						Implementor
-						</role>
-				</roles>
-				<timezone>
-					UTC-06:00
-					</timezone>
-			</developer>
-		</developers>
-	<scm>
-		<connection>
-			scm:git:https://github.com/Nzen/Enohar.git
-			</connection>
-		<developerConnection>
-			scm:git:https://github.com/Nzen/Enohar.git
-			</developerConnection>
-		<url>
-			https://github.com/Nzen/Enohar
-			</url>
-		</scm>
-	<distributionManagement>
-		<snapshotRepository>
-			<id>
-				ossrh
-				</id>
-			<url>
-				https://oss.sonatype.org/content/repositories/snapshots
-				</url>
-			</snapshotRepository>
-		<repository>
-			<id>
-				ossrh
-			</id>
-			<url>
-				https://oss.sonatype.org/service/local/staging/deploy/maven2/
-			</url>
-			</repository>
-		</distributionManagement>
 	</project>
