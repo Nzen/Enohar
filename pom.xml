@@ -290,6 +290,11 @@
 			https://github.com/Nzen/Enohar
 			</url>
 		</scm>
+	<!--
+		prerequisites
+		repositories
+		pluginRepositories
+		-->
 	<distributionManagement>
 		<snapshotRepository>
 			<id>
