@@ -60,7 +60,7 @@
 				note_enohaste
 				</artifactId>
 			<version>
-				1.0
+				1.0+j8
 				</version>
 			</dependency>
 		<dependency>
