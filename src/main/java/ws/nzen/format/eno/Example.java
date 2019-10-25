@@ -21,7 +21,7 @@ public class Example
 {
 	private static final String cl = "t.";
 
-	/** @param args */
+
 	public static void main( String[] args )
 	{
 		// checkHardcodedDocument();

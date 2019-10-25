@@ -8,7 +8,7 @@ import static ws.nzen.format.eno.EnoType.BARE;
 public class Empty extends EnoElement
 {
 
-	/** @param typeToBe */
+	/**  */
 	public Empty()
 	{
 		super( BARE );
@@ -21,9 +21,8 @@ public class Empty extends EnoElement
 	}
 
 
-	/** @param typeToBe
-	/** @param nameToHave
-	/** @param escapes */
+	/** @param nameToHave name
+	/** @param escapes number of escapes */
 	public Empty( String nameToHave, int escapes )
 	{
 		super( BARE, nameToHave, escapes );
