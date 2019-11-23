@@ -10,7 +10,7 @@
 		-->
 	<modelVersion>
 		4.0.0
-	</modelVersion>
+		</modelVersion>
 	<groupId>
 		ws.nzen.format.eno
 		</groupId>
@@ -257,28 +257,28 @@
 			<id>
 				Nzen
 				</id>
-				<name>
-					Nicholas Prado
-					</name>
-				<email>
-					nmprado@nzen.ws
-					</email>
-				<roles>
-					<role>
-						Implementor
-						</role>
+			<name>
+				Nicholas Prado
+				</name>
+			<email>
+				nmprado@nzen.ws
+				</email>
+			<roles>
+				<role>
+					Implementor
+					</role>
 				</roles>
-				<timezone>
-					UTC-06:00
-					</timezone>
+			<timezone>
+				UTC-06:00
+				</timezone>
 			</developer>
+		</developers>
 	<!--
 		contributors
 		ssueManagement
 		ciManagement
 		mailingLists
 		-->
-		</developers>
 	<scm>
 		<connection>
 			scm:git:https://github.com/Nzen/Enohar.git
@@ -479,7 +479,7 @@
 		<profile>
 			<!-- profile to compile as java 12 for local repo -->
 			<id>
-				j12
+				jL
 				</id>
 			<build>
 				<plugins>
@@ -498,7 +498,7 @@
 							<toolchains>
 								<jdk>
 									<version>
-										[12,)
+										[13,)
 										</version>
 									</jdk>
 								</toolchains>
@@ -526,13 +526,13 @@
 							</version>
 						<configuration>
 							<source>
-								12
+								13
 								</source>
 							<target>
-								12
+								13
 								</target>
 							<release>
-								12
+								13
 								</release>
 							<encoding>
 								UTF-8
@@ -928,9 +928,9 @@
 				</build>
 			</profile>
 		<profile>
-			<!-- publish java 12 to maven -->
+			<!-- publish java latest version to maven -->
 			<id>
-				j12-r
+				jL-r
 				</id>
 			<build>
 				<plugins>
@@ -949,7 +949,7 @@
 							<toolchains>
 								<jdk>
 									<version>
-										[12,)
+										[13,)
 										</version>
 									</jdk>
 								</toolchains>
@@ -977,13 +977,13 @@
 							</version>
 						<configuration>
 							<source>
-								12
+								13
 								</source>
 							<target>
-								12
+								13
 								</target>
 							<release>
-								12
+								13
 								</release>
 							<encoding>
 								UTF-8
