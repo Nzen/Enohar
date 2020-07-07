@@ -1,30 +1,23 @@
 
 # issue yyMMdd_hhmm
 
-## body
+		title : 
 
-assignee : 
+		status : to do
 
-title :
-	| 
+		priority : 
 
-status : to do
+		assignee : 
 
-priority : 
+		-- desc
 
--- desc
+		-- desc
 
--- desc
+	>## yyMMdd hhMM zzz
+		>comment author : 
+		>-- comment
 
-labels:
-
-## yyMMdd hhMM zzz
-
-comment author : 
-
--- comment
-
--- comment
+		>-- comment
 
 
 

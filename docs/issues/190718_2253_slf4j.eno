@@ -5,8 +5,7 @@
 
 assignee : Nicholas (Nzen)
 
-title :
-	| provide client configurable logging with slf4j
+title : provide client configurable logging with slf4j
 
 status : to do
 

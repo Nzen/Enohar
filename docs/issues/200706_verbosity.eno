@@ -1,0 +1,42 @@
+
+# issue 200706_2355
+
+		title : Avoid default verbose log
+
+		status : to do
+
+		priority : high
+
+		assignee : Nicholas Prado
+
+		-- desc
+		Parsing an eno document should not have cursor level logging unless the caller has requested that level of granularity.
+		Suppress that level or honor some mechanism (ex slf4j) for honoring the caller's preferred level.
+		-- desc
+
+	>## yyMMdd hhMM zzz
+		>comment author : 
+		>-- comment
+
+		>-- comment
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
