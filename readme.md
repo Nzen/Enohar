@@ -7,10 +7,10 @@ Enohar is a library to serialize and deserialize Eno documents. It uses Java v7 
 
 #### Contents
 
-* [Sample eno](#Sample eno)
-* [Inclusion](#Inclusion in your project)
+* [Sample eno](#Eno)
+* [Inclusion](#Inclusion)
 * [Progress](#Progress)
-* [Sample usage](#Sample usage)
+* [Sample usage](#Usage)
 * [Name](#Name)
 * [Contribution](#Contribution)
 
@@ -18,12 +18,14 @@ _Eno_ is a document [file format](https://github.com/eno-lang/eno) / data struct
 
 Enohar parses a valid eno document in compliance with the eno spec. It imitates much of the api that enolib exposes. However, Enohar will not provide some enolib behavior for the forseeable future (ex, tracking whether elements have been used). It provides some functionality that that enolib implementations lack (ex, emitting an eno document as text).
 
-### Sample Eno
+### Eno
 ```
 > comment
 field with no content :
 
 field with : immediately following content
+
+'blank' element with no value; also non operator punctuation is part of the identifier
 
 field with : line
 	\ wrapped content, all lines and element names are trimmed
@@ -66,7 +68,7 @@ field that has its own values and those from < field with content to avoid repea
 > deep copy << will present a mix of this and that section's elements when they share a name
 ```
 
-#### Inclusion in your project
+#### Inclusion
 
 At the moment, Enohar does not parse an eno document fully compliantly. (Not all elements support templating yet.) At that point, I will make it available on sonatype / maven-central. The below dependence declarations are provided as examples. They include the jre version they were compiled for. Enohar, without tests, is compatible with java 7 up to the latest (currently 12, but 13 in a couple of weeks). Enohar is published with  [compatibility versioning](https://gitlab.com/staltz/comver) in mind. Refer to the changelog in this repository for a survey of whether a given version is appropriate.
 
@@ -114,11 +116,12 @@ Struck elements are not yet implemented.
 * ~recognize some types ('loaders')~
 * ~enable use-tracking ('touch')~
 
-### Sample usage
+### Usage
 
-Below is a self-contained example of reading one of the eno formatted issues of this project, changing it from status to do, and writing the file back to disc. Before the example is a list of libraries currently using Enohar.
-
+* [Choose-Workflo](https://github.com/BR-Nicholas-Prado/Choose-Workflo/blob/master/src/main/java/com/beyondrelations/runtime/cwf/Initialization.java#L78) paired with the file it's intended [to consume](https://github.com/BR-Nicholas-Prado/Choose-Workflo/blob/master/config.eno)
 * [JarLauncher](https://github.com/Nzen/JarLauncher/blob/master/src/main/java/ws/nzen/jarl/parser/EnoParser.java#L77) paired with the file it's intended [to consume](https://github.com/Nzen/JarLauncher/blob/master/etc/config.eno)
+
+Below is a self-contained example of reading one of the eno formatted issues of this project, changing it from status to do, and writing the file back to disc.
 
 ```java
 import java.io.IOException;
@@ -166,7 +169,7 @@ public class ExampleOfEnoUsage
 
 #### Name
 
-"Enojar" is a portuguese-origin, infinitive verb meaning _to anger_ . That word is [pronounced](https://en.wiktionary.org/wiki/enojar#Pronunciation), in US english, the way this library is spelt. Using enojar felt a bit on the nose.
+"Enojar" is a portuguese-origin, infinitive verb meaning _to anger_ . That word is [pronounced](https://en.wiktionary.org/wiki/enojar#Pronunciation), in North American US english, the way this library is spelt. Using eno_jar for a java project felt a bit on the nose.
 
 ### Contribution
 
